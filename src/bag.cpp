@@ -62,7 +62,8 @@ Bag Bag::read(rosbaz::io::IReader &reader, bool read_chunk_indices) {
   return bag;
 }
 
-void Bag::parseFileHeaderRecord(const rosbaz::bag_parsing::Record &file_header_record) {
+void Bag::parseFileHeaderRecord(
+    const rosbaz::bag_parsing::Record &file_header_record) {
   auto h = rosbaz::bag_parsing::Header::parse(file_header_record.header);
 
   if (h.op != rosbag::OP_FILE_HEADER) {
@@ -112,8 +113,9 @@ void Bag::parseFileTail(rosbaz::DataSpan bag_tail) {
   }
 }
 
-void Bag::parseIndexSection(rosbaz::bag_parsing::ChunkExt &chunk_ext, rosbaz::DataSpan chunk_index,
-                              const uint64_t index_offset) {
+void Bag::parseIndexSection(rosbaz::bag_parsing::ChunkExt &chunk_ext,
+                            rosbaz::DataSpan chunk_index,
+                            const uint64_t index_offset) {
   // There may be multiple records in the given data span
   uint32_t offset = 0;
 

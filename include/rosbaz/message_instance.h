@@ -80,13 +80,11 @@ namespace serialization {
 
 template <> struct Serializer<rosbaz::MessageInstance> {
   template <typename Stream>
-  inline static void write(Stream &stream,
-                           const rosbaz::MessageInstance &m) {
+  inline static void write(Stream &stream, const rosbaz::MessageInstance &m) {
     m.write(stream);
   }
 
-  inline static uint32_t
-  serializedLength(const rosbaz::MessageInstance &m) {
+  inline static uint32_t serializedLength(const rosbaz::MessageInstance &m) {
     return m.size();
   }
 };

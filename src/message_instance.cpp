@@ -30,11 +30,11 @@ void MessageInstance::getOffsetAndSize(uint64_t &record_offset,
                                        uint32_t &record_size) const {
   assert(m_bag->chunk_indices_parsed_);
 
-  auto found_chunk = std::find_if(m_bag->chunks_.begin(), m_bag->chunks_.end(),
-                                  [this](const rosbaz::bag_parsing::ChunkExt &chunk_ext) {
-                                    return chunk_ext.chunk_info.pos ==
-                                           m_index_entry->chunk_pos;
-                                  });
+  auto found_chunk = std::find_if(
+      m_bag->chunks_.begin(), m_bag->chunks_.end(),
+      [this](const rosbaz::bag_parsing::ChunkExt &chunk_ext) {
+        return chunk_ext.chunk_info.pos == m_index_entry->chunk_pos;
+      });
 
   if (found_chunk == m_bag->chunks_.end()) {
     std::stringstream msg;
@@ -43,11 +43,11 @@ void MessageInstance::getOffsetAndSize(uint64_t &record_offset,
     throw rosbaz::InvalidBagIndexException(msg.str());
   }
 
-  auto found_size = std::find_if(found_chunk->message_records.begin(),
-                                 found_chunk->message_records.end(),
-                                 [this](const rosbaz::bag_parsing::MessageRecordInfo &info) {
-                                   return info.offset == m_index_entry->offset;
-                                 });
+  auto found_size = std::find_if(
+      found_chunk->message_records.begin(), found_chunk->message_records.end(),
+      [this](const rosbaz::bag_parsing::MessageRecordInfo &info) {
+        return info.offset == m_index_entry->offset;
+      });
 
   if (found_size == found_chunk->message_records.end()) {
     std::stringstream msg;
