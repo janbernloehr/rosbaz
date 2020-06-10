@@ -71,3 +71,9 @@ cd rosbaz
 git clone https://github.com/janbernloehr/rosbaz.git src
 catkin build rosbaz
 ```
+
+## Dependencies
+
+- [azure-storage-cpplite](https://github.com/Azure/azure-storage-cpplite)
+- [CLI11](https://github.com/CLIUtils/CLI11)
+- [span-lite](https://github.com/martinmoene/span-lite)
