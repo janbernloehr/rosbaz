@@ -37,16 +37,15 @@ struct ViewIterHelperCompare {
 
 struct View {
 public:
-  struct ViewIterator
+  struct iterator
       : public std::iterator<std::forward_iterator_tag, MessageInstance> {
   public:
-    using iterator = ViewIterator;
     using const_pointer = const MessageInstance *;
 
   private:
     friend class View;
 
-    ViewIterator(const View &view, bool end = false) : m_view(&view) {
+    iterator(const View &view, bool end = false) : m_view(&view) {
       if (!end) {
         populate();
       }
@@ -134,8 +133,8 @@ public:
 
   size_t size() const;
 
-  ViewIterator begin() const;
-  ViewIterator end() const;
+  iterator begin() const;
+  iterator end() const;
 
   ros::Time getBeginTime();
   ros::Time getEndTime();

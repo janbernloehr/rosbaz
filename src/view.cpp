@@ -65,8 +65,8 @@ View::View(Bag &bag, rosbaz::io::IReader &reader,
   }
 }
 
-View::ViewIterator View::begin() const { return View::ViewIterator(*this); }
-View::ViewIterator View::end() const { return View::ViewIterator(*this, true); }
+View::iterator View::begin() const { return View::iterator(*this); }
+View::iterator View::end() const { return View::iterator(*this, true); }
 
 size_t View::size() const {
   size_t size = 0;
