@@ -45,81 +45,31 @@ public:
   private:
     friend class View;
 
-    iterator(const View &view, bool end = false) : m_view(&view) {
-      if (!end) {
-        populate();
-      }
-    }
+    iterator(const View &view, bool end = false);
 
-    void populate() {
-      m_message_instance.reset();
-      for (const auto &range : m_view->m_ranges) {
-        if (range.begin != range.end) {
-          m_iters.emplace_back(range.begin, range);
-        }
-      }
+    void populate();
 
-      std::sort(m_iters.begin(), m_iters.end(), ViewIterHelperCompare());
-    }
-
-    void increment() {
-      m_message_instance.reset();
-      m_iters.back().iter++;
-
-      if (m_iters.back().iter == m_iters.back().range->end) {
-        m_iters.pop_back();
-      }
-
-      std::sort(m_iters.begin(), m_iters.end(), ViewIterHelperCompare());
-    }
+    void increment();
 
   public:
-    iterator &operator++() {
-      increment();
-      return *this;
-    }
-    iterator operator++(int) {
-      iterator tmp = *this;
-      increment();
-      return tmp;
-    }
+    iterator() = default;
+    iterator(iterator const &i);
+    iterator &operator=(iterator const &i);
 
-    bool operator==(const iterator &other) const {
-      if (m_iters.empty()) {
-        return other.m_iters.empty();
-      }
-      if (other.m_iters.empty()) {
-        return false;
-      }
+    iterator &operator++();
+    iterator operator++(int);
 
-      return m_iters.back().iter == other.m_iters.back().iter;
-    }
-    bool operator!=(const iterator &rhs) const { return !(*this == rhs); }
+    bool operator==(const iterator &other) const;
+    bool operator!=(const iterator &rhs) const;
 
-    value_type operator*() const {
-      if (!m_message_instance) {
-        auto it = m_iters.back();
-        m_message_instance.emplace(MessageInstance{*it.range->connection_info,
-                                                   *it.iter, *it.range->bag,
-                                                   *it.range->reader});
-      }
-      return *m_message_instance;
-    }
-    const_pointer operator->() const {
-      if (!m_message_instance) {
-        auto it = m_iters.back();
-        m_message_instance.emplace(MessageInstance{*it.range->connection_info,
-                                                   *it.iter, *it.range->bag,
-                                                   *it.range->reader});
-      }
-      return &(*m_message_instance);
-    }
+    value_type operator*() const;
+    const_pointer operator->() const;
 
   protected:
-    const View *m_view;
-    std::vector<ViewIterHelper> m_iters;
+    const View *view_{nullptr};
+    std::vector<ViewIterHelper> iters_{};
 
-    mutable boost::optional<MessageInstance> m_message_instance;
+    mutable boost::optional<MessageInstance> message_instance_{};
   };
 
   explicit View(const Bag &bag, ros::Time start_time = ros::TIME_MIN,
