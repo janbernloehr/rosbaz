@@ -12,12 +12,12 @@ This package provides an implementation of a subset of the rosbag api and the `r
 
 Summarize contents of a bag
 ```bash
-rosbag info https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag?SAS_TOKEN
+rosbaz info https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag?SAS_TOKEN
 ```
 
 Play back contents of a bag
 ```bash
-rosbag play --paused https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag?SAS_TOKEN
+rosbaz play --paused https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag?SAS_TOKEN
 ```
 
 Note that only those topics with connected subscribers will actually be downloaded from azure.
@@ -28,15 +28,15 @@ The following modes are supported
 - Bearer Token
 ```bash
 export AZ_TOKEN=$(az account get-access-token --resource https://storage.azure.com/ -o tsv --query accessToken)
-rosbag info https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag --token $AZ_TOKEN
+rosbaz info https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag --token $AZ_TOKEN
 ```
 - SAS Token
 ```bash
-rosbag info https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag?SAS_TOKEN
+rosbaz info https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag?SAS_TOKEN
 ```
 - API Key
 ```bash
-rosbag info https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag --account-key $ACCOUNT_KEY
+rosbaz info https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag --account-key $ACCOUNT_KEY
 ```
 
 ### Restrictions
