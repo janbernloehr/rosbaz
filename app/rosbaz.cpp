@@ -13,9 +13,9 @@
 #include "terminal/progress_bar.h"
 
 #include "rosbaz/bag.h"
-#include "rosbaz/view.h"
 #include "rosbaz/blob_url.h"
 #include "rosbaz/io/az_reader.h"
+#include "rosbaz/view.h"
 
 namespace container {
 
@@ -62,7 +62,7 @@ void print_bag(const rosbaz::Bag &bag) {
   std::cout << "start:    " << start_time.sec << "." << start_time.nsec << "\n";
   std::cout << "end:      " << end_time.sec << "." << end_time.nsec << "\n";
   std::cout << "size:     "
-            << static_cast<float>(bag.getFileSize()) / 1024.f / 1024.f / 1024.f
+            << static_cast<float>(bag.getSize()) / 1024.f / 1024.f / 1024.f
             << " GB\n";
 
   std::map<uint32_t, uint32_t> total_connection_counts;
@@ -167,8 +167,7 @@ void play_command(const CommonOptions &common_options,
     finish_time = initial_time + ros::Duration(*play_options.duration);
   }
 
-  rosbaz::View filtered_view{az_bag, az_reader, initial_time,
-                                          finish_time};
+  rosbaz::View filtered_view{az_bag, az_reader, initial_time, finish_time};
 
   std::unordered_map<std::string, ros::Publisher> publishers;
   for (const auto *connection_info : filtered_view.getConnections()) {
