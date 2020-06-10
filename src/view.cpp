@@ -14,12 +14,13 @@ ViewIterHelper::ViewIterHelper(
     const MessageRange &_range)
     : iter(_iter), range(&_range) {}
 
-View::View(Bag &bag, ros::Time start_time, ros::Time end_time)
+View::View(const Bag &bag, ros::Time start_time, ros::Time end_time)
     : View(
           bag, [](rosbag::ConnectionInfo const *) { return true; }, start_time,
           end_time) {}
 
-View::View(Bag &bag, std::function<bool(rosbag::ConnectionInfo const *)> query,
+View::View(const Bag &bag,
+           std::function<bool(rosbag::ConnectionInfo const *)> query,
            const ros::Time &start_time, const ros::Time &end_time)
     : m_bag(&bag) {
   assert(bag.chunk_indices_parsed_);

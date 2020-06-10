@@ -55,7 +55,7 @@ private:
   /// Fills connection_indexes_ and chunks_.
   void parseChunkIndices(rosbaz::io::IReader &reader);
 
-  std::shared_ptr<rosbaz::io::IReader> reader_;
+  mutable std::shared_ptr<rosbaz::io::IReader> reader_;
 
   std::unordered_map<uint32_t, rosbag::ConnectionInfo> connections_;
 
