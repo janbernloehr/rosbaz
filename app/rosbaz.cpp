@@ -32,6 +32,8 @@ inline std::istream &operator>>(std::istream &stream,
 struct CommonOptions {
   std::string account_key{};
   std::string token{};
+
+  bool print_transfer_stats{false};
 };
 
 struct InfoOptions {
@@ -121,6 +123,12 @@ void print_bag(const rosbaz::bag_parsing::AzBag &bag) {
   }
 }
 
+void print_transfer_stats(const rosbaz::io::AzReader &az_reader) {
+  std::cout << "---\n";
+  std::cout << "requests:          " << az_reader.num_requests() << "\n";
+  std::cout << "bytes transferred: " << az_reader.num_bytes() << "\n";
+}
+
 void info_command(const CommonOptions &common_options,
                   const InfoOptions &info_options) {
   auto url = rosbaz::AzBlobUrl::parse(info_options.blob_url);
@@ -130,8 +138,9 @@ void info_command(const CommonOptions &common_options,
   auto az_bag = rosbaz::bag_parsing::AzBag::read(az_reader, false);
   print_bag(az_bag);
 
-  ROS_INFO_STREAM("Requests: " << az_reader.num_requests() << " bytes "
-                               << az_reader.num_bytes());
+  if (common_options.print_transfer_stats) {
+    print_transfer_stats(az_reader);
+  }
 }
 
 void play_command(const CommonOptions &common_options,
@@ -230,8 +239,9 @@ void play_command(const CommonOptions &common_options,
 
   std::cout << std::endl << "Done." << std::endl;
 
-  ROS_INFO_STREAM("Requests: " << az_reader.num_requests() << " bytes "
-                               << az_reader.num_bytes());
+  if (common_options.print_transfer_stats) {
+    print_transfer_stats(az_reader);
+  }
 }
 
 } // namespace
@@ -250,6 +260,9 @@ int main(int argc, char **argv) {
                  "running\naz account "
                  "get-access-token --resource https://storage.azure.com/ -o "
                  "tsv --query accessToken");
+
+  app.add_flag("--print-transfer-stats", common_options.print_transfer_stats,
+               "Print transfer statistics at command completion.");
 
   InfoOptions info_options;
 
