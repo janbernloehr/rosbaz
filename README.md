@@ -39,6 +39,11 @@ rosbag info https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag
 rosbag info https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag --token ???
 ```
 
+### Restrictions
+- rosbag format 2.0
+- no support for encryption
+- no support for compressed chunks
+
 ## Build (Linux)
 
 ### Build azure-storage-cpplite dependency
