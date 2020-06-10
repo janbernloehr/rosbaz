@@ -1,10 +1,9 @@
 #pragma once
 
-#include <array>
 #include <cassert>
 #include <fstream>
 #include <string>
-#include <vector>
+#include <type_traits>
 
 #include "rosbaz/common.h"
 
@@ -12,35 +11,22 @@ namespace rosbaz {
 
 namespace io {
 
-using RosStream = std::ifstream; // std::basic_ifstream<byte>;
+using RosStream = std::ifstream;
 
-size_t size_of_file(std::string file_path);
-
+/// Read \p count many bytes from \p ifs into \p target.
 void read_from(RosStream &ifs, byte *target, const size_t count);
 
-void read_from(RosStream &ifs, std::vector<byte> &target, const size_t count);
-
-template <size_t N>
-void read_from(RosStream &ifs, std::array<byte, N> &target) {
-  read_from(ifs, target.begin(), N);
-}
-
+/// Convert the given byte span into a string assuming the span is not null terminated.
 inline std::string to_string(rosbaz::DataSpan data) {
   return std::string{reinterpret_cast<const char *>(data.begin()),
                      static_cast<size_t>(data.size())};
 }
 
+/// Deserialize a T at \p offset from \p buffer.
 template <class T> T read_little_endian(DataSpan buffer, size_t offset = 0) {
+  static_assert(std::is_standard_layout<T>::value == true);
   assert(static_cast<size_t>(buffer.size()) >= offset + sizeof(T));
   return *reinterpret_cast<const T *>(buffer.begin() + offset);
-}
-
-template <class T> T read_little_endian(RosStream &ifs) {
-  std::array<rosbaz::io::byte, sizeof(T)> buffer;
-
-  read_from(ifs, buffer);
-
-  return read_little_endian<T>(buffer);
 }
 
 } // namespace io
