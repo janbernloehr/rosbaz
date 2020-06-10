@@ -20,7 +20,7 @@ catkin_package(
   DEPENDS azure_storage_cpplite
 )
 
-file(GLOB_RECURSE _lib_sources CONFIGURE_DEPENDS "src" "*.cpp")
+file(GLOB _lib_sources CONFIGURE_DEPENDS "src/*.cpp" "src/**/*.cpp")
 
 add_library(${PROJECT_NAME}
   ${_lib_sources}
@@ -38,8 +38,10 @@ target_link_libraries(${PROJECT_NAME}
     ${catkin_LIBRARIES}
 )
 
+file(GLOB _app_sources CONFIGURE_DEPENDS "app/*.cpp" "app/**/*.cpp")
+
 add_executable(${PROJECT_NAME}_app
-  "app/rosbaz.cpp"
+  ${_app_sources}
 )
 target_link_libraries(${PROJECT_NAME}_app PRIVATE ${PROJECT_NAME})
 set_target_properties(${PROJECT_NAME}_app PROPERTIES OUTPUT_NAME "rosbaz")
@@ -48,6 +50,12 @@ set_target_properties(${PROJECT_NAME}_app
     PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CATKIN_DEVEL_PREFIX}/${CATKIN_GLOBAL_BIN_DESTINATION}"
 )
+
+if (CATKIN_ENABLE_TESTING)
+  file(GLOB _test_sources CONFIGURE_DEPENDS "test/*.cpp")
+  catkin_add_gtest(test_${PROJECT_NAME} ${_test_sources})
+  target_link_libraries(test_${PROJECT_NAME} ${PROJECT_NAME} ${catkin_LIBRARIES} gtest_main)
+endif()
 
 install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_app
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
