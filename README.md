@@ -28,7 +28,7 @@ The following modes are supported
 - Bearer Token
 ```bash
 export AZ_TOKEN=$(az account get-access-token --resource https://storage.azure.com/ -o tsv --query accessToken)
-rosbag info https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag --token ???
+rosbag info https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag --token $AZ_TOKEN
 ```
 - SAS Token
 ```bash
@@ -36,7 +36,7 @@ rosbag info https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag
 ```
 - API Key
 ```bash
-rosbag info https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag --token ???
+rosbag info https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag --account-key $ACCOUNT_KEY
 ```
 
 ### Restrictions
