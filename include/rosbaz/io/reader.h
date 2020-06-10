@@ -27,9 +27,7 @@ public:
 
   template <size_t N> std::array<rosbaz::io::byte, N> read(size_t offset) {
     std::array<rosbaz::io::byte, N> buffer;
-
     read_fixed(buffer.begin(), offset, N);
-
     return buffer;
   }
 

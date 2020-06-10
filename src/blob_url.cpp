@@ -1,8 +1,9 @@
 #include "rosbaz/blob_url.h"
 
-#include "ros/console.h"
-
 #include <regex>
+#include <ros/console.h>
+
+#include "rosbaz/exceptions.h"
 
 namespace rosbaz {
 
@@ -12,7 +13,12 @@ AzBlobUrl AzBlobUrl::parse(const std::string &url) {
   std::smatch matches;
 
   if (!std::regex_search(url, matches, url_rgx)) {
-    throw std::runtime_error("Invalid url provided");
+    std::stringstream msg;
+    msg << "Given url '" << url
+        << "' is not of required form "
+           "http[s]://contosoaccount.blob.core.windows.net/contosocontainer/"
+           "my.bag[?SAS_TOKEN]";
+    throw rosbaz::InvalidUrlException(msg.str());
   }
 
   AzBlobUrl result;

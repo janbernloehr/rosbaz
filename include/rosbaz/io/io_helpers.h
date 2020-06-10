@@ -16,7 +16,8 @@ using RosStream = std::ifstream;
 /// Read \p count many bytes from \p ifs into \p target.
 void read_from(RosStream &ifs, byte *target, const size_t count);
 
-/// Convert the given byte span into a string assuming the span is not null terminated.
+/// Convert the given byte span into a string assuming the span is not null
+/// terminated.
 inline std::string to_string(rosbaz::DataSpan data) {
   return std::string{reinterpret_cast<const char *>(data.begin()),
                      static_cast<size_t>(data.size())};

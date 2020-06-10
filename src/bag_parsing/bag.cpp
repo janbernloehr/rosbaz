@@ -1,14 +1,14 @@
 #include "rosbaz/bag_parsing/bag.h"
 
+#include <ros/console.h>
 #include <rosbag/constants.h>
 #include <rosbag/structures.h>
-
-#include "ros/console.h"
 
 #include "rosbaz/bag_parsing/conversion.h"
 #include "rosbaz/bag_parsing/header.h"
 #include "rosbaz/bag_parsing/record.h"
 #include "rosbaz/common.h"
+#include "rosbaz/exceptions.h"
 #include "rosbaz/io/io_helpers.h"
 #include "rosbaz/io/reader.h"
 
@@ -30,7 +30,9 @@ AzBag AzBag::read(rosbaz::io::IReader &reader, bool read_chunk_indices) {
 
   if (!rosbaz::bag_parsing::verifyVersionHeader(
           version_and_file_header_span.subspan(0, kVersionHeaderSize))) {
-    throw std::runtime_error("Invalid rosbag format");
+    std::stringstream msg;
+    msg << "Only rosbag version 2.0 is supported";
+    throw rosbaz::UnsupportedRosBagException(msg.str());
   }
 
   bag.file_header_pos_ = kVersionHeaderSize;
@@ -66,11 +68,16 @@ void AzBag::parseFileHeaderRecord(const Record &file_header_record) {
   Header h = Header::parse(file_header_record.header);
 
   if (h.op != rosbag::OP_FILE_HEADER) {
-    throw std::runtime_error("Invalid file header op");
+    std::stringstream msg;
+    msg << "Expected op " << static_cast<int>(rosbag::OP_FILE_HEADER)
+        << " in file header but found " << static_cast<int>(h.op);
+    throw rosbaz::UnsupportedRosBagException(msg.str());
   }
 
   if (h.fields.count(rosbag::ENCRYPTOR_FIELD_NAME) != 0) {
-    throw std::runtime_error("Encryptor is not supported");
+    std::stringstream msg;
+    msg << "This bag uses an encryptor which is not supported";
+    throw rosbaz::UnsupportedRosBagException(msg.str());
   }
 
   chunk_count_ = rosbaz::io::read_little_endian<uint32_t>(
@@ -123,8 +130,9 @@ void AzBag::parseIndexSection(ChunkExt &chunk_ext, rosbaz::DataSpan chunk_index,
     if (index_header.op != rosbag::OP_INDEX_DATA) {
       std::stringstream msg;
       msg << "Unexpected op code " << static_cast<int>(index_header.op)
-          << " in index section";
-      throw std::runtime_error(msg.str());
+          << " while parsing index section. Only op code "
+          << static_cast<int>(rosbag::OP_INDEX_DATA) << " is supported.";
+      throw rosbaz::UnsupportedRosBagException(msg.str());
     }
 
     const uint32_t index_version = rosbaz::io::read_little_endian<uint32_t>(
@@ -132,8 +140,9 @@ void AzBag::parseIndexSection(ChunkExt &chunk_ext, rosbaz::DataSpan chunk_index,
 
     if (index_version != rosbag::INDEX_VERSION) {
       std::stringstream msg;
-      msg << "Unexpected index version " << index_version;
-      throw std::runtime_error(msg.str());
+      msg << "Unexpected index version " << index_version << ". Only version "
+          << rosbag::INDEX_VERSION << " is supported.";
+      throw rosbaz::UnsupportedRosBagException(msg.str());
     }
 
     const uint32_t connection_id = rosbaz::io::read_little_endian<uint32_t>(
@@ -200,8 +209,10 @@ void AzBag::parseChunkIndices(rosbaz::io::IReader &reader) {
 
     if (chunk_header.compression != rosbag::COMPRESSION_NONE) {
       std::stringstream msg;
-      msg << "Unsupported compression: " << chunk_header.compression;
-      throw std::runtime_error(msg.str());
+      msg << "Unsupported compression '" << chunk_header.compression
+          << "'. Only compression '" << rosbag::COMPRESSION_NONE
+          << "' is supported.";
+      throw rosbaz::UnsupportedRosBagException(msg.str());
     }
 
     const uint64_t data_offset = chunk_info.pos + sizeof(uint32_t) +

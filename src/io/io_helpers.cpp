@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "rosbaz/common.h"
+#include "rosbaz/exceptions.h"
 
 namespace rosbaz {
 
@@ -19,8 +20,9 @@ void read_from(RosStream &ifs, byte *target, const size_t count) {
 
   if (actual_count != count) {
     std::stringstream msg;
-    msg << "Requested " << count << " from stream but read " << actual_count;
-    throw std::runtime_error(msg.str());
+    msg << "Requested " << count << " from stream but " << actual_count
+        << " were read";
+    throw rosbaz::IoException(msg.str());
   }
 }
 

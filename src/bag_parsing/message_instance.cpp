@@ -1,5 +1,7 @@
 #include "rosbaz/bag_parsing/message_instance.h"
 
+#include "rosbaz/exceptions.h"
+
 namespace rosbaz {
 namespace bag_parsing {
 
@@ -36,7 +38,10 @@ void MessageInstance::getOffsetAndSize(uint64_t &record_offset,
                                   });
 
   if (found_chunk == m_bag->chunks_.end()) {
-    throw std::runtime_error("Could not find chunk information for chunk.");
+    std::stringstream msg;
+    msg << "Requested chunk at pos=" << m_index_entry->chunk_pos
+        << " could not be found in index.";
+    throw rosbaz::InvalidBagIndexException(msg.str());
   }
 
   auto found_size = std::find_if(found_chunk->message_records.begin(),
@@ -46,7 +51,10 @@ void MessageInstance::getOffsetAndSize(uint64_t &record_offset,
                                  });
 
   if (found_size == found_chunk->message_records.end()) {
-    throw std::runtime_error("Could not find message size of message.");
+    std::stringstream msg;
+    msg << "Requested message recrod with offset=" << m_index_entry->offset
+        << " could not be found in index.";
+    throw rosbaz::InvalidBagIndexException(msg.str());
   }
 
   ROS_DEBUG_STREAM("chunk_pos: " << m_index_entry->chunk_pos

@@ -1,10 +1,10 @@
 #include "rosbaz/bag_parsing/header.h"
 
+#include <ros/console.h>
 #include <rosbag/constants.h>
 
-#include "ros/console.h"
-
 #include "rosbaz/common.h"
+#include "rosbaz/exceptions.h"
 #include "rosbaz/io/io_helpers.h"
 
 namespace rosbaz {
@@ -25,7 +25,10 @@ Header Header::parse(rosbaz::DataSpan source) {
     const rosbaz::io::byte *value_pos =
         std::find(field_span.begin(), field_span.end(), rosbag::FIELD_DELIM);
     if (value_pos == field_span.end()) {
-      throw std::runtime_error("Could not find field separator");
+      std::stringstream msg;
+      msg << "Could not find field delimiter '" << rosbag::FIELD_DELIM
+          << "' in field data";
+      throw rosbaz::RosBagFormatException(msg.str());
     }
     const size_t name_length = std::distance(field_span.begin(), value_pos);
     const std::string field_name =

@@ -1,9 +1,9 @@
 #include "rosbaz/bag_parsing/conversion.h"
 
+#include <ros/console.h>
 #include <rosbag/constants.h>
 
-#include "ros/console.h"
-
+#include "rosbaz/exceptions.h"
 #include "rosbaz/io/io_helpers.h"
 
 namespace rosbaz {
@@ -31,8 +31,8 @@ rosbag::ChunkHeader as_chunk_header(const Header &header,
   if (header.op != rosbag::OP_CHUNK) {
     std::stringstream msg;
     msg << "Cannot create ChunkHeader from op=" << static_cast<int>(header.op)
-        << " != " << static_cast<int>(rosbag::OP_CHUNK);
-    throw std::runtime_error(msg.str());
+        << " != " << static_cast<int>(rosbag::OP_CHUNK) << ".";
+    throw rosbaz::RosBagFormatException(msg.str());
   }
 
   rosbag::ChunkHeader chunk_header;
@@ -54,8 +54,8 @@ rosbag::ConnectionInfo as_connection_info(const Header &header,
     std::stringstream msg;
     msg << "Cannot create ConnectionInfo from op="
         << static_cast<int>(header.op)
-        << " != " << static_cast<int>(rosbag::OP_CONNECTION);
-    throw std::runtime_error(msg.str());
+        << " != " << static_cast<int>(rosbag::OP_CONNECTION) << ".";
+    throw rosbaz::RosBagFormatException(msg.str());
   }
 
   rosbag::ConnectionInfo info;
@@ -86,8 +86,8 @@ rosbag::ChunkInfo as_chunk_info(const Header &header, rosbaz::DataSpan data) {
   if (header.op != rosbag::OP_CHUNK_INFO) {
     std::stringstream msg;
     msg << "Cannot create ChunkInfo from op=" << static_cast<int>(header.op)
-        << " != " << static_cast<int>(rosbag::OP_CHUNK_INFO);
-    throw std::runtime_error(msg.str());
+        << " != " << static_cast<int>(rosbag::OP_CHUNK_INFO) << ".";
+    throw rosbaz::RosBagFormatException(msg.str());
   }
 
   rosbag::ChunkInfo info;
@@ -96,7 +96,10 @@ rosbag::ChunkInfo as_chunk_info(const Header &header, rosbaz::DataSpan data) {
       header.fields.at(rosbag::VER_FIELD_NAME));
 
   if (ver != rosbag::CHUNK_INFO_VERSION) {
-    throw std::runtime_error("Unsupported chunk info version");
+    std::stringstream msg;
+    msg << "Unsupported chunk info version " << ver << ". Only "
+        << rosbag::CHUNK_INFO_VERSION << " is supported.";
+    throw rosbaz::UnsupportedRosBagException(msg.str());
   }
 
   info.pos = rosbaz::io::read_little_endian<uint64_t>(

@@ -1,6 +1,6 @@
 #include "rosbaz/bag_parsing/view.h"
 
-#include "ros/console.h"
+#include <ros/console.h>
 
 namespace rosbaz {
 
