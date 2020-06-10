@@ -3,10 +3,10 @@
 #include <cstdint>
 #include <set>
 
+#include <boost/optional.hpp>
 #include <ros/time.h>
 #include <rosbag/query.h>
 #include <rosbag/structures.h>
-#include <boost/optional.hpp>
 
 #include "rosbaz/bag_parsing/bag.h"
 #include "rosbaz/bag_parsing/message_instance.h"
@@ -19,34 +19,35 @@ class View;
 struct MessageRange {
   std::multiset<rosbag::IndexEntry>::const_iterator begin;
   std::multiset<rosbag::IndexEntry>::const_iterator end;
-  const rosbag::ConnectionInfo* connection_info;
-  const AzBag* bag;
-  rosbaz::io::IReader* reader;
+  const rosbag::ConnectionInfo *connection_info;
+  const AzBag *bag;
+  rosbaz::io::IReader *reader;
 };
 
 struct ViewIterHelper {
   ViewIterHelper(std::multiset<rosbag::IndexEntry>::const_iterator _iter,
-                 const MessageRange& _range);
+                 const MessageRange &_range);
 
   std::multiset<rosbag::IndexEntry>::const_iterator iter;
-  const MessageRange* range;
+  const MessageRange *range;
 };
 
 struct ViewIterHelperCompare {
-  bool operator()(ViewIterHelper const& a, ViewIterHelper const& b);
+  bool operator()(ViewIterHelper const &a, ViewIterHelper const &b);
 };
 
 struct View {
- public:
-  struct ViewIterator : public std::iterator<std::forward_iterator_tag, MessageInstance> {
-   public:
+public:
+  struct ViewIterator
+      : public std::iterator<std::forward_iterator_tag, MessageInstance> {
+  public:
     using iterator = ViewIterator;
-    using const_pointer = const MessageInstance*;
+    using const_pointer = const MessageInstance *;
 
-   private:
+  private:
     friend class View;
 
-    ViewIterator(const View& view, bool end = false) : m_view(&view) {
+    ViewIterator(const View &view, bool end = false) : m_view(&view) {
       if (!end) {
         populate();
       }
@@ -54,7 +55,7 @@ struct View {
 
     void populate() {
       m_message_instance.reset();
-      for (const auto& range : m_view->m_ranges) {
+      for (const auto &range : m_view->m_ranges) {
         if (range.begin != range.end) {
           m_iters.emplace_back(range.begin, range);
         }
@@ -74,8 +75,8 @@ struct View {
       std::sort(m_iters.begin(), m_iters.end(), ViewIterHelperCompare());
     }
 
-   public:
-    iterator& operator++() {
+  public:
+    iterator &operator++() {
       increment();
       return *this;
     }
@@ -85,7 +86,7 @@ struct View {
       return tmp;
     }
 
-    bool operator==(const iterator& other) const {
+    bool operator==(const iterator &other) const {
       if (m_iters.empty()) {
         return other.m_iters.empty();
       }
@@ -95,43 +96,42 @@ struct View {
 
       return m_iters.back().iter == other.m_iters.back().iter;
     }
-    bool operator!=(const iterator& rhs) const { return !(*this == rhs); }
+    bool operator!=(const iterator &rhs) const { return !(*this == rhs); }
 
     value_type operator*() const {
       if (!m_message_instance) {
         auto it = m_iters.back();
-        m_message_instance.emplace(MessageInstance{*it.range->connection_info, *it.iter,
-                                                   *it.range->bag, *it.range->reader});
+        m_message_instance.emplace(MessageInstance{*it.range->connection_info,
+                                                   *it.iter, *it.range->bag,
+                                                   *it.range->reader});
       }
       return *m_message_instance;
     }
     const_pointer operator->() const {
       if (!m_message_instance) {
         auto it = m_iters.back();
-        m_message_instance.emplace(MessageInstance{*it.range->connection_info, *it.iter,
-                                                   *it.range->bag, *it.range->reader});
+        m_message_instance.emplace(MessageInstance{*it.range->connection_info,
+                                                   *it.iter, *it.range->bag,
+                                                   *it.range->reader});
       }
       return &(*m_message_instance);
     }
 
-   protected:
-    const View* m_view;
+  protected:
+    const View *m_view;
     std::vector<ViewIterHelper> m_iters;
 
     mutable boost::optional<MessageInstance> m_message_instance;
   };
 
-
-  explicit View(AzBag& bag,
-                rosbaz::io::IReader& reader,
+  explicit View(AzBag &bag, rosbaz::io::IReader &reader,
                 ros::Time start_time = ros::TIME_MIN,
                 ros::Time end_time = ros::TIME_MAX);
 
-  explicit View(AzBag& bag,
-                rosbaz::io::IReader& reader,
-                std::function<bool(rosbag::ConnectionInfo const*)> query,
-                ros::Time const& start_time = ros::TIME_MIN,
-                ros::Time const& end_time = ros::TIME_MAX);
+  explicit View(AzBag &bag, rosbaz::io::IReader &reader,
+                std::function<bool(rosbag::ConnectionInfo const *)> query,
+                ros::Time const &start_time = ros::TIME_MIN,
+                ros::Time const &end_time = ros::TIME_MAX);
 
   size_t size() const;
 
@@ -141,12 +141,12 @@ struct View {
   ros::Time getBeginTime();
   ros::Time getEndTime();
 
-  std::vector<const rosbag::ConnectionInfo*> getConnections() const;
+  std::vector<const rosbag::ConnectionInfo *> getConnections() const;
 
- private:
+private:
   std::vector<MessageRange> m_ranges;
-  const AzBag* m_bag;
-  rosbaz::io::IReader* m_reader;
+  const AzBag *m_bag;
+  rosbaz::io::IReader *m_reader;
 };
-}  // namespace bag_parsing
-}  // namespace rosbaz
+} // namespace bag_parsing
+} // namespace rosbaz

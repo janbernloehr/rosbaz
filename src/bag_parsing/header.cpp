@@ -7,7 +7,6 @@
 #include "rosbaz/common.h"
 #include "rosbaz/io/io_helpers.h"
 
-
 namespace rosbaz {
 namespace bag_parsing {
 
@@ -16,27 +15,31 @@ Header Header::parse(rosbaz::DataSpan source) {
   std::uint64_t offset = 0;
 
   while (offset < source.size()) {
-    const std::uint32_t field_length = rosbaz::io::read_little_endian<std::uint32_t>(
-        source.subspan(offset, sizeof(std::uint32_t)));
+    const std::uint32_t field_length =
+        rosbaz::io::read_little_endian<std::uint32_t>(
+            source.subspan(offset, sizeof(std::uint32_t)));
     offset += sizeof(std::uint32_t);
 
     const auto field_span = source.subspan(offset, field_length);
 
-    const rosbaz::io::byte* value_pos =
+    const rosbaz::io::byte *value_pos =
         std::find(field_span.begin(), field_span.end(), rosbag::FIELD_DELIM);
     if (value_pos == field_span.end()) {
       throw std::runtime_error("Could not find field separator");
     }
     const size_t name_length = std::distance(field_span.begin(), value_pos);
-    const std::string field_name = rosbaz::io::to_string(field_span.subspan(0, name_length));
+    const std::string field_name =
+        rosbaz::io::to_string(field_span.subspan(0, name_length));
 
     assert(field_length > name_length);
-    const std::uint32_t data_length = field_length - static_cast<uint32_t>(name_length) - 1;
+    const std::uint32_t data_length =
+        field_length - static_cast<uint32_t>(name_length) - 1;
 
-    ROS_DEBUG_STREAM("field: " << field_name << " data length: " << data_length);
+    ROS_DEBUG_STREAM("field: " << field_name
+                               << " data length: " << data_length);
 
-    const auto data =
-        header.fields.insert({field_name, field_span.subspan(name_length + 1, data_length)});
+    const auto data = header.fields.insert(
+        {field_name, field_span.subspan(name_length + 1, data_length)});
     offset += field_length;
 
     if (field_name == rosbag::OP_FIELD_NAME) {
@@ -46,5 +49,5 @@ Header Header::parse(rosbaz::DataSpan source) {
 
   return header;
 }
-}  // namespace bag_parsing
-}  // namespace rosbaz
+} // namespace bag_parsing
+} // namespace rosbaz

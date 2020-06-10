@@ -12,6 +12,6 @@ struct AzBlobUrl {
   std::string blob_name{};
   std::string sas_token{};
 
-  static AzBlobUrl parse(const std::string& url);
+  static AzBlobUrl parse(const std::string &url);
 };
-}  // namespace rosbaz
+} // namespace rosbaz

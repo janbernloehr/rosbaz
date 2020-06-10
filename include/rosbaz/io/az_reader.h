@@ -19,10 +19,10 @@ struct CacheEntry {
 };
 
 class AzReader : public IReader {
- public:
-  explicit AzReader(const AzBlobUrl& blob_url,
-                    const std::string& account_key = "",
-                    const std::string& token = "");
+public:
+  explicit AzReader(const AzBlobUrl &blob_url,
+                    const std::string &account_key = "",
+                    const std::string &token = "");
 
   size_t size() override;
 
@@ -31,8 +31,9 @@ class AzReader : public IReader {
   std::int32_t num_requests() const { return m_num_requests; }
   std::int64_t num_bytes() const { return m_num_bytes; }
 
- private:
-  void read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t count) override;
+private:
+  void read_fixed(rosbaz::io::byte *buffer, size_t offset,
+                  size_t count) override;
 
   std::string m_container{};
   std::string m_blob{};
@@ -46,5 +47,5 @@ class AzReader : public IReader {
   std::vector<CacheEntry> m_cache;
 };
 
-}  // namespace io
-}  // namespace rosbaz
+} // namespace io
+} // namespace rosbaz

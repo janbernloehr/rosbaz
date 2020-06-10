@@ -6,7 +6,8 @@
 
 namespace rosbaz {
 namespace bag_parsing {
-  /// Represents a record of the rosbag format - see http://wiki.ros.org/Bags/Format/2.0
+/// Represents a record of the rosbag format - see
+/// http://wiki.ros.org/Bags/Format/2.0
 struct Record {
   std::uint32_t header_length;
   rosbaz::DataSpan header;
@@ -20,5 +21,5 @@ struct Record {
 
   static Record parse(rosbaz::DataSpan source);
 };
-}  // namespace bag_parsing
-}  // namespace rosbaz
+} // namespace bag_parsing
+} // namespace rosbaz

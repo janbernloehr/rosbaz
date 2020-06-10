@@ -5,36 +5,36 @@
 #include "rosbaz/io/io_helpers.h"
 
 namespace {
-std::shared_ptr<azure::storage_lite::storage_credential> create_credential(
-    const rosbaz::AzBlobUrl& blob_url,
-    const std::string& account_key = "",
-    const std::string& token = "") {
+std::shared_ptr<azure::storage_lite::storage_credential>
+create_credential(const rosbaz::AzBlobUrl &blob_url,
+                  const std::string &account_key = "",
+                  const std::string &token = "") {
   std::shared_ptr<azure::storage_lite::storage_credential> credential;
 
   if (!token.empty()) {
     credential = std::make_shared<azure::storage_lite::token_credential>(token);
   } else if (!blob_url.sas_token.empty()) {
-    credential = std::make_shared<azure::storage_lite::shared_access_signature_credential>(
+    credential = std::make_shared<
+        azure::storage_lite::shared_access_signature_credential>(
         blob_url.sas_token);
   } else if (!account_key.empty()) {
-    credential = std::make_shared<azure::storage_lite::shared_key_credential>(blob_url.account_name,
-                                                                              account_key);
+    credential = std::make_shared<azure::storage_lite::shared_key_credential>(
+        blob_url.account_name, account_key);
   } else {
-    throw std::runtime_error(
-        "You must provide either a bearer token, a sas token, or an account key.");
+    throw std::runtime_error("You must provide either a bearer token, a sas "
+                             "token, or an account key.");
   }
 
   return credential;
 }
-}  // namespace
+} // namespace
 
 namespace rosbaz {
 
 namespace io {
 
-AzReader::AzReader(const AzBlobUrl& blob_url,
-                   const std::string& account_key,
-                   const std::string& token)
+AzReader::AzReader(const AzBlobUrl &blob_url, const std::string &account_key,
+                   const std::string &token)
     : m_container(blob_url.container_name), m_blob(blob_url.blob_name) {
   bool use_https = blob_url.schema == "https";
   int connection_count = 2;
@@ -44,7 +44,8 @@ AzReader::AzReader(const AzBlobUrl& blob_url,
   // Setup the client
   auto account = std::make_shared<azure::storage_lite::storage_account>(
       blob_url.account_name, credential, use_https, blob_url.blob_endpoint);
-  m_client = std::make_shared<azure::storage_lite::blob_client>(account, connection_count);
+  m_client = std::make_shared<azure::storage_lite::blob_client>(
+      account, connection_count);
 }
 
 size_t AzReader::size() {
@@ -52,8 +53,8 @@ size_t AzReader::size() {
 
   if (!ret.success()) {
     std::stringstream msg;
-    msg << "Failed to fetch container properties, Error: " << ret.error().code << ", "
-        << ret.error().code_name << std::endl;
+    msg << "Failed to fetch container properties, Error: " << ret.error().code
+        << ", " << ret.error().code_name << std::endl;
     throw std::runtime_error(msg.str());
   }
 
@@ -62,10 +63,12 @@ size_t AzReader::size() {
   return ret.response().size;
 }
 
-void AzReader::read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t count) {
-  auto cache_found =
-      std::find_if(m_cache.begin(), m_cache.end(), [offset, count](const CacheEntry& entry) {
-        return ((entry.offset <= offset) && (offset + count <= entry.offset + entry.data.size()));
+void AzReader::read_fixed(rosbaz::io::byte *buffer, size_t offset,
+                          size_t count) {
+  auto cache_found = std::find_if(
+      m_cache.begin(), m_cache.end(), [offset, count](const CacheEntry &entry) {
+        return ((entry.offset <= offset) &&
+                (offset + count <= entry.offset + entry.data.size()));
       });
 
   if (cache_found == m_cache.end()) {
@@ -75,14 +78,15 @@ void AzReader::read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t count)
     entry.data.resize(cache_size);
 
     auto ret = m_client
-                   ->download_blob_to_buffer(m_container, m_blob, offset, cache_size,
-                                             reinterpret_cast<char*>(&(*entry.data.begin())), 2)
+                   ->download_blob_to_buffer(
+                       m_container, m_blob, offset, cache_size,
+                       reinterpret_cast<char *>(&(*entry.data.begin())), 2)
                    .get();
 
     if (!ret.success()) {
       std::stringstream msg;
-      msg << "Failed to download blob, Error: " << ret.error().code << ", " << ret.error().code_name
-          << std::endl;
+      msg << "Failed to download blob, Error: " << ret.error().code << ", "
+          << ret.error().code_name << std::endl;
       throw std::runtime_error(msg.str());
     }
 
@@ -94,8 +98,9 @@ void AzReader::read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t count)
     cache_found = m_cache.end() - 1;
   }
 
-  std::copy_n(cache_found->data.begin() + (offset - cache_found->offset), count, buffer);
+  std::copy_n(cache_found->data.begin() + (offset - cache_found->offset), count,
+              buffer);
 }
 
-}  // namespace io
-}  // namespace rosbaz
+} // namespace io
+} // namespace rosbaz

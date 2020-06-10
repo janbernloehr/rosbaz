@@ -1,13 +1,13 @@
 #include "pausable_context.h"
 
-#include <termios.h>
 #include <chrono>
 #include <csignal>
-#include <thread>
 #include <cstdint>
+#include <termios.h>
+#include <thread>
 
-#include <ros/ros.h>
 #include <ros/console.h>
+#include <ros/ros.h>
 
 namespace {
 
@@ -24,7 +24,7 @@ void resetTerminal(int signal = 0) {
     std::exit(-signal);
   }
 }
-}  // namespace
+} // namespace
 
 namespace terminal {
 
@@ -54,7 +54,8 @@ char PausableContext::readOneChar() const {
   timeval tv;
   tv.tv_sec = 0;
   tv.tv_usec = 0;
-  if (select(maxfd_, &testfd, nullptr, nullptr, &tv) <= 0) return EOF;
+  if (select(maxfd_, &testfd, nullptr, nullptr, &tv) <= 0)
+    return EOF;
 
   return static_cast<char>(getc(stdin));
 }
@@ -80,19 +81,19 @@ void PausableContext::hideUserInputOnTerminal() {
 }
 
 void PausableContext::readKeyboardInput() {
-	std::int8_t ch;
+  std::int8_t ch;
 
   do {
     ch = readOneChar();
 
     switch (ch) {
-      case kSingleStepKey:
-        ++steps_to_perform_;
-        break;
-      case kPauseToggleKey:
-        is_paused_ = !is_paused_;
-        break;
+    case kSingleStepKey:
+      ++steps_to_perform_;
+      break;
+    case kPauseToggleKey:
+      is_paused_ = !is_paused_;
+      break;
     }
   } while (ch != EOF);
 }
-}  // namespace terminal
+} // namespace terminal

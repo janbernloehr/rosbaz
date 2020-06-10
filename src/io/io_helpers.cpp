@@ -17,8 +17,8 @@ size_t size_of_file(std::string file_path) {
   return file.tellg();
 }
 
-void read_from(RosStream& ifs, byte* target, const size_t count) {
-  ifs.read(reinterpret_cast<char*>(target), count);
+void read_from(RosStream &ifs, byte *target, const size_t count) {
+  ifs.read(reinterpret_cast<char *>(target), count);
 
   const auto actual_count = ifs.gcount();
 
@@ -29,12 +29,12 @@ void read_from(RosStream& ifs, byte* target, const size_t count) {
   }
 }
 
-void read_from(RosStream& ifs, std::vector<byte>& target, const size_t count) {
+void read_from(RosStream &ifs, std::vector<byte> &target, const size_t count) {
   target.resize(count);
-  byte* begin = &(*target.begin());
+  byte *begin = &(*target.begin());
   read_from(ifs, begin, count);
 }
 
-}  // namespace io
+} // namespace io
 
-}  // namespace rosbaz
+} // namespace rosbaz

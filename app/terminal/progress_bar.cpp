@@ -1,14 +1,16 @@
 #include "progress_bar.h"
 
-#include <sys/ioctl.h>
-#include <unistd.h>
 #include <cmath>
 #include <iostream>
 #include <sstream>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 namespace {
-int digits(const int i) { return i > 0 ? static_cast<int>(std::log10(i)) + 1 : 1; }
-}  // namespace
+int digits(const int i) {
+  return i > 0 ? static_cast<int>(std::log10(i)) + 1 : 1;
+}
+} // namespace
 
 namespace terminal {
 
@@ -18,16 +20,16 @@ ProgressBar::ProgressBar(int max_steps, int start_step, int stop_step)
       start_step_(start_step < 0 ? max_steps + start_step : start_step),
       stop_step_(stop_step < 0 ? max_steps + 1 + stop_step : stop_step) {}
 
-ProgressBar& ProgressBar::operator++() {
+ProgressBar &ProgressBar::operator++() {
   ++current_step_;
   return *this;
 }
-ProgressBar& ProgressBar::operator+=(int value) {
+ProgressBar &ProgressBar::operator+=(int value) {
   current_step_ += value;
   return *this;
 }
 
-void ProgressBar::display(const std::string& prefix) const {
+void ProgressBar::display(const std::string &prefix) const {
   struct winsize w;
   int window_width;
   if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) != 0) {
@@ -92,4 +94,4 @@ void ProgressBar::display(const std::string& prefix) const {
   std::cout << cmd_line.str() << '\r';
   std::cout << std::flush;
 }
-}  // namespace terminal
+} // namespace terminal

@@ -10,4 +10,4 @@ using byte = uint8_t;
 }
 
 using DataSpan = nonstd::span<const rosbaz::io::byte>;
-}  // namespace rosbaz
+} // namespace rosbaz

@@ -6,7 +6,7 @@
 
 namespace rosbaz {
 
-AzBlobUrl AzBlobUrl::parse(const std::string& url) {
+AzBlobUrl AzBlobUrl::parse(const std::string &url) {
   std::regex url_rgx("^(https*)://(.+?)\\.([^/]+)/([^/]+)/(.+?)(\\?.+)?$");
 
   std::smatch matches;
@@ -29,4 +29,4 @@ AzBlobUrl AzBlobUrl::parse(const std::string& url) {
 
   return result;
 }
-}  // namespace rosbaz
+} // namespace rosbaz
