@@ -12,13 +12,11 @@
 #include <rosbag/exceptions.h>
 #include <rosbag/structures.h>
 
-#include "rosbaz/bag_parsing/bag.h"
+#include "rosbaz/bag.h"
 #include "rosbaz/io/reader.h"
 
 namespace rosbaz {
-namespace bag_parsing {
-
-class AzBag;
+class Bag;
 class View;
 
 struct MessageInstance {
@@ -43,36 +41,35 @@ private:
   friend class View;
 
   MessageInstance(const rosbag::ConnectionInfo &connection_info,
-                  const rosbag::IndexEntry &index, const AzBag &bag,
+                  const rosbag::IndexEntry &index, const Bag &bag,
                   rosbaz::io::IReader &reader);
 
   void getOffsetAndSize(uint64_t &record_offset, uint32_t &record_size) const;
 
   const rosbag::ConnectionInfo *m_connection_info;
   const rosbag::IndexEntry *m_index_entry;
-  const AzBag *m_bag;
+  const Bag *m_bag;
   rosbaz::io::IReader *m_reader;
 };
-} // namespace bag_parsing
 } // namespace rosbaz
 
 namespace ros {
 namespace message_traits {
 
-template <> struct MD5Sum<rosbaz::bag_parsing::MessageInstance> {
-  static const char *value(const rosbaz::bag_parsing::MessageInstance &m) {
+template <> struct MD5Sum<rosbaz::MessageInstance> {
+  static const char *value(const rosbaz::MessageInstance &m) {
     return m.getMD5Sum().c_str();
   }
 };
 
-template <> struct DataType<rosbaz::bag_parsing::MessageInstance> {
-  static const char *value(const rosbaz::bag_parsing::MessageInstance &m) {
+template <> struct DataType<rosbaz::MessageInstance> {
+  static const char *value(const rosbaz::MessageInstance &m) {
     return m.getDataType().c_str();
   }
 };
 
-template <> struct Definition<rosbaz::bag_parsing::MessageInstance> {
-  static const char *value(const rosbaz::bag_parsing::MessageInstance &m) {
+template <> struct Definition<rosbaz::MessageInstance> {
+  static const char *value(const rosbaz::MessageInstance &m) {
     return m.getMessageDefinition().c_str();
   }
 };
@@ -81,15 +78,15 @@ template <> struct Definition<rosbaz::bag_parsing::MessageInstance> {
 
 namespace serialization {
 
-template <> struct Serializer<rosbaz::bag_parsing::MessageInstance> {
+template <> struct Serializer<rosbaz::MessageInstance> {
   template <typename Stream>
   inline static void write(Stream &stream,
-                           const rosbaz::bag_parsing::MessageInstance &m) {
+                           const rosbaz::MessageInstance &m) {
     m.write(stream);
   }
 
   inline static uint32_t
-  serializedLength(const rosbaz::bag_parsing::MessageInstance &m) {
+  serializedLength(const rosbaz::MessageInstance &m) {
     return m.size();
   }
 };
@@ -97,7 +94,6 @@ template <> struct Serializer<rosbaz::bag_parsing::MessageInstance> {
 } // namespace ros
 
 namespace rosbaz {
-namespace bag_parsing {
 
 template <class T> bool MessageInstance::isType() const {
   char const *md5sum = ros::message_traits::MD5Sum<T>::value();
@@ -180,5 +176,4 @@ template <typename Stream> void MessageInstance::write(Stream &stream) const {
   }
 }
 
-} // namespace bag_parsing
 } // namespace rosbaz

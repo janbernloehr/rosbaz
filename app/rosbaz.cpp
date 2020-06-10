@@ -12,8 +12,8 @@
 #include "terminal/pausable_context.h"
 #include "terminal/progress_bar.h"
 
-#include "rosbaz/bag_parsing/bag.h"
-#include "rosbaz/bag_parsing/view.h"
+#include "rosbaz/bag.h"
+#include "rosbaz/view.h"
 #include "rosbaz/blob_url.h"
 #include "rosbaz/io/az_reader.h"
 
@@ -53,7 +53,7 @@ struct PlayOptions {
 
 namespace {
 
-void print_bag(const rosbaz::bag_parsing::AzBag &bag) {
+void print_bag(const rosbaz::Bag &bag) {
   auto start_time = bag.getBeginTime();
   auto end_time = bag.getEndTime();
   auto duration = end_time - start_time;
@@ -135,7 +135,7 @@ void info_command(const CommonOptions &common_options,
 
   rosbaz::io::AzReader az_reader{url, common_options.account_key,
                                  common_options.token};
-  auto az_bag = rosbaz::bag_parsing::AzBag::read(az_reader, false);
+  auto az_bag = rosbaz::Bag::read(az_reader, false);
   print_bag(az_bag);
 
   if (common_options.print_transfer_stats) {
@@ -153,11 +153,11 @@ void play_command(const CommonOptions &common_options,
   auto url = rosbaz::AzBlobUrl::parse(play_options.blob_url);
   rosbaz::io::AzReader az_reader{url, common_options.account_key,
                                  common_options.token};
-  auto az_bag = rosbaz::bag_parsing::AzBag::read(az_reader);
+  auto az_bag = rosbaz::Bag::read(az_reader);
 
   // we first create a full blown view to obtain the time range of the messages
   // and then filter that view
-  rosbaz::bag_parsing::View full_view{az_bag, az_reader};
+  rosbaz::View full_view{az_bag, az_reader};
 
   const auto initial_time =
       full_view.getBeginTime() +
@@ -167,7 +167,7 @@ void play_command(const CommonOptions &common_options,
     finish_time = initial_time + ros::Duration(*play_options.duration);
   }
 
-  rosbaz::bag_parsing::View filtered_view{az_bag, az_reader, initial_time,
+  rosbaz::View filtered_view{az_bag, az_reader, initial_time,
                                           finish_time};
 
   std::unordered_map<std::string, ros::Publisher> publishers;

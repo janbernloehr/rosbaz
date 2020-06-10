@@ -15,18 +15,16 @@ namespace io {
 class IReader;
 }
 
-namespace bag_parsing {
-
 /// Implements a subset of the functionality provided by rosbag::Bag offloading
 /// the actual data reading to an implementation of rosbaz::io::IReader provided
 /// by the user.
-class AzBag {
+class Bag {
 public:
   friend class View;
   friend class MessageInstance;
 
   /// Create a bag instance using the given reader.
-  static AzBag read(rosbaz::io::IReader &reader,
+  static Bag read(rosbaz::io::IReader &reader,
                     bool read_chunk_indices = true);
 
   std::vector<const rosbag::ConnectionInfo *> getConnections() const;
@@ -40,15 +38,15 @@ public:
   ros::Time getEndTime() const;
 
 private:
-  AzBag() = default;
+  Bag() = default;
 
-  void parseFileHeaderRecord(const Record &file_header_record);
+  void parseFileHeaderRecord(const rosbaz::bag_parsing::Record &file_header_record);
 
   void parseFileTail(rosbaz::DataSpan bag_tail);
 
   /// Parses the indexes following a chunk record and populates
   /// connection_indexes_; also sets message_records of the given ChunkExt.
-  void parseIndexSection(ChunkExt &chunk_ext, rosbaz::DataSpan chunk_index,
+  void parseIndexSection(rosbaz::bag_parsing::ChunkExt &chunk_ext, rosbaz::DataSpan chunk_index,
                          const uint64_t index_offset);
 
   /// Fills connection_indexes_ and chunks_.
@@ -70,7 +68,6 @@ private:
 
   std::unordered_map<uint32_t, std::multiset<rosbag::IndexEntry>>
       connection_indexes_;
-  std::vector<ChunkExt> chunks_;
+  std::vector<rosbaz::bag_parsing::ChunkExt> chunks_;
 };
-} // namespace bag_parsing
 } // namespace rosbaz

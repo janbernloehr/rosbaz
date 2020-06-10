@@ -1,13 +1,12 @@
-#include "rosbaz/bag_parsing/message_instance.h"
+#include "rosbaz/message_instance.h"
 
 #include "rosbaz/exceptions.h"
 
 namespace rosbaz {
-namespace bag_parsing {
 
 MessageInstance::MessageInstance(const rosbag::ConnectionInfo &connection_info,
                                  const rosbag::IndexEntry &index,
-                                 const AzBag &bag, rosbaz::io::IReader &reader)
+                                 const Bag &bag, rosbaz::io::IReader &reader)
     : m_connection_info(&connection_info), m_index_entry(&index), m_bag(&bag),
       m_reader(&reader) {}
 
@@ -32,7 +31,7 @@ void MessageInstance::getOffsetAndSize(uint64_t &record_offset,
   assert(m_bag->chunk_indices_parsed_);
 
   auto found_chunk = std::find_if(m_bag->chunks_.begin(), m_bag->chunks_.end(),
-                                  [this](const ChunkExt &chunk_ext) {
+                                  [this](const rosbaz::bag_parsing::ChunkExt &chunk_ext) {
                                     return chunk_ext.chunk_info.pos ==
                                            m_index_entry->chunk_pos;
                                   });
@@ -46,7 +45,7 @@ void MessageInstance::getOffsetAndSize(uint64_t &record_offset,
 
   auto found_size = std::find_if(found_chunk->message_records.begin(),
                                  found_chunk->message_records.end(),
-                                 [this](const MessageRecordInfo &info) {
+                                 [this](const rosbaz::bag_parsing::MessageRecordInfo &info) {
                                    return info.offset == m_index_entry->offset;
                                  });
 
@@ -74,5 +73,4 @@ uint32_t MessageInstance::size() const {
 
   return record_size;
 }
-} // namespace bag_parsing
 } // namespace rosbaz

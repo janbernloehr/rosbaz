@@ -8,11 +8,10 @@
 #include <rosbag/query.h>
 #include <rosbag/structures.h>
 
-#include "rosbaz/bag_parsing/bag.h"
-#include "rosbaz/bag_parsing/message_instance.h"
+#include "rosbaz/bag.h"
+#include "rosbaz/message_instance.h"
 
 namespace rosbaz {
-namespace bag_parsing {
 
 class View;
 
@@ -20,7 +19,7 @@ struct MessageRange {
   std::multiset<rosbag::IndexEntry>::const_iterator begin;
   std::multiset<rosbag::IndexEntry>::const_iterator end;
   const rosbag::ConnectionInfo *connection_info;
-  const AzBag *bag;
+  const Bag *bag;
   rosbaz::io::IReader *reader;
 };
 
@@ -124,11 +123,11 @@ public:
     mutable boost::optional<MessageInstance> m_message_instance;
   };
 
-  explicit View(AzBag &bag, rosbaz::io::IReader &reader,
+  explicit View(Bag &bag, rosbaz::io::IReader &reader,
                 ros::Time start_time = ros::TIME_MIN,
                 ros::Time end_time = ros::TIME_MAX);
 
-  explicit View(AzBag &bag, rosbaz::io::IReader &reader,
+  explicit View(Bag &bag, rosbaz::io::IReader &reader,
                 std::function<bool(rosbag::ConnectionInfo const *)> query,
                 ros::Time const &start_time = ros::TIME_MIN,
                 ros::Time const &end_time = ros::TIME_MAX);
@@ -145,8 +144,7 @@ public:
 
 private:
   std::vector<MessageRange> m_ranges;
-  const AzBag *m_bag;
+  const Bag *m_bag;
   rosbaz::io::IReader *m_reader;
 };
-} // namespace bag_parsing
 } // namespace rosbaz

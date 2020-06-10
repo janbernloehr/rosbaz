@@ -1,4 +1,4 @@
-#include "rosbaz/bag_parsing/bag.h"
+#include "rosbaz/bag.h"
 
 #include <ros/console.h>
 #include <rosbag/constants.h>
@@ -14,10 +14,8 @@
 
 namespace rosbaz {
 
-namespace bag_parsing {
-
-AzBag AzBag::read(rosbaz::io::IReader &reader, bool read_chunk_indices) {
-  AzBag bag;
+Bag Bag::read(rosbaz::io::IReader &reader, bool read_chunk_indices) {
+  Bag bag;
 
   constexpr size_t kVersionHeaderSize = 13;
   constexpr size_t kFileHeaderTotalSize =
@@ -64,8 +62,8 @@ AzBag AzBag::read(rosbaz::io::IReader &reader, bool read_chunk_indices) {
   return bag;
 }
 
-void AzBag::parseFileHeaderRecord(const Record &file_header_record) {
-  Header h = Header::parse(file_header_record.header);
+void Bag::parseFileHeaderRecord(const rosbaz::bag_parsing::Record &file_header_record) {
+  auto h = rosbaz::bag_parsing::Header::parse(file_header_record.header);
 
   if (h.op != rosbag::OP_FILE_HEADER) {
     std::stringstream msg;
@@ -88,33 +86,33 @@ void AzBag::parseFileHeaderRecord(const Record &file_header_record) {
       h.fields[rosbag::INDEX_POS_FIELD_NAME]);
 }
 
-void AzBag::parseFileTail(rosbaz::DataSpan bag_tail) {
+void Bag::parseFileTail(rosbaz::DataSpan bag_tail) {
   std::uint64_t offset = 0;
 
   while (offset < bag_tail.size()) {
-    Record second = Record::parse(bag_tail.subspan(offset));
-    Header header = Header::parse(second.header);
+    auto record = rosbaz::bag_parsing::Record::parse(bag_tail.subspan(offset));
+    auto header = rosbaz::bag_parsing::Header::parse(record.header);
 
     ROS_DEBUG_STREAM("op: " << static_cast<int>(header.op));
 
     switch (header.op) {
     case rosbag::OP_CONNECTION: {
-      rosbag::ConnectionInfo info = as_connection_info(header, second.data);
+      rosbag::ConnectionInfo info = as_connection_info(header, record.data);
       connections_[info.id] = info;
     } break;
     case rosbag::OP_CHUNK_INFO: {
-      chunk_infos_.push_back(as_chunk_info(header, second.data));
+      chunk_infos_.push_back(as_chunk_info(header, record.data));
     } break;
     default:
       ROS_WARN_STREAM("Not implemented op=" << static_cast<int>(header.op));
       break;
     }
 
-    offset += second.total_size();
+    offset += record.total_size();
   }
 }
 
-void AzBag::parseIndexSection(ChunkExt &chunk_ext, rosbaz::DataSpan chunk_index,
+void Bag::parseIndexSection(rosbaz::bag_parsing::ChunkExt &chunk_ext, rosbaz::DataSpan chunk_index,
                               const uint64_t index_offset) {
   // There may be multiple records in the given data span
   uint32_t offset = 0;
@@ -178,16 +176,16 @@ void AzBag::parseIndexSection(ChunkExt &chunk_ext, rosbaz::DataSpan chunk_index,
   auto &record_sizes = chunk_ext.message_records;
 
   for (size_t i = 0; i < offsets.size() - 1; ++i) {
-    record_sizes.emplace_back(MessageRecordInfo{
+    record_sizes.emplace_back(rosbaz::bag_parsing::MessageRecordInfo{
         offsets[i], static_cast<uint32_t>(offsets[i + 1] - offsets[i])});
   }
 
-  record_sizes.emplace_back(MessageRecordInfo{
+  record_sizes.emplace_back(rosbaz::bag_parsing::MessageRecordInfo{
       offsets.back(), static_cast<uint32_t>(index_offset - offsets.back() -
                                             chunk_ext.chunk_info.pos)});
 }
 
-void AzBag::parseChunkIndices(rosbaz::io::IReader &reader) {
+void Bag::parseChunkIndices(rosbaz::io::IReader &reader) {
   // keep the position of the next chunk to determine the size of the index
   // record section.
   std::vector<uint64_t> index_end;
@@ -243,7 +241,7 @@ void AzBag::parseChunkIndices(rosbaz::io::IReader &reader) {
   chunk_indices_parsed_ = true;
 }
 
-std::vector<const rosbag::ConnectionInfo *> AzBag::getConnections() const {
+std::vector<const rosbag::ConnectionInfo *> Bag::getConnections() const {
   std::vector<const rosbag::ConnectionInfo *> result;
 
   for (const auto &connection_info : connections_) {
@@ -253,7 +251,7 @@ std::vector<const rosbag::ConnectionInfo *> AzBag::getConnections() const {
   return result;
 }
 
-std::uint32_t AzBag::getMessageCountForConnectionId(uint32_t id) const {
+std::uint32_t Bag::getMessageCountForConnectionId(uint32_t id) const {
   std::uint32_t count = 0;
 
   for (const auto &chunk_info : chunk_infos_) {
@@ -265,7 +263,7 @@ std::uint32_t AzBag::getMessageCountForConnectionId(uint32_t id) const {
   return count;
 }
 
-ros::Time AzBag::getBeginTime() const {
+ros::Time Bag::getBeginTime() const {
   ros::Time begin = ros::TIME_MAX;
 
   for (const auto &chunk_info : chunk_infos_) {
@@ -277,7 +275,7 @@ ros::Time AzBag::getBeginTime() const {
   return begin;
 }
 
-ros::Time AzBag::getEndTime() const {
+ros::Time Bag::getEndTime() const {
   ros::Time end = ros::TIME_MIN;
 
   for (const auto &chunk_info : chunk_infos_) {
@@ -289,5 +287,4 @@ ros::Time AzBag::getEndTime() const {
   return end;
 }
 
-} // namespace bag_parsing
 } // namespace rosbaz

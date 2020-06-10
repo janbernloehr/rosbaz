@@ -1,10 +1,8 @@
-#include "rosbaz/bag_parsing/view.h"
+#include "rosbaz/view.h"
 
 #include <ros/console.h>
 
 namespace rosbaz {
-
-namespace bag_parsing {
 
 bool ViewIterHelperCompare::operator()(ViewIterHelper const &a,
                                        ViewIterHelper const &b) {
@@ -16,13 +14,13 @@ ViewIterHelper::ViewIterHelper(
     const MessageRange &_range)
     : iter(_iter), range(&_range) {}
 
-View::View(AzBag &bag, rosbaz::io::IReader &reader, ros::Time start_time,
+View::View(Bag &bag, rosbaz::io::IReader &reader, ros::Time start_time,
            ros::Time end_time)
     : View(
           bag, reader, [](rosbag::ConnectionInfo const *) { return true; },
           start_time, end_time) {}
 
-View::View(AzBag &bag, rosbaz::io::IReader &reader,
+View::View(Bag &bag, rosbaz::io::IReader &reader,
            std::function<bool(rosbag::ConnectionInfo const *)> query,
            const ros::Time &start_time, const ros::Time &end_time)
     : m_bag(&bag) {
@@ -111,5 +109,4 @@ std::vector<const rosbag::ConnectionInfo *> View::getConnections() const {
   return m_bag->getConnections();
 }
 
-} // namespace bag_parsing
 } // namespace rosbaz
