@@ -133,13 +133,13 @@ void info_command(const CommonOptions &common_options,
                   const InfoOptions &info_options) {
   auto url = rosbaz::AzBlobUrl::parse(info_options.blob_url);
 
-  rosbaz::io::AzReader az_reader{url, common_options.account_key,
-                                 common_options.token};
+  auto az_reader = std::make_shared<rosbaz::io::AzReader>(
+      url, common_options.account_key, common_options.token);
   auto az_bag = rosbaz::Bag::read(az_reader, false);
   print_bag(az_bag);
 
   if (common_options.print_transfer_stats) {
-    print_transfer_stats(az_reader);
+    print_transfer_stats(*az_reader);
   }
 }
 
@@ -151,13 +151,13 @@ void play_command(const CommonOptions &common_options,
   ros::NodeHandle node_handle{};
 
   auto url = rosbaz::AzBlobUrl::parse(play_options.blob_url);
-  rosbaz::io::AzReader az_reader{url, common_options.account_key,
-                                 common_options.token};
+  auto az_reader = std::make_shared<rosbaz::io::AzReader>(
+      url, common_options.account_key, common_options.token);
   auto az_bag = rosbaz::Bag::read(az_reader);
 
   // we first create a full blown view to obtain the time range of the messages
   // and then filter that view
-  rosbaz::View full_view{az_bag, az_reader};
+  rosbaz::View full_view{az_bag};
 
   const auto initial_time =
       full_view.getBeginTime() +
@@ -167,7 +167,7 @@ void play_command(const CommonOptions &common_options,
     finish_time = initial_time + ros::Duration(*play_options.duration);
   }
 
-  rosbaz::View filtered_view{az_bag, az_reader, initial_time, finish_time};
+  rosbaz::View filtered_view{az_bag, initial_time, finish_time};
 
   std::unordered_map<std::string, ros::Publisher> publishers;
   for (const auto *connection_info : filtered_view.getConnections()) {
@@ -239,7 +239,7 @@ void play_command(const CommonOptions &common_options,
   std::cout << std::endl << "Done." << std::endl;
 
   if (common_options.print_transfer_stats) {
-    print_transfer_stats(az_reader);
+    print_transfer_stats(*az_reader);
   }
 }
 

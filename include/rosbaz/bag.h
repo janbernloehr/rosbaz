@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <unordered_map>
 #include <vector>
 
@@ -24,7 +25,8 @@ public:
   friend class MessageInstance;
 
   /// Create a bag instance using the given reader.
-  static Bag read(rosbaz::io::IReader &reader, bool read_chunk_indices = true);
+  static Bag read(std::shared_ptr<rosbaz::io::IReader> reader,
+                  bool read_chunk_indices = true);
 
   std::vector<const rosbag::ConnectionInfo *> getConnections() const;
 
@@ -37,7 +39,7 @@ public:
   ros::Time getEndTime() const;
 
 private:
-  Bag() = default;
+  Bag(std::shared_ptr<rosbaz::io::IReader> reader);
 
   void
   parseFileHeaderRecord(const rosbaz::bag_parsing::Record &file_header_record);
@@ -52,6 +54,8 @@ private:
 
   /// Fills connection_indexes_ and chunks_.
   void parseChunkIndices(rosbaz::io::IReader &reader);
+
+  std::shared_ptr<rosbaz::io::IReader> reader_;
 
   std::unordered_map<uint32_t, rosbag::ConnectionInfo> connections_;
 

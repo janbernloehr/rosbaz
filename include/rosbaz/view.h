@@ -122,11 +122,10 @@ public:
     mutable boost::optional<MessageInstance> m_message_instance;
   };
 
-  explicit View(Bag &bag, rosbaz::io::IReader &reader,
-                ros::Time start_time = ros::TIME_MIN,
+  explicit View(Bag &bag, ros::Time start_time = ros::TIME_MIN,
                 ros::Time end_time = ros::TIME_MAX);
 
-  explicit View(Bag &bag, rosbaz::io::IReader &reader,
+  explicit View(Bag &bag,
                 std::function<bool(rosbag::ConnectionInfo const *)> query,
                 ros::Time const &start_time = ros::TIME_MIN,
                 ros::Time const &end_time = ros::TIME_MAX);

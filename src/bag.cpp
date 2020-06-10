@@ -14,15 +14,20 @@
 
 namespace rosbaz {
 
-Bag Bag::read(rosbaz::io::IReader &reader, bool read_chunk_indices) {
-  Bag bag;
+Bag::Bag(std::shared_ptr<rosbaz::io::IReader> reader) : reader_(reader) {
+  assert(reader != nullptr);
+}
+
+Bag Bag::read(std::shared_ptr<rosbaz::io::IReader> reader,
+              bool read_chunk_indices) {
+  Bag bag{reader};
 
   constexpr size_t kVersionHeaderSize = 13;
   constexpr size_t kFileHeaderTotalSize =
       2 * sizeof(uint32_t) + rosbag::FILE_HEADER_LENGTH;
 
   const auto version_and_file_header_buffer =
-      reader.read(0, kVersionHeaderSize + kFileHeaderTotalSize);
+      reader->read(0, kVersionHeaderSize + kFileHeaderTotalSize);
   const rosbaz::DataSpan version_and_file_header_span{
       version_and_file_header_buffer};
 
@@ -39,7 +44,7 @@ Bag Bag::read(rosbaz::io::IReader &reader, bool read_chunk_indices) {
       version_and_file_header_span.subspan(kVersionHeaderSize));
 
   bag.parseFileHeaderRecord(file_header_record);
-  bag.file_size_ = reader.size();
+  bag.file_size_ = reader->size();
 
   ROS_DEBUG_STREAM("chunk_count: " << bag.chunk_count_);
   ROS_DEBUG_STREAM("conn_count: " << bag.connection_count_);
@@ -50,11 +55,11 @@ Bag Bag::read(rosbaz::io::IReader &reader, bool read_chunk_indices) {
   std::int32_t reminder_size =
       static_cast<std::int32_t>(bag.file_size_ - bag.index_data_pos_);
 
-  const auto bag_tail = reader.read(bag.index_data_pos_, reminder_size);
+  const auto bag_tail = reader->read(bag.index_data_pos_, reminder_size);
   bag.parseFileTail(bag_tail);
 
   if (read_chunk_indices) {
-    bag.parseChunkIndices(reader);
+    bag.parseChunkIndices(*reader);
 
     ROS_DEBUG_STREAM("Read indices");
   }

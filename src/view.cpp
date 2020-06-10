@@ -14,14 +14,12 @@ ViewIterHelper::ViewIterHelper(
     const MessageRange &_range)
     : iter(_iter), range(&_range) {}
 
-View::View(Bag &bag, rosbaz::io::IReader &reader, ros::Time start_time,
-           ros::Time end_time)
+View::View(Bag &bag, ros::Time start_time, ros::Time end_time)
     : View(
-          bag, reader, [](rosbag::ConnectionInfo const *) { return true; },
-          start_time, end_time) {}
+          bag, [](rosbag::ConnectionInfo const *) { return true; }, start_time,
+          end_time) {}
 
-View::View(Bag &bag, rosbaz::io::IReader &reader,
-           std::function<bool(rosbag::ConnectionInfo const *)> query,
+View::View(Bag &bag, std::function<bool(rosbag::ConnectionInfo const *)> query,
            const ros::Time &start_time, const ros::Time &end_time)
     : m_bag(&bag) {
   assert(bag.chunk_indices_parsed_);
@@ -44,8 +42,8 @@ View::View(Bag &bag, rosbaz::io::IReader &reader,
       auto e = end;
       --e;
 
-      m_ranges.emplace_back(
-          MessageRange{begin, end, &connection_info.second, &bag, &reader});
+      m_ranges.emplace_back(MessageRange{begin, end, &connection_info.second,
+                                         &bag, bag.reader_.get()});
     }
   }
 
