@@ -1,16 +1,16 @@
 #pragma once
 
-#include <cstdint>
-
 #include <ros/console.h>
-
-#include <boost/format.hpp>
-#include <boost/make_shared.hpp>
 #include <ros/message_traits.h>
 #include <ros/serialization.h>
 #include <rosbag/constants.h>
 #include <rosbag/exceptions.h>
 #include <rosbag/structures.h>
+
+#include <boost/format.hpp>
+#include <boost/make_shared.hpp>
+#include <boost/optional.hpp>
+#include <cstdint>
 
 #include "rosbaz/bag.h"
 #include "rosbaz/exceptions.h"
@@ -21,7 +21,7 @@ class Bag;
 class View;
 
 struct MessageInstance {
-public:
+ public:
   const ros::Time &getTime() const;
   const std::string &getTopic() const;
   const std::string &getDataType() const;
@@ -31,17 +31,23 @@ public:
   //! Size of serialized message
   uint32_t size() const;
 
-  template <class T> bool isType() const;
+  template <class T>
+  bool isType() const;
 
-  template <class T> boost::shared_ptr<T> instantiate() const;
+  template <class T>
+  boost::shared_ptr<T> instantiate() const;
 
   template <class T>
   boost::shared_ptr<T> instantiate_subset(uint32_t offset, uint32_t size) const;
 
-  //! Write serialized message contents out to a stream
-  template <typename Stream> void write(Stream &stream) const;
+  std::vector<rosbaz::io::byte> read_subset(uint32_t offset,
+                                            uint32_t size) const;
 
-private:
+  //! Write serialized message contents out to a stream
+  template <typename Stream>
+  void write(Stream &stream) const;
+
+ private:
   friend class View;
 
   MessageInstance(const rosbag::ConnectionInfo &connection_info,
@@ -54,35 +60,42 @@ private:
   const rosbag::IndexEntry *m_index_entry;
   const Bag *m_bag;
   rosbaz::io::IReader *m_reader;
+
+  mutable boost::optional<rosbaz::io::HeaderBufferAndSize>
+      m_header_buffer_and_size;
 };
-} // namespace rosbaz
+}  // namespace rosbaz
 
 namespace ros {
 namespace message_traits {
 
-template <> struct MD5Sum<rosbaz::MessageInstance> {
+template <>
+struct MD5Sum<rosbaz::MessageInstance> {
   static const char *value(const rosbaz::MessageInstance &m) {
     return m.getMD5Sum().c_str();
   }
 };
 
-template <> struct DataType<rosbaz::MessageInstance> {
+template <>
+struct DataType<rosbaz::MessageInstance> {
   static const char *value(const rosbaz::MessageInstance &m) {
     return m.getDataType().c_str();
   }
 };
 
-template <> struct Definition<rosbaz::MessageInstance> {
+template <>
+struct Definition<rosbaz::MessageInstance> {
   static const char *value(const rosbaz::MessageInstance &m) {
     return m.getMessageDefinition().c_str();
   }
 };
 
-} // namespace message_traits
+}  // namespace message_traits
 
 namespace serialization {
 
-template <> struct Serializer<rosbaz::MessageInstance> {
+template <>
+struct Serializer<rosbaz::MessageInstance> {
   template <typename Stream>
   inline static void write(Stream &stream, const rosbaz::MessageInstance &m) {
     m.write(stream);
@@ -92,17 +105,19 @@ template <> struct Serializer<rosbaz::MessageInstance> {
     return m.size();
   }
 };
-} // namespace serialization
-} // namespace ros
+}  // namespace serialization
+}  // namespace ros
 
 namespace rosbaz {
 
-template <class T> bool MessageInstance::isType() const {
+template <class T>
+bool MessageInstance::isType() const {
   char const *md5sum = ros::message_traits::MD5Sum<T>::value();
   return md5sum == std::string("*") || md5sum == getMD5Sum();
 }
 
-template <class T> boost::shared_ptr<T> MessageInstance::instantiate() const {
+template <class T>
+boost::shared_ptr<T> MessageInstance::instantiate() const {
   if (!isType<T>()) {
     return nullptr;
   }
@@ -181,7 +196,8 @@ boost::shared_ptr<T> MessageInstance::instantiate_subset(uint32_t offset,
   ros::serialization::deserialize(s, *ptr);
 }
 
-template <typename Stream> void MessageInstance::write(Stream &stream) const {
+template <typename Stream>
+void MessageInstance::write(Stream &stream) const {
   uint64_t record_offset;
   uint32_t record_size;
 
@@ -198,4 +214,4 @@ template <typename Stream> void MessageInstance::write(Stream &stream) const {
   }
 }
 
-} // namespace rosbaz
+}  // namespace rosbaz
