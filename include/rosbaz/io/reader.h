@@ -15,6 +15,10 @@ struct HeaderBufferAndSize {
   std::vector<rosbaz::io::byte> header_buffer;
   uint32_t header_size;
   uint32_t data_size;
+
+  uint32_t data_offset() const {
+    return sizeof(uint32_t) + header_size + sizeof(uint32_t);
+  }
 };
 
 class IReader {

@@ -13,6 +13,7 @@
 #include <rosbag/structures.h>
 
 #include "rosbaz/bag.h"
+#include "rosbaz/exceptions.h"
 #include "rosbaz/io/reader.h"
 
 namespace rosbaz {
@@ -33,6 +34,9 @@ public:
   template <class T> bool isType() const;
 
   template <class T> boost::shared_ptr<T> instantiate() const;
+
+  template <class T>
+  boost::shared_ptr<T> instantiate_subset(uint32_t offset, uint32_t size) const;
 
   //! Write serialized message contents out to a stream
   template <typename Stream> void write(Stream &stream) const;
@@ -114,47 +118,67 @@ template <class T> boost::shared_ptr<T> MessageInstance::instantiate() const {
   const auto record = rosbaz::bag_parsing::Record::parse(buffer_span);
   const auto header = rosbaz::bag_parsing::Header::parse(record.header);
 
-  switch (header.op) {
-  case rosbag::OP_CONNECTION:
-    ROS_WARN(" -> Connection");
-    break;
-
-  case rosbag::OP_MSG_DATA: {
-    ROS_DEBUG(" -> Msg data");
-
-    const uint32_t connection_id = rosbaz::io::read_little_endian<uint32_t>(
-        header.fields.at(rosbag::CONNECTION_FIELD_NAME));
-
-    const auto found_connection = m_bag->connections_.find(connection_id);
-    if (found_connection == m_bag->connections_.end()) {
-      throw rosbag::BagFormatException(
-          (boost::format("Unknown connection ID: %1%") % connection_id).str());
-    }
-    auto ptr = boost::make_shared<T>();
-
-    ros::serialization::PreDeserializeParams<T> predes_params;
-    predes_params.message = ptr;
-    predes_params.connection_header = found_connection->second.header;
-    ros::serialization::PreDeserialize<T>::notify(predes_params);
-
-    ros::serialization::IStream s(
-        const_cast<uint8_t *>(&(*record.data.begin())),
-        static_cast<uint32_t>(record.data.size()));
-    ros::serialization::deserialize(s, *ptr);
-
-    return ptr;
-  } break;
-
-  case rosbag::OP_INDEX_DATA:
-    ROS_WARN("Index data");
-    break;
-
-  default:
-    ROS_WARN_STREAM("Unkown op " << static_cast<int>(header.op));
-    break;
+  if (header.op != rosbag::OP_MSG_DATA) {
+    std::stringstream msg;
+    msg << "Encountered op=" << static_cast<int>(header.op)
+        << " while deserializing message instead of "
+        << static_cast<int>(rosbag::OP_MSG_DATA);
+    throw rosbaz::RosBagFormatException(msg.str());
   }
 
-  return nullptr;
+  const uint32_t connection_id = rosbaz::io::read_little_endian<uint32_t>(
+      header.fields.at(rosbag::CONNECTION_FIELD_NAME));
+
+  const auto found_connection = m_bag->connections_.find(connection_id);
+  if (found_connection == m_bag->connections_.end()) {
+    throw rosbag::BagFormatException(
+        (boost::format("Unknown connection ID: %1%") % connection_id).str());
+  }
+  auto ptr = boost::make_shared<T>();
+
+  ros::serialization::PreDeserializeParams<T> predes_params;
+  predes_params.message = ptr;
+  predes_params.connection_header = found_connection->second.header;
+  ros::serialization::PreDeserialize<T>::notify(predes_params);
+
+  ros::serialization::IStream s(const_cast<uint8_t *>(&(*record.data.begin())),
+                                static_cast<uint32_t>(record.data.size()));
+  ros::serialization::deserialize(s, *ptr);
+
+  return ptr;
+}
+
+template <class T>
+boost::shared_ptr<T> MessageInstance::instantiate_subset(uint32_t offset,
+                                                         uint32_t size) const {
+  uint64_t record_offset;
+  uint32_t record_size;
+
+  getOffsetAndSize(record_offset, record_size);
+
+  const auto header_buffer_and_size =
+      m_reader->read_header_buffer_and_size(record_offset);
+
+  const auto header =
+      rosbaz::bag_parsing::Header::parse(header_buffer_and_size.header_buffer);
+
+  if (header.op != rosbag::OP_MSG_DATA) {
+    std::stringstream msg;
+    msg << "Encountered op=" << static_cast<int>(header.op)
+        << " while deserializing message instead of "
+        << static_cast<int>(rosbag::OP_MSG_DATA);
+    throw rosbaz::RosBagFormatException(msg.str());
+  }
+
+  const auto subset_buffer = m_reader->read(
+      record_offset + header_buffer_and_size.data_offset() + offset, size);
+
+  auto ptr = boost::make_shared<T>();
+
+  ros::serialization::IStream s(
+      const_cast<uint8_t *>(&(*subset_buffer.begin())),
+      static_cast<uint32_t>(subset_buffer.size()));
+  ros::serialization::deserialize(s, *ptr);
 }
 
 template <typename Stream> void MessageInstance::write(Stream &stream) const {
