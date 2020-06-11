@@ -100,7 +100,7 @@ before_script:
   - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local/azure-storage-cpplite -DBUILD_SHARED_LIBS=ON
   - cmake --build .
   - sudo cmake --build . --target install
-  - echo "/usr/local/azure-storage-cpplite/lib" | sudo tee /etc/ld.so.conf.d/azure-storage-cpplite
+  - echo "/usr/local/azure-storage-cpplite/lib" | sudo tee /etc/ld.so.conf.d/azure-storage-cpplite.conf
   - sudo ldconfig
   # package depdencies: install using rosdep.
   - cd ~/catkin_ws

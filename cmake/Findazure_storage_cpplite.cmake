@@ -29,17 +29,17 @@ pkg_check_modules(uuid REQUIRED IMPORTED_TARGET uuid)
 find_package(OpenSSL REQUIRED)
 find_package(CURL REQUIRED)
 
+set(azure_storage_cpplite_DEPENDENCIES ${CURL_LIBRARIES} PkgConfig::uuid OpenSSL::SSL OpenSSL::Crypto)
+
 if (NOT TARGET azure_storage_cpplite::azure_storage_cpplite)
   add_library(azure_storage_cpplite::azure_storage_cpplite STATIC IMPORTED GLOBAL)
-  target_include_directories(azure_storage_cpplite::azure_storage_cpplite INTERFACE ${azure_storage_cpplite_INCLUDE_DIR})
-  set_property(TARGET azure_storage_cpplite::azure_storage_cpplite
-    PROPERTY
-      IMPORTED_LOCATION "${azure_storage_cpplite_LIBRARY}")
-  target_link_libraries(azure_storage_cpplite::azure_storage_cpplite INTERFACE ${CURL_LIBRARIES} PkgConfig::uuid OpenSSL::SSL OpenSSL::Crypto)
-
-  get_filename_component(azure_storage_cpplite_LIBRARY_PATH "${azure_storage_cpplite_LIBRARY}" DIRECTORY)
-  list(APPEND CMAKE_INSTALL_RPATH "${azure_storage_cpplite_LIBRARY_PATH}")
+  set_target_properties(azure_storage_cpplite::azure_storage_cpplite
+    PROPERTIES
+      IMPORTED_LOCATION "${azure_storage_cpplite_LIBRARY}"
+      INTERFACE_INCLUDE_DIRECTORIES "${azure_storage_cpplite_INCLUDE_DIR}"
+      INTERFACE_LINK_LIBRARIES "${azure_storage_cpplite_DEPENDENCIES}"
+  )
 endif()
 
-set(azure_storage_cpplite_LIBRARIES ${azure_storage_cpplite_LIBRARY} ${CURL_LIBRARIES} PkgConfig::uuid OpenSSL::SSL OpenSSL::Crypto)
+set(azure_storage_cpplite_LIBRARIES ${azure_storage_cpplite_LIBRARY} ${azure_storage_cpplite_DEPENDENCIES})
 set(azure_storage_cpplite_INCLUDE_DIRS ${azure_storage_cpplite_INCLUDE_DIR})
