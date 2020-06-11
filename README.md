@@ -22,6 +22,27 @@ rosbaz play --paused https://contosoaccount.blob.core.windows.net/contosocontain
 
 Note that only those topics with connected subscribers will actually be downloaded from azure.
 
+We tried to keep the API as close to the rosbag api as possible.
+
+```c++
+#include <rosbaz/bag.h>
+#include <rosbaz/view.h>
+#include <std_msgs/Int32.h>
+
+auto url = rosbaz::AzBlobUrl::parse("https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag?SAS_TOKEN");
+auto az_reader = std::make_shared<rosbaz::io::AzReader>(url);
+
+auto bag = rosbaz::Bag::read(az_reader);
+
+for(const auto m : rosbag::View(bag))
+{
+  std_msgs::Int32::ConstPtr i = m.instantiate<std_msgs::Int32>();
+  if (i != nullptr) {
+    std::cout << i->data << std::endl;
+  }
+}
+```
+
 ### Authentication
 
 The following modes are supported
