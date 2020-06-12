@@ -1,5 +1,7 @@
 # rosbaz
 
+[![Build Status](https://travis-ci.org/janbernloehr/rosbaz.svg?branch=master)](https://travis-ci.org/janbernloehr/rosbaz)
+
 ## About
 
 Streaming ros bags from azure blob storage.
