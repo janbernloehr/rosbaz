@@ -1,8 +1,8 @@
 #pragma once
 #include <sys/select.h>
 
-namespace terminal {
-
+namespace terminal
+{
 /// Provides a user interface on the terminal to pause/unpause an operation
 ///
 /// \detail
@@ -15,7 +15,8 @@ namespace terminal {
 /// paused state. Moreover, in paused mode, the user can ask for a finite number
 /// of steps to be executed using the kSingleStepKey. tick() will return true as
 /// many times as this key was pressed.
-class PausableContext {
+class PausableContext
+{
 public:
   static constexpr char kPauseToggleKey = ' ';
   static constexpr char kSingleStepKey = 's';
@@ -44,4 +45,4 @@ private:
   fd_set stdin_fdset_;
   int maxfd_ = -1;
 };
-} // namespace terminal
+}  // namespace terminal

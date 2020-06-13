@@ -2,9 +2,10 @@
 
 #include <string>
 
-namespace rosbaz {
-
-struct AzBlobUrl {
+namespace rosbaz
+{
+struct AzBlobUrl
+{
   std::string schema{};
   std::string account_name{};
   std::string blob_endpoint{};
@@ -12,6 +13,6 @@ struct AzBlobUrl {
   std::string blob_name{};
   std::string sas_token{};
 
-  static AzBlobUrl parse(const std::string &url);
+  static AzBlobUrl parse(const std::string& url);
 };
-} // namespace rosbaz
+}  // namespace rosbaz

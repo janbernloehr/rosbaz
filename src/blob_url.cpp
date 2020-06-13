@@ -5,14 +5,16 @@
 
 #include "rosbaz/exceptions.h"
 
-namespace rosbaz {
-
-AzBlobUrl AzBlobUrl::parse(const std::string &url) {
+namespace rosbaz
+{
+AzBlobUrl AzBlobUrl::parse(const std::string& url)
+{
   std::regex url_rgx("^(https*)://(.+?)\\.([^/]+)/([^/]+)/(.+?)(\\?.+)?$");
 
   std::smatch matches;
 
-  if (!std::regex_search(url, matches, url_rgx)) {
+  if (!std::regex_search(url, matches, url_rgx))
+  {
     std::stringstream msg;
     msg << "Given url '" << url
         << "' is not of required form "
@@ -29,10 +31,11 @@ AzBlobUrl AzBlobUrl::parse(const std::string &url) {
   result.blob_endpoint = endpoint.str();
   result.container_name = matches[4].str();
   result.blob_name = matches[5].str();
-  if (matches.size() == 7) {
+  if (matches.size() == 7)
+  {
     result.sas_token = matches[6].str();
   }
 
   return result;
 }
-} // namespace rosbaz
+}  // namespace rosbaz

@@ -3,9 +3,9 @@
 
 #include "rosbaz/blob_url.h"
 
-TEST(AzBlobUrl, can_parse_without_sas) {
-  const std::string url =
-      "https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag";
+TEST(AzBlobUrl, can_parse_without_sas)
+{
+  const std::string url = "https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag";
 
   const auto az_url = rosbaz::AzBlobUrl::parse(url);
 
@@ -17,7 +17,8 @@ TEST(AzBlobUrl, can_parse_without_sas) {
   EXPECT_EQ(az_url.sas_token, "");
 }
 
-TEST(AzBlobUrl, can_parse_with_sas) {
+TEST(AzBlobUrl, can_parse_with_sas)
+{
   const std::string url = "https://contosoaccount.blob.core.windows.net/"
                           "contosocontainer/my.bag?SAS_TOKEN";
 

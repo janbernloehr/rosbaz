@@ -9,39 +9,49 @@
 #include <ros/console.h>
 #include <ros/ros.h>
 
-namespace {
-
+namespace
+{
 termios g_original_termios_flags;
 
-void resetTerminal(int signal = 0) {
+void resetTerminal(int signal = 0)
+{
   const int fd = fileno(stdin);
   tcsetattr(fd, TCSANOW, &g_original_termios_flags);
-  if (ros::ok()) {
+  if (ros::ok())
+  {
     ros::shutdown();
   }
-  if (signal != 0) {
+  if (signal != 0)
+  {
     ROS_WARN_STREAM("Process stopped with signal " << signal);
     std::exit(-signal);
   }
 }
-} // namespace
+}  // namespace
 
-namespace terminal {
-
-PausableContext::PausableContext(bool is_paused) : is_paused_(is_paused) {
+namespace terminal
+{
+PausableContext::PausableContext(bool is_paused) : is_paused_(is_paused)
+{
   hideUserInputOnTerminal();
 }
 
-PausableContext::~PausableContext() { resetTerminal(); }
+PausableContext::~PausableContext()
+{
+  resetTerminal();
+}
 
-bool PausableContext::tick() {
+bool PausableContext::tick()
+{
   readKeyboardInput();
 
-  if (!is_paused_) {
+  if (!is_paused_)
+  {
     return true;
   }
 
-  if (steps_to_perform_ > 0) {
+  if (steps_to_perform_ > 0)
+  {
     --steps_to_perform_;
     return true;
   }
@@ -49,7 +59,8 @@ bool PausableContext::tick() {
   return false;
 }
 
-char PausableContext::readOneChar() const {
+char PausableContext::readOneChar() const
+{
   fd_set testfd = stdin_fdset_;
   timeval tv;
   tv.tv_sec = 0;
@@ -60,7 +71,8 @@ char PausableContext::readOneChar() const {
   return static_cast<char>(getc(stdin));
 }
 
-void PausableContext::hideUserInputOnTerminal() {
+void PausableContext::hideUserInputOnTerminal()
+{
   const int fd = fileno(stdin);
   termios flags;
   tcgetattr(fd, &flags);
@@ -80,20 +92,23 @@ void PausableContext::hideUserInputOnTerminal() {
   std::signal(SIGSEGV, resetTerminal);
 }
 
-void PausableContext::readKeyboardInput() {
+void PausableContext::readKeyboardInput()
+{
   std::int8_t ch;
 
-  do {
+  do
+  {
     ch = readOneChar();
 
-    switch (ch) {
-    case kSingleStepKey:
-      ++steps_to_perform_;
-      break;
-    case kPauseToggleKey:
-      is_paused_ = !is_paused_;
-      break;
+    switch (ch)
+    {
+      case kSingleStepKey:
+        ++steps_to_perform_;
+        break;
+      case kPauseToggleKey:
+        is_paused_ = !is_paused_;
+        break;
     }
   } while (ch != EOF);
 }
-} // namespace terminal
+}  // namespace terminal
