@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 #include <vector>
 
@@ -53,12 +54,23 @@ private:
 
   void parseFileTail(rosbaz::DataSpan bag_tail);
 
-  /// Parses the indexes following a chunk record and populates
-  /// connection_indexes_; also sets message_records of the given ChunkExt.
-  void parseIndexSection(rosbaz::bag_parsing::ChunkExt& chunk_ext, rosbaz::DataSpan chunk_index,
+  /// Parses the index records contained in \p chunk_index following a chunk record described by \p chunk_ext. This
+  /// populates \p connection_indexes_ and also sets \p message_records of the given \p chunk_ext.
+  ///
+  /// The implementation has to be thread safe since it may be invoked simultaneously for multiple chunks.
+  void parseIndexSection(std::mutex& sync, rosbaz::bag_parsing::ChunkExt& chunk_ext, rosbaz::DataSpan chunk_index,
                          const uint64_t index_offset);
 
-  /// Fills connection_indexes_ and chunks_.
+  /// Reads the chunk header for the given \p chunk_info, extracts the position of and reads the index sections which
+  /// subsequently is analyzed by \p parseIndexSection.
+  ///
+  /// The implementation has to be thread safe since it may be invoked simultaneously for multiple chunks.
+  void parseChunkInfo(std::mutex& sync, rosbaz::io::IReader& reader, const rosbag::ChunkInfo& chunk_info,
+                      uint64_t next_chunk_pos);
+
+  /// Fills \p connection_indexes_ and \p chunks_.
+  ///
+  /// The implementation may read data for the present chunks simultaneously.
   void parseChunkIndices(rosbaz::io::IReader& reader);
 
   mutable std::shared_ptr<rosbaz::io::IReader> reader_;

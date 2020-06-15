@@ -1,5 +1,7 @@
 #include "rosbaz/bag.h"
 
+#include <future>
+
 #include <ros/console.h>
 #include <rosbag/constants.h>
 #include <rosbag/structures.h>
@@ -120,7 +122,7 @@ void Bag::parseFileTail(rosbaz::DataSpan bag_tail)
   }
 }
 
-void Bag::parseIndexSection(rosbaz::bag_parsing::ChunkExt& chunk_ext, rosbaz::DataSpan chunk_index,
+void Bag::parseIndexSection(std::mutex& sync, rosbaz::bag_parsing::ChunkExt& chunk_ext, rosbaz::DataSpan chunk_index,
                             const uint64_t index_offset)
 {
   // There may be multiple records in the given data span
@@ -156,23 +158,26 @@ void Bag::parseIndexSection(rosbaz::bag_parsing::ChunkExt& chunk_ext, rosbaz::Da
         rosbaz::io::read_little_endian<uint32_t>(index_header.fields.at(rosbag::CONNECTION_FIELD_NAME));
     const uint32_t count = rosbaz::io::read_little_endian<uint32_t>(index_header.fields.at(rosbag::COUNT_FIELD_NAME));
 
-    auto& connection_index = connection_indexes_[connection_id];
-
-    for (uint32_t i = 0; i < count; i++)
     {
-      rosbag::IndexEntry index_entry;
+      std::lock_guard<std::mutex> guard(sync);
+      auto& connection_index = connection_indexes_[connection_id];
 
-      index_entry.time =
-          rosbaz::bag_parsing::unpack_time(rosbaz::io::read_little_endian<uint64_t>(index_record.data, i * 12));
+      for (uint32_t i = 0; i < count; i++)
+      {
+        rosbag::IndexEntry index_entry;
 
-      index_entry.offset = rosbaz::io::read_little_endian<uint32_t>(index_record.data, i * 12 + 8);
-      index_entry.chunk_pos = chunk_ext.chunk_info.pos;
+        index_entry.time =
+            rosbaz::bag_parsing::unpack_time(rosbaz::io::read_little_endian<uint64_t>(index_record.data, i * 12));
 
-      ROS_DEBUG_STREAM("chunk_pos: " << chunk_ext.chunk_info.pos << " conn: " << connection_id
-                                     << " offset: " << index_entry.offset);
+        index_entry.offset = rosbaz::io::read_little_endian<uint32_t>(index_record.data, i * 12 + 8);
+        index_entry.chunk_pos = chunk_ext.chunk_info.pos;
 
-      connection_index.insert(connection_index.end(), index_entry);
-      offsets.push_back(index_entry.offset);
+        ROS_DEBUG_STREAM("chunk_pos: " << chunk_ext.chunk_info.pos << " conn: " << connection_id
+                                       << " offset: " << index_entry.offset);
+
+        connection_index.insert(connection_index.end(), index_entry);
+        offsets.push_back(index_entry.offset);
+      }
     }
 
     offset += index_record.total_size();
@@ -192,8 +197,52 @@ void Bag::parseIndexSection(rosbaz::bag_parsing::ChunkExt& chunk_ext, rosbaz::Da
       offsets.back(), static_cast<uint32_t>(index_offset - offsets.back() - chunk_ext.chunk_info.pos) });
 }
 
+void Bag::parseChunkInfo(std::mutex& sync, rosbaz::io::IReader& reader, const rosbag::ChunkInfo& chunk_info,
+                         const uint64_t next_chunk_pos)
+{
+  const auto chunk_header_buffer_and_size = reader.read_header_buffer_and_size(chunk_info.pos);
+  const auto chunk_header_raw = rosbaz::bag_parsing::Header::parse(chunk_header_buffer_and_size.header_buffer);
+
+  const auto chunk_header = as_chunk_header(chunk_header_raw, chunk_header_buffer_and_size.data_size);
+
+  if (chunk_header.compression != rosbag::COMPRESSION_NONE)
+  {
+    std::stringstream msg;
+    msg << "Unsupported compression '" << chunk_header.compression << "'. Only compression '"
+        << rosbag::COMPRESSION_NONE << "' is supported.";
+    throw rosbaz::UnsupportedRosBagException(msg.str());
+  }
+
+  const uint64_t data_offset =
+      chunk_info.pos + sizeof(uint32_t) + chunk_header_buffer_and_size.header_size + sizeof(uint32_t);
+
+  const uint64_t index_offset = data_offset + chunk_header_buffer_and_size.data_size;
+
+  rosbaz::bag_parsing::ChunkExt* chunk_ext = nullptr;
+
+  {
+    std::lock_guard<std::mutex> guard(sync);
+    chunks_.emplace_back(chunk_info, chunk_header, data_offset, chunk_header_buffer_and_size.data_size, index_offset,
+                         static_cast<uint32_t>(next_chunk_pos - index_offset));
+
+    // this only works since we reserved chunks_ to the correct size so that no reallocation occurs
+    chunk_ext = &chunks_.back();
+  }
+
+  ROS_DEBUG_STREAM("chunk pos: " << chunk_ext->chunk_info.pos << " data pos: " << chunk_ext->data_offset
+                                 << " index pos: " << chunk_ext->index_offset
+                                 << " index size: " << chunk_ext->index_size);
+
+  const auto index_buffer = reader.read(chunk_ext->index_offset, chunk_ext->index_size);
+
+  parseIndexSection(sync, *chunk_ext, index_buffer, index_offset);
+}
+
 void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
 {
+  // We need to make sure that all inserts are in-place and do not need to re-allocate
+  chunks_.reserve(chunk_infos_.size());
+
   // keep the position of the next chunk to determine the size of the index
   // record section.
   std::vector<uint64_t> index_end;
@@ -205,39 +254,18 @@ void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
 
   auto next_chunk_pos = index_end.begin();
 
-  for (const auto& chunk_info : chunk_infos_)
   {
-    const auto chunk_header_buffer_and_size = reader.read_header_buffer_and_size(chunk_info.pos);
-    const auto chunk_header_raw = rosbaz::bag_parsing::Header::parse(chunk_header_buffer_and_size.header_buffer);
+    std::mutex sync;
+    std::vector<std::future<void>> futures;
 
-    const auto chunk_header = as_chunk_header(chunk_header_raw, chunk_header_buffer_and_size.data_size);
-
-    if (chunk_header.compression != rosbag::COMPRESSION_NONE)
+    for (const auto& chunk_info : chunk_infos_)
     {
-      std::stringstream msg;
-      msg << "Unsupported compression '" << chunk_header.compression << "'. Only compression '"
-          << rosbag::COMPRESSION_NONE << "' is supported.";
-      throw rosbaz::UnsupportedRosBagException(msg.str());
+      const int64_t next_chunk_pos_value = *next_chunk_pos;
+      futures.emplace_back(std::async(std::launch::async, [this, &sync, &reader, &chunk_info, next_chunk_pos_value]() {
+        parseChunkInfo(sync, reader, chunk_info, next_chunk_pos_value);
+      }));
+      ++next_chunk_pos;
     }
-
-    const uint64_t data_offset =
-        chunk_info.pos + sizeof(uint32_t) + chunk_header_buffer_and_size.header_size + sizeof(uint32_t);
-
-    const uint64_t index_offset = data_offset + chunk_header_buffer_and_size.data_size;
-
-    chunks_.emplace_back(chunk_info, chunk_header, data_offset, chunk_header_buffer_and_size.data_size, index_offset,
-                         static_cast<uint32_t>(*next_chunk_pos - index_offset));
-    auto& chunk_ext = chunks_.back();
-
-    ROS_DEBUG_STREAM("chunk pos: " << chunk_ext.chunk_info.pos << " data pos: " << chunk_ext.data_offset
-                                   << " index pos: " << chunk_ext.index_offset
-                                   << " index size: " << chunk_ext.index_size);
-
-    const auto index_buffer = reader.read(chunk_ext.index_offset, chunk_ext.index_size);
-
-    parseIndexSection(chunk_ext, index_buffer, index_offset);
-
-    ++next_chunk_pos;
   }
 
   chunk_indices_parsed_ = true;
