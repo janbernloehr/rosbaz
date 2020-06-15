@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.10.2)
 project(rosbaz)
 
+if(POLICY CMP0074)
+  cmake_policy(SET CMP0074 NEW) #3.12.0 `find_package()`` uses ``<PackageName>_ROOT`` variables.
+endif()
+
 set(CMAKE_CXX_STANDARD 11)
 
 find_package(catkin REQUIRED
