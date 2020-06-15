@@ -56,8 +56,8 @@ AzReader::AzReader(const AzBlobUrl& blob_url, const std::string& account_key, co
                    std::unique_ptr<ICacheStrategy> cache_strategy)
   : container_(blob_url.container_name), blob_(blob_url.blob_name), cache_strategy_(std::move(cache_strategy))
 {
-  bool use_https = blob_url.schema == "https";
-  int connection_count = 24;
+  const bool use_https = blob_url.schema == "https";
+  const int connection_count = static_cast<int>(std::thread::hardware_concurrency());
 
   auto credential = create_credential(blob_url, account_key, token);
 
