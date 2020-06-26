@@ -12,6 +12,8 @@ namespace io
 class ICacheStrategy
 {
 public:
+  virtual ~ICacheStrategy() = default;
+
   /// Retrieve a specified range of bytes from the cache.
   ///
   /// \return true if the specified range was found in the cache; otherwise false.
