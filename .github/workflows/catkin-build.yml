@@ -22,4 +22,4 @@ jobs:
       with:
         ros-version: 'melodic'
         workspace: '$GITHUB_WORKSPACE'
-    - run: catkin build -sc -DCMAKE_C_COMPILER=${{ matrix.compiler }} -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
+    - run: catkin build -sc --no-status --no-notify -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
