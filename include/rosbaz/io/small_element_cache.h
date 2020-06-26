@@ -2,18 +2,21 @@
 
 #include <cstdint>
 
+#include <boost/circular_buffer.hpp>
+
+#include "rosbaz/io/cache_entry.h"
 #include "rosbaz/io/cache_strategy.h"
 
 namespace rosbaz
 {
 namespace io
 {
-struct CacheEntry
-{
-  std::vector<byte> data;
-  std::uint64_t offset;
-};
-
+/// Caches the most recent small chunks of a bag file. The reader reads at least \p max_element_size_ bytes even when
+/// fewer are requested. Can significantly reduce the number of reads when indexing a bag and when retrieving small
+/// chunks.
+///
+/// With default parameters, SmallElementCacheStrategy caches up to 10k small chunks of size 1k and hence requires 10M
+/// of memory.
 class SmallElementCacheStrategy : public ICacheStrategy
 {
 public:
@@ -26,9 +29,11 @@ public:
   size_t cache_element_size(size_t count) override;
 
 private:
-  std::vector<CacheEntry> cache_{};
   const size_t max_element_size_;
   const size_t max_elements_;
+
+  boost::circular_buffer<CacheEntry> cache_{ max_elements_ };
 };
+
 }  // namespace io
 }  // namespace rosbaz

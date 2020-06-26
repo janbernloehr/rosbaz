@@ -46,7 +46,8 @@ void SmallElementCacheStrategy::update(std::vector<rosbaz::io::byte> data, size_
   entry.offset = offset;
   entry.data = std::move(data);
 
-  cache_.emplace_back(std::move(entry));
+  cache_.push_back(std::move(entry));
 }
+
 }  // namespace io
 }  // namespace rosbaz
