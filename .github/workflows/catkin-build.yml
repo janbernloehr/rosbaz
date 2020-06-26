@@ -19,6 +19,23 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
+        repository: 'Azure/azure-storage-cpplite.git'
+        ref: 'v0.3.0'
+        path: 'azure-storage-cpplite'
+
+    - run: |
+        set -ex
+        cd azure-storage-cpplite
+        mkdir build.release
+        cd build.release
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local/azure-storage-cpplite -DBUILD_SHARED_LIBS=ON
+        cmake --build .
+        sudo cmake --build . --target install
+        echo "/usr/local/azure-storage-cpplite/lib" | sudo tee /etc/ld.so.conf.d/azure-storage-cpplite.conf
+        sudo ldconfig
+
+    - uses: actions/checkout@v2
+      with:
         path: 'src'
     - uses: janbernloehr/github-setup-catkin@master
       with:
