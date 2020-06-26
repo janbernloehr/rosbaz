@@ -1,6 +1,6 @@
 # rosbaz
 
-[![Build Status](https://travis-ci.org/janbernloehr/rosbaz.svg?branch=master)](https://travis-ci.org/janbernloehr/rosbaz)
+![Catkin CI](https://github.com/janbernloehr/rosbaz/workflows/Catkin%20CI/badge.svg)
 
 ## About
 
