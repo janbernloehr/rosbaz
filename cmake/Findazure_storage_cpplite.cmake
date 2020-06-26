@@ -32,7 +32,7 @@ find_package(CURL REQUIRED)
 set(azure_storage_cpplite_DEPENDENCIES ${CURL_LIBRARIES} PkgConfig::uuid OpenSSL::SSL OpenSSL::Crypto)
 
 if (NOT TARGET azure_storage_cpplite::azure_storage_cpplite)
-  add_library(azure_storage_cpplite::azure_storage_cpplite STATIC IMPORTED GLOBAL)
+  add_library(azure_storage_cpplite::azure_storage_cpplite SHARED IMPORTED GLOBAL)
   set_target_properties(azure_storage_cpplite::azure_storage_cpplite
     PROPERTIES
       IMPORTED_LOCATION "${azure_storage_cpplite_LIBRARY}"
