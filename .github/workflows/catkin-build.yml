@@ -18,7 +18,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - uses: jbernlo/github-setup-catkin@master
+    - uses: janbernloehr/github-setup-catkin@master
       with:
         ros-version: 'melodic'
         workspace: '$GITHUB_WORKSPACE'
