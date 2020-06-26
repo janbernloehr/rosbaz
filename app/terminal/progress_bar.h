@@ -15,7 +15,7 @@ namespace terminal
 class ProgressBar
 {
 public:
-  ProgressBar(int max_steps);
+  explicit ProgressBar(int max_steps);
   ProgressBar(int max_steps, int start_step, int stop_step);
 
   ProgressBar& operator++();

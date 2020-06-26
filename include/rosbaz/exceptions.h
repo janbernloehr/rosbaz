@@ -7,7 +7,7 @@ namespace rosbaz
 class Exception : public std::runtime_error
 {
 public:
-  Exception(const std::string& what) : std::runtime_error(what)
+  explicit Exception(const std::string& what) : std::runtime_error(what)
   {
   }
 };
@@ -15,7 +15,7 @@ public:
 class InvalidUrlException : public Exception
 {
 public:
-  InvalidUrlException(std::string const& msg) : Exception(msg)
+  explicit InvalidUrlException(std::string const& msg) : Exception(msg)
   {
   }
 };
@@ -23,7 +23,7 @@ public:
 class MissingCredentialsException : public Exception
 {
 public:
-  MissingCredentialsException(std::string const& msg) : Exception(msg)
+  explicit MissingCredentialsException(std::string const& msg) : Exception(msg)
   {
   }
 };
@@ -31,7 +31,7 @@ public:
 class IoException : public Exception
 {
 public:
-  IoException(std::string const& msg) : Exception(msg)
+  explicit IoException(std::string const& msg) : Exception(msg)
   {
   }
 };
@@ -39,7 +39,7 @@ public:
 class UnsupportedRosBagException : public Exception
 {
 public:
-  UnsupportedRosBagException(std::string const& msg) : Exception(msg)
+  explicit UnsupportedRosBagException(std::string const& msg) : Exception(msg)
   {
   }
 };
@@ -47,7 +47,7 @@ public:
 class RosBagFormatException : public Exception
 {
 public:
-  RosBagFormatException(std::string const& msg) : Exception(msg)
+  explicit RosBagFormatException(std::string const& msg) : Exception(msg)
   {
   }
 };
@@ -55,7 +55,7 @@ public:
 class InvalidBagIndexException : public Exception
 {
 public:
-  InvalidBagIndexException(std::string const& msg) : Exception(msg)
+  explicit InvalidBagIndexException(std::string const& msg) : Exception(msg)
   {
   }
 };

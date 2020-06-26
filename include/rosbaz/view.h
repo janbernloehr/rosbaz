@@ -17,6 +17,10 @@ class View;
 
 struct MessageRange
 {
+  MessageRange(std::multiset<rosbag::IndexEntry>::const_iterator _begin,
+               std::multiset<rosbag::IndexEntry>::const_iterator _end, const rosbag::ConnectionInfo& _connection_info,
+               const Bag& _bag, rosbaz::io::IReader& _reader);
+
   std::multiset<rosbag::IndexEntry>::const_iterator begin;
   std::multiset<rosbag::IndexEntry>::const_iterator end;
   const rosbag::ConnectionInfo* connection_info;

@@ -23,7 +23,13 @@ public:
 
   /// Creates the PausableContext in the given state and reconfigures the
   /// terminal to hide all user input.
-  PausableContext(bool is_paused);
+  explicit PausableContext(bool is_paused);
+
+  PausableContext(const PausableContext&) = delete;
+  PausableContext(PausableContext&&) = delete;
+
+  PausableContext& operator=(const PausableContext&) = delete;
+  PausableContext& operator=(PausableContext&&) = delete;
 
   /// Restores the terminal to allow user input.
   ~PausableContext();

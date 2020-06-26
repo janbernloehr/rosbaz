@@ -147,7 +147,7 @@ View::View(const Bag& bag, std::function<bool(rosbag::ConnectionInfo const*)> qu
       auto e = end;
       --e;
 
-      m_ranges.emplace_back(MessageRange{ begin, end, &connection_info.second, &bag, bag.reader_.get() });
+      m_ranges.emplace_back(MessageRange{ begin, end, connection_info.second, bag, *bag.reader_ });
     }
   }
 
@@ -222,6 +222,14 @@ ros::Time View::getEndTime()
 std::vector<const rosbag::ConnectionInfo*> View::getConnections() const
 {
   return m_bag->getConnections();
+}
+
+MessageRange::MessageRange(std::multiset<rosbag::IndexEntry>::const_iterator _begin,
+                           std::multiset<rosbag::IndexEntry>::const_iterator _end,
+                           const rosbag::ConnectionInfo& _connection_info, const Bag& _bag,
+                           rosbaz::io::IReader& _reader)
+  : begin(_begin), end(_end), connection_info(&_connection_info), bag(&_bag), reader(&_reader)
+{
 }
 
 }  // namespace rosbaz

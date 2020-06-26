@@ -62,7 +62,7 @@ bool PausableContext::tick()
 char PausableContext::readOneChar() const
 {
   fd_set testfd = stdin_fdset_;
-  timeval tv;
+  timeval tv{};
   tv.tv_sec = 0;
   tv.tv_usec = 0;
   if (select(maxfd_, &testfd, nullptr, nullptr, &tv) <= 0)
@@ -74,7 +74,7 @@ char PausableContext::readOneChar() const
 void PausableContext::hideUserInputOnTerminal()
 {
   const int fd = fileno(stdin);
-  termios flags;
+  termios flags{};
   tcgetattr(fd, &flags);
   g_original_termios_flags = flags;
   flags.c_lflag &= ~(ICANON | ECHO);

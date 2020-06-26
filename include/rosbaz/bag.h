@@ -17,7 +17,7 @@ namespace rosbaz
 namespace io
 {
 class IReader;
-}
+}  // namespace io
 
 /// Implements a subset of the functionality provided by rosbag::Bag offloading
 /// the actual data reading to an implementation of rosbaz::io::IReader provided
@@ -48,7 +48,7 @@ public:
   ros::Time getEndTime() const;
 
 private:
-  Bag(std::shared_ptr<rosbaz::io::IReader> reader);
+  explicit Bag(std::shared_ptr<rosbaz::io::IReader> reader);
 
   void parseFileHeaderRecord(const rosbaz::bag_parsing::Record& file_header_record);
 
