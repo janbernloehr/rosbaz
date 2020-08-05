@@ -13,6 +13,7 @@
 #include "rosbaz/exceptions.h"
 #include "rosbaz/io/io_helpers.h"
 #include "rosbaz/io/reader.h"
+#include "rosbaz/io/thread_pool.h"
 
 namespace rosbaz
 {
@@ -256,16 +257,18 @@ void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
 
   {
     std::mutex sync;
-    std::vector<std::future<void>> futures;
+    std::vector<std::function<void(void)>> work;
 
     for (const auto& chunk_info : chunk_infos_)
     {
       const int64_t next_chunk_pos_value = *next_chunk_pos;
-      futures.emplace_back(std::async(std::launch::async, [this, &sync, &reader, &chunk_info, next_chunk_pos_value]() {
-        parseChunkInfo(sync, reader, chunk_info, next_chunk_pos_value);
-      }));
+      work.emplace_back([this, &sync, &reader, &chunk_info, next_chunk_pos_value]() {
+            parseChunkInfo(sync, reader, chunk_info, next_chunk_pos_value);
+          });
       ++next_chunk_pos;
     }
+
+    io::process_async(sync, work);
   }
 
   chunk_indices_parsed_ = true;
