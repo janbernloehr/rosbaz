@@ -20,12 +20,14 @@ StreamReader::StreamReader(rosbaz::io::RosStream source) : m_source(std::move(so
 
 size_t StreamReader::size()
 {
+  std::lock_guard<std::mutex> lock_guard(m_mutex);
   m_source.seekg(0, rosbaz::io::RosStream::end);
   return m_source.tellg();
 }
 
 void StreamReader::read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t count)
 {
+  std::lock_guard<std::mutex> lock_guard(m_mutex);
   m_source.seekg(offset);
   read_from(m_source, buffer, count);
 }

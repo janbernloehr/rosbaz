@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
+#include <mutex>
 
 #include "rosbaz/io/reader.h"
 
@@ -23,6 +24,7 @@ private:
   void read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t count) override;
 
   rosbaz::io::RosStream m_source;
+  std::mutex m_mutex{};
 };
 
 }  // namespace io
