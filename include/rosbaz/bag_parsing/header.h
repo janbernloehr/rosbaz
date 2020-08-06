@@ -14,8 +14,9 @@ namespace bag_parsing
 /// http://wiki.ros.org/Bags/Format/2.0
 struct Header
 {
-  std::uint8_t op;
-  std::unordered_map<std::string, rosbaz::DataSpan> fields;
+  std::uint8_t op{ 0 };
+  std::unordered_map<std::string, rosbaz::DataSpan> fields{};
+
 
   static Header parse(rosbaz::DataSpan source);
 };

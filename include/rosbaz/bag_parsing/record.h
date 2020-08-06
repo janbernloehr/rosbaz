@@ -12,10 +12,10 @@ namespace bag_parsing
 /// http://wiki.ros.org/Bags/Format/2.0
 struct Record
 {
-  std::uint32_t header_length;
-  rosbaz::DataSpan header;
-  std::uint32_t data_length;
-  rosbaz::DataSpan data;
+  std::uint32_t header_length{ 0 };
+  rosbaz::DataSpan header{};
+  std::uint32_t data_length{ 0 };
+  rosbaz::DataSpan data{};
 
   std::uint32_t total_size() const
   {

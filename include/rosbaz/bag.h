@@ -73,23 +73,23 @@ private:
   /// The implementation may read data for the present chunks simultaneously.
   void parseChunkIndices(rosbaz::io::IReader& reader);
 
-  mutable std::shared_ptr<rosbaz::io::IReader> reader_;
+  mutable std::shared_ptr<rosbaz::io::IReader> reader_{};
 
-  std::unordered_map<uint32_t, rosbag::ConnectionInfo> connections_;
+  std::unordered_map<uint32_t, rosbag::ConnectionInfo> connections_{};
 
-  std::uint32_t chunk_count_;
-  std::uint32_t connection_count_;
+  std::uint32_t chunk_count_{0};
+  std::uint32_t connection_count_{0};
 
-  std::uint64_t file_header_pos_;
-  std::uint64_t index_data_pos_;
+  std::uint64_t file_header_pos_{0};
+  std::uint64_t index_data_pos_{0};
 
-  std::uint64_t file_size_;
+  std::uint64_t file_size_{0};
 
-  std::vector<rosbag::ChunkInfo> chunk_infos_;
+  std::vector<rosbag::ChunkInfo> chunk_infos_{};
 
   bool chunk_indices_parsed_ = false;
 
-  std::unordered_map<uint32_t, std::multiset<rosbag::IndexEntry>> connection_indexes_;
-  std::vector<rosbaz::bag_parsing::ChunkExt> chunks_;
+  std::unordered_map<uint32_t, std::multiset<rosbag::IndexEntry>> connection_indexes_{};
+  std::vector<rosbaz::bag_parsing::ChunkExt> chunks_{};
 };
 }  // namespace rosbaz

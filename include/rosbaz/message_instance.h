@@ -56,12 +56,12 @@ private:
 
   void getOffsetAndSize(uint64_t& record_offset, uint32_t& record_size) const;
 
-  const rosbag::ConnectionInfo* m_connection_info;
-  const rosbag::IndexEntry* m_index_entry;
-  const Bag* m_bag;
-  rosbaz::io::IReader* m_reader;
+  const rosbag::ConnectionInfo* m_connection_info{ nullptr };
+  const rosbag::IndexEntry* m_index_entry{ nullptr };
+  const Bag* m_bag{ nullptr };
+  rosbaz::io::IReader* m_reader{ nullptr };
 
-  mutable boost::optional<rosbaz::io::HeaderBufferAndSize> m_header_buffer_and_size;
+  mutable boost::optional<rosbaz::io::HeaderBufferAndSize> m_header_buffer_and_size{};
 };
 }  // namespace rosbaz
 
@@ -153,8 +153,7 @@ boost::shared_ptr<T> MessageInstance::instantiate() const
     throw rosbaz::RosBagFormatException(msg.str());
   }
 
-  const uint32_t connection_id =
-      rosbaz::io::read_little_endian<uint32_t>(header.fields.at(rosbag::CONNECTION_FIELD_NAME));
+  const uint32_t connection_id = header.read_field_little_endian<uint32_t>(rosbag::CONNECTION_FIELD_NAME);
 
   const auto found_connection = m_bag->connections_.find(connection_id);
   if (found_connection == m_bag->connections_.end())

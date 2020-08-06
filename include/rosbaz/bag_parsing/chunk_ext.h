@@ -31,14 +31,14 @@ struct ChunkExt
   }
 
   const rosbag::ChunkInfo& chunk_info;
-  rosbag::ChunkHeader chunk_header;
-  std::uint64_t data_offset;  // absolute
-  std::uint32_t data_size;
+  rosbag::ChunkHeader chunk_header{};
+  std::uint64_t data_offset{ 0 };  // absolute
+  std::uint32_t data_size{ 0 };
 
-  std::uint64_t index_offset;  // absolute
-  std::uint32_t index_size;
+  std::uint64_t index_offset{ 0 };  // absolute
+  std::uint32_t index_size{ 0 };
 
-  std::vector<MessageRecordInfo> message_records;
+  std::vector<MessageRecordInfo> message_records{};
 };
 }  // namespace bag_parsing
 }  // namespace rosbaz

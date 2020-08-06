@@ -23,9 +23,9 @@ struct MessageRange
 
   std::multiset<rosbag::IndexEntry>::const_iterator begin;
   std::multiset<rosbag::IndexEntry>::const_iterator end;
-  const rosbag::ConnectionInfo* connection_info;
-  const Bag* bag;
-  rosbaz::io::IReader* reader;
+  const rosbag::ConnectionInfo* connection_info{ nullptr };
+  const Bag* bag{ nullptr };
+  rosbaz::io::IReader* reader{ nullptr };
 };
 
 struct ViewIterHelper
@@ -95,8 +95,8 @@ public:
   std::vector<const rosbag::ConnectionInfo*> getConnections() const;
 
 private:
-  std::vector<MessageRange> m_ranges;
-  const Bag* m_bag;
-  rosbaz::io::IReader* m_reader;
+  std::vector<MessageRange> m_ranges{};
+  const Bag* m_bag{ nullptr };
+  rosbaz::io::IReader* m_reader{ nullptr };
 };
 }  // namespace rosbaz

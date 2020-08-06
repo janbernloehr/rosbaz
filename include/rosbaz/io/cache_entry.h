@@ -11,8 +11,8 @@ namespace io
 {
 struct CacheEntry
 {
-  std::vector<byte> data;
-  std::uint64_t offset;
+  std::vector<byte> data{};
+  std::uint64_t offset{ 0 };
 };
 
 }  // namespace io
