@@ -45,7 +45,7 @@ rosbag::ChunkHeader as_chunk_header(const Header& header, uint32_t compressed_si
   chunk_header.compression = rosbaz::io::to_string(compression_field);
 
   chunk_header.compressed_size = compressed_size;
-  chunk_header.uncompressed_size = rosbaz::io::read_little_endian<uint32_t>(header.fields.at(rosbag::SIZE_FIELD_NAME));
+  chunk_header.uncompressed_size = header.read_field_little_endian<uint32_t>(rosbag::SIZE_FIELD_NAME);
 
   return chunk_header;
 }
@@ -62,8 +62,7 @@ rosbag::ConnectionInfo as_connection_info(const Header& header, rosbaz::DataSpan
 
   rosbag::ConnectionInfo info;
 
-  const auto& conn_field = header.fields.at(rosbag::CONNECTION_FIELD_NAME);
-  info.id = rosbaz::io::read_little_endian<uint32_t>(conn_field);
+  info.id = header.read_field_little_endian<uint32_t>(rosbag::CONNECTION_FIELD_NAME);
 
   const auto& topic_field = header.fields.at(rosbag::TOPIC_FIELD_NAME);
   info.topic = rosbaz::io::to_string(topic_field);
@@ -96,7 +95,7 @@ rosbag::ChunkInfo as_chunk_info(const Header& header, rosbaz::DataSpan data)
 
   rosbag::ChunkInfo info;
 
-  auto ver = rosbaz::io::read_little_endian<uint32_t>(header.fields.at(rosbag::VER_FIELD_NAME));
+  auto ver = header.read_field_little_endian<uint32_t>(rosbag::VER_FIELD_NAME);
 
   if (ver != rosbag::CHUNK_INFO_VERSION)
   {
@@ -105,16 +104,15 @@ rosbag::ChunkInfo as_chunk_info(const Header& header, rosbaz::DataSpan data)
     throw rosbaz::UnsupportedRosBagException(msg.str());
   }
 
-  info.pos = rosbaz::io::read_little_endian<uint64_t>(header.fields.at(rosbag::CHUNK_POS_FIELD_NAME));
+  info.pos = header.read_field_little_endian<uint64_t>(rosbag::CHUNK_POS_FIELD_NAME);
 
-  info.start_time =
-      unpack_time(rosbaz::io::read_little_endian<uint64_t>(header.fields.at(rosbag::START_TIME_FIELD_NAME)));
-  info.end_time = unpack_time(rosbaz::io::read_little_endian<uint64_t>(header.fields.at(rosbag::END_TIME_FIELD_NAME)));
+  info.start_time = unpack_time(header.read_field_little_endian<uint64_t>(rosbag::START_TIME_FIELD_NAME));
+  info.end_time = unpack_time(header.read_field_little_endian<uint64_t>(rosbag::END_TIME_FIELD_NAME));
 
   ROS_DEBUG_STREAM(" pos: " << info.pos << " start: " << info.start_time.toNSec()
                             << " end: " << info.end_time.toNSec());
 
-  auto count = rosbaz::io::read_little_endian<uint32_t>(header.fields.at(rosbag::COUNT_FIELD_NAME));
+  auto count = header.read_field_little_endian<uint32_t>(rosbag::COUNT_FIELD_NAME);
 
   for (int32_t i = 0; i < count; ++i)
   {

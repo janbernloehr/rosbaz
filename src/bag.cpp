@@ -87,9 +87,10 @@ void Bag::parseFileHeaderRecord(const rosbaz::bag_parsing::Record& file_header_r
     throw rosbaz::UnsupportedRosBagException(msg.str());
   }
 
-  chunk_count_ = rosbaz::io::read_little_endian<uint32_t>(h.fields.at(rosbag::CHUNK_COUNT_FIELD_NAME));
-  connection_count_ = rosbaz::io::read_little_endian<uint32_t>(h.fields[rosbag::CONNECTION_COUNT_FIELD_NAME]);
-  index_data_pos_ = rosbaz::io::read_little_endian<uint64_t>(h.fields[rosbag::INDEX_POS_FIELD_NAME]);
+  chunk_count_ = h.read_field_little_endian<uint32_t>(rosbag::CHUNK_COUNT_FIELD_NAME);
+  connection_count_ = h.read_field_little_endian<uint32_t>(rosbag::CONNECTION_COUNT_FIELD_NAME);
+  index_data_pos_ = h.read_field_little_endian<uint64_t>(rosbag::INDEX_POS_FIELD_NAME);
+
 }
 
 void Bag::parseFileTail(rosbaz::DataSpan bag_tail)
@@ -144,8 +145,7 @@ void Bag::parseIndexSection(std::mutex& sync, rosbaz::bag_parsing::ChunkExt& chu
       throw rosbaz::UnsupportedRosBagException(msg.str());
     }
 
-    const uint32_t index_version =
-        rosbaz::io::read_little_endian<uint32_t>(index_header.fields.at(rosbag::VER_FIELD_NAME));
+    const uint32_t index_version = index_header.read_field_little_endian<uint32_t>(rosbag::VER_FIELD_NAME);
 
     if (index_version != rosbag::INDEX_VERSION)
     {
@@ -155,9 +155,8 @@ void Bag::parseIndexSection(std::mutex& sync, rosbaz::bag_parsing::ChunkExt& chu
       throw rosbaz::UnsupportedRosBagException(msg.str());
     }
 
-    const uint32_t connection_id =
-        rosbaz::io::read_little_endian<uint32_t>(index_header.fields.at(rosbag::CONNECTION_FIELD_NAME));
-    const uint32_t count = rosbaz::io::read_little_endian<uint32_t>(index_header.fields.at(rosbag::COUNT_FIELD_NAME));
+    const uint32_t connection_id = index_header.read_field_little_endian<uint32_t>(rosbag::CONNECTION_FIELD_NAME);
+    const uint32_t count = index_header.read_field_little_endian<uint32_t>(rosbag::COUNT_FIELD_NAME);
 
     {
       std::lock_guard<std::mutex> guard(sync);
