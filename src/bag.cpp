@@ -263,8 +263,8 @@ void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
     {
       const int64_t next_chunk_pos_value = *next_chunk_pos;
       work.emplace_back([this, &sync, &reader, &chunk_info, next_chunk_pos_value]() {
-            parseChunkInfo(sync, reader, chunk_info, next_chunk_pos_value);
-          });
+        parseChunkInfo(sync, reader, chunk_info, next_chunk_pos_value);
+      });
       ++next_chunk_pos;
     }
 

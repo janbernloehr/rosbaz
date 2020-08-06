@@ -6,8 +6,7 @@ namespace rosbaz
 {
 namespace io
 {
-void process_async(std::mutex& sync, std::vector<std::function<void(void)>>& work,
-                   std::size_t max_threads)
+void process_async(std::mutex& sync, std::vector<std::function<void(void)>>& work, std::size_t max_threads)
 {
   std::vector<std::future<void>> thread_pool;
   for (size_t i = 0; i < max_threads; ++i)
