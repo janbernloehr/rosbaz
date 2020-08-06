@@ -55,6 +55,14 @@ Bag Bag::read(std::shared_ptr<rosbaz::io::IReader> reader, bool read_chunk_indic
 
   std::int32_t reminder_size = static_cast<std::int32_t>(bag.file_size_ - bag.index_data_pos_);
 
+  if (reminder_size < 0)
+  {
+    std::stringstream msg;
+    msg << "Expected index at " << bag.index_data_pos_ << " but bag is only " << bag.file_size_
+        << " bytes long. Try reindexing.";
+    throw RosBagUnindexedException(msg.str());
+  }
+
   const auto bag_tail = reader->read(bag.index_data_pos_, reminder_size);
   bag.parseFileTail(bag_tail);
 
@@ -91,6 +99,12 @@ void Bag::parseFileHeaderRecord(const rosbaz::bag_parsing::Record& file_header_r
   connection_count_ = h.read_field_little_endian<uint32_t>(rosbag::CONNECTION_COUNT_FIELD_NAME);
   index_data_pos_ = h.read_field_little_endian<uint64_t>(rosbag::INDEX_POS_FIELD_NAME);
 
+  if (index_data_pos_ == 0)
+  {
+    std::stringstream msg;
+    msg << "Index not found in bagfile. Try reindexing.";
+    throw RosBagUnindexedException(msg.str());
+  }
 }
 
 void Bag::parseFileTail(rosbaz::DataSpan bag_tail)
@@ -129,10 +143,11 @@ void Bag::parseIndexSection(std::mutex& sync, rosbaz::bag_parsing::ChunkExt& chu
 {
   // There may be multiple records in the given data span
   uint32_t offset = 0;
+  int idx = 0;
 
   std::vector<uint32_t> offsets;
 
-  while (offset < chunk_index.size())
+  while (idx < chunk_ext.chunk_info.connection_counts.size())
   {
     const auto index_record = rosbaz::bag_parsing::Record::parse(chunk_index.subspan(offset));
     const auto index_header = rosbaz::bag_parsing::Header::parse(index_record.header);
@@ -181,6 +196,7 @@ void Bag::parseIndexSection(std::mutex& sync, rosbaz::bag_parsing::ChunkExt& chu
     }
 
     offset += index_record.total_size();
+    ++idx;
   }
 
   std::sort(offsets.begin(), offsets.end());

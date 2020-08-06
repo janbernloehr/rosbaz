@@ -52,6 +52,14 @@ public:
   }
 };
 
+class RosBagUnindexedException : public Exception
+{
+public:
+  explicit RosBagUnindexedException(std::string const& msg) : Exception(msg)
+  {
+  }
+};
+
 class InvalidBagIndexException : public Exception
 {
 public:

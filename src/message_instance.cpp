@@ -56,7 +56,8 @@ void MessageInstance::getOffsetAndSize(uint64_t& record_offset, uint32_t& record
   if (found_size == found_chunk->message_records.end())
   {
     std::stringstream msg;
-    msg << "Requested message recrod with offset=" << m_index_entry->offset << " could not be found in index.";
+    msg << "Requested message record with offset=" << m_index_entry->offset << " and chunk pos "
+        << m_index_entry->chunk_pos << " could not be found in index.";
     throw rosbaz::InvalidBagIndexException(msg.str());
   }
 
