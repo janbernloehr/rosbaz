@@ -15,6 +15,7 @@
 #include "rosbaz/bag.h"
 #include "rosbaz/blob_url.h"
 #include "rosbaz/io/az_reader.h"
+#include "rosbaz/io/stream_reader.h"
 #include "rosbaz/view.h"
 
 namespace container
@@ -39,12 +40,12 @@ struct CommonOptions
 
 struct InfoOptions
 {
-  std::string blob_url{};
+  std::string file_or_blob_url{};
 };
 
 struct PlayOptions
 {
-  std::string blob_url{};
+  std::string file_or_blob_url{};
 
   boost::optional<float> start_offset{};
   boost::optional<float> duration{};
@@ -56,6 +57,14 @@ struct PlayOptions
 
 namespace
 {
+std::regex is_url_rgx("^(https*)://");
+
+bool is_url(const std::string& path_or_url)
+{
+  std::smatch matches;
+  return std::regex_search(path_or_url, matches, is_url_rgx);
+}
+
 void print_bag(const rosbaz::Bag& bag)
 {
   auto start_time = bag.getBeginTime();
@@ -124,18 +133,34 @@ void print_bag(const rosbaz::Bag& bag)
   }
 }
 
-void print_transfer_stats(const rosbaz::io::AzReader& az_reader)
+void print_transfer_stats(const rosbaz::io::IReader& reader)
 {
-  std::cout << "---\n";
-  std::cout << "requests:          " << az_reader.num_requests() << "\n";
-  std::cout << "bytes transferred: " << az_reader.num_bytes() << "\n";
+  if (auto az_reader = dynamic_cast<const rosbaz::io::AzReader*>(&reader))
+  {
+    std::cout << "---\n";
+    std::cout << "requests:          " << az_reader->num_requests() << "\n";
+    std::cout << "bytes transferred: " << az_reader->num_bytes() << "\n";
+  }
+}
+
+std::shared_ptr<rosbaz::io::IReader> create_reader(const std::string& path_or_url, const std::string& account_key,
+                                                   const std::string& token)
+{
+  if (is_url(path_or_url))
+  {
+    auto url = rosbaz::AzBlobUrl::parse(path_or_url);
+
+    return std::make_shared<rosbaz::io::AzReader>(url, account_key, token);
+  }
+  else
+  {
+    return rosbaz::io::StreamReader::open(path_or_url);
+  }
 }
 
 void info_command(const CommonOptions& common_options, const InfoOptions& info_options)
 {
-  auto url = rosbaz::AzBlobUrl::parse(info_options.blob_url);
-
-  auto az_reader = std::make_shared<rosbaz::io::AzReader>(url, common_options.account_key, common_options.token);
+  auto az_reader = create_reader(info_options.file_or_blob_url, common_options.account_key, common_options.token);
   auto az_bag = rosbaz::Bag::read(az_reader, false);
   print_bag(az_bag);
 
@@ -152,8 +177,7 @@ void play_command(const CommonOptions& common_options, const PlayOptions& play_o
   ros::init(mapping, "rosbaz");
   ros::NodeHandle node_handle{};
 
-  auto url = rosbaz::AzBlobUrl::parse(play_options.blob_url);
-  auto az_reader = std::make_shared<rosbaz::io::AzReader>(url, common_options.account_key, common_options.token);
+  auto az_reader = create_reader(play_options.file_or_blob_url, common_options.account_key, common_options.token);
   auto az_bag = rosbaz::Bag::read(az_reader);
 
   // we first create a full blown view to obtain the time range of the messages
@@ -274,13 +298,17 @@ int main(int argc, char** argv)
 
   CLI::App* info = app.add_subcommand("info", "Summarize the contents of one bag file.")->fallthrough();
 
-  info->add_option("blob_url", info_options.blob_url, "The blob url (may including SAS token)")->required();
+  info->add_option("file_or_blob_url", info_options.file_or_blob_url,
+                   "Either a path to a file or a blob url (may including SAS token)")
+      ->required();
 
   PlayOptions play_options;
   CLI::App* play = app.add_subcommand("play", "Play the contents of one bag file.")->fallthrough();
   app.require_subcommand(1);
 
-  play->add_option("blob_url", play_options.blob_url, "The blob url (may including SAS token)")->required();
+  play->add_option("file_or_blob_url", play_options.file_or_blob_url,
+                   "Either a path to a file or a blob url (may including SAS token)")
+      ->required();
   play->add_option("-s,--start", play_options.start_offset, "start SEC seconds into the bag files");
   play->add_option("-u,--duration", play_options.duration, "play only SEC seconds from the bag files");
   play->add_flag("-l,--loop", play_options.loop, "loop playback");
