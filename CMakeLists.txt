@@ -6,6 +6,35 @@ if(POLICY CMP0074)
 endif()
 
 set(CMAKE_CXX_STANDARD 11)
+set(ROSBAZ_CXX_FLAGS
+  -Wall
+  -Wextra
+  -Wcast-qual
+  -Wconversion-null
+  -Wmissing-declarations
+  -Woverlength-strings
+  -Wpointer-arith
+  -Wunused-local-typedefs
+  -Wunused-result
+  -Wvarargs
+  -Wvla
+  -Wwrite-strings
+  -Wold-style-cast
+  -Wshadow
+  -Wnon-virtual-dtor
+  -Wcast-align
+  -Wunused
+  -Woverloaded-virtual
+  -Wpedantic
+  -Wconversion
+  # Google style does not use unsigned integers though STL containers
+  # have unsigned types.
+  -Wno-sign-compare
+)
+
+add_compile_options(
+  "$<$<COMPILE_LANGUAGE:CXX>:${ROSBAZ_CXX_FLAGS}>"
+)
 
 find_package(catkin REQUIRED
   COMPONENTS
@@ -14,7 +43,6 @@ find_package(catkin REQUIRED
 )
 
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-
 find_package(azure_storage_cpplite REQUIRED)
 
 catkin_package(
@@ -33,6 +61,9 @@ add_library(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME}
   PUBLIC
     include
+)
+target_include_directories(${PROJECT_NAME}
+  SYSTEM PUBLIC
     ${catkin_INCLUDE_DIRS}
 )
 
