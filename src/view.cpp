@@ -2,6 +2,8 @@
 
 #include <ros/console.h>
 
+#include "rosbaz/io/util.h"
+
 namespace rosbaz
 {
 View::iterator::iterator(const iterator& i) : view_(i.view_), iters_(i.iters_), message_instance_{}
@@ -180,7 +182,7 @@ size_t View::size() const
 
   for (const auto& range : m_ranges)
   {
-    size += std::distance(range.begin, range.end);
+    size += rosbaz::io::narrow<size_t>(std::distance(range.begin, range.end));
   }
 
   return size;

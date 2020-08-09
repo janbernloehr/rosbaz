@@ -1,5 +1,6 @@
 #include "progress_bar.h"
 
+#include <cassert>
 #include <cmath>
 #include <iostream>
 #include <sstream>
@@ -24,6 +25,7 @@ ProgressBar::ProgressBar(int max_steps, int start_step, int stop_step)
   , start_step_(start_step < 0 ? max_steps + start_step : start_step)
   , stop_step_(stop_step < 0 ? max_steps + 1 + stop_step : stop_step)
 {
+  assert(max_steps > 0);
 }
 
 ProgressBar& ProgressBar::operator++()
@@ -63,6 +65,8 @@ void ProgressBar::display(const std::string& prefix) const
   cmd_line << current_step_ << " / " << max_steps_;
 
   cmd_line.seekg(0, std::ios::end);
+
+  assert(max_steps_ > 0);
 
   const int remaining_space = static_cast<int>(window_width - cmd_line.tellg());
   const int bar_width = remaining_space - 3;

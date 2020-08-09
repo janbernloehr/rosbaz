@@ -25,7 +25,9 @@ bool SmallElementCacheStrategy::retrieve(rosbaz::io::byte* buffer, size_t offset
     return false;
   }
 
-  std::copy_n(cache_found->data.begin() + (offset - cache_found->offset), count, buffer);
+  assert(offset >= cache_found->offset);
+
+  std::copy_n(cache_found->data.begin() + static_cast<uint64_t>(offset - cache_found->offset), count, buffer);
 
   return true;
 }

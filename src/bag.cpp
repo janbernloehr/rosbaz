@@ -14,6 +14,7 @@
 #include "rosbaz/io/io_helpers.h"
 #include "rosbaz/io/reader.h"
 #include "rosbaz/io/thread_pool.h"
+#include "rosbaz/io/util.h"
 
 namespace rosbaz
 {
@@ -53,15 +54,15 @@ Bag Bag::read(std::shared_ptr<rosbaz::io::IReader> reader, bool read_chunk_indic
 
   ROS_DEBUG_STREAM("Read file header");
 
-  std::int32_t reminder_size = static_cast<std::int32_t>(bag.file_size_ - bag.index_data_pos_);
-
-  if (reminder_size < 0)
+  if (bag.index_data_pos_ > bag.file_size_)
   {
     std::stringstream msg;
     msg << "Expected index at " << bag.index_data_pos_ << " but bag is only " << bag.file_size_
         << " bytes long. Try reindexing.";
     throw RosBagUnindexedException(msg.str());
   }
+
+  const size_t reminder_size = static_cast<size_t>(bag.file_size_ - bag.index_data_pos_);
 
   const auto bag_tail = reader->read(bag.index_data_pos_, reminder_size);
   bag.parseFileTail(bag_tail);
@@ -276,7 +277,7 @@ void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
 
     for (const auto& chunk_info : chunk_infos_)
     {
-      const int64_t next_chunk_pos_value = *next_chunk_pos;
+      const uint64_t next_chunk_pos_value = *next_chunk_pos;
       work.emplace_back([this, &sync, &reader, &chunk_info, next_chunk_pos_value]() {
         parseChunkInfo(sync, reader, chunk_info, next_chunk_pos_value);
       });

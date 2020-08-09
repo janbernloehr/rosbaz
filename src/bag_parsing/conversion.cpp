@@ -114,10 +114,10 @@ rosbag::ChunkInfo as_chunk_info(const Header& header, rosbaz::DataSpan data)
 
   auto count = header.read_field_little_endian<uint32_t>(rosbag::COUNT_FIELD_NAME);
 
-  for (int32_t i = 0; i < count; ++i)
+  for (uint32_t i = 0; i < count; ++i)
   {
-    const auto conn_id = rosbaz::io::read_little_endian<uint32_t>(data.subspan(8 * i, 4));
-    const auto conn_count = rosbaz::io::read_little_endian<uint32_t>(data.subspan(8 * i + 4, 4));
+    const auto conn_id = rosbaz::io::read_little_endian<uint32_t>(data.subspan(8u * i, 4));
+    const auto conn_count = rosbaz::io::read_little_endian<uint32_t>(data.subspan(8u * i + 4u, 4));
 
     info.connection_counts[conn_id] = conn_count;
     ROS_DEBUG_STREAM(" id: " << conn_id << " count: " << conn_count);

@@ -19,7 +19,7 @@
 namespace rosbaz
 {
 class Bag;
-class View;
+struct View;
 
 struct MessageInstance
 {
@@ -49,7 +49,7 @@ public:
   void write(Stream& stream) const;
 
 private:
-  friend class View;
+  friend struct View;
 
   MessageInstance(const rosbag::ConnectionInfo& connection_info, const rosbag::IndexEntry& index, const Bag& bag,
                   rosbaz::io::IReader& reader);
