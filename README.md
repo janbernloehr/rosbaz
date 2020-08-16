@@ -1,7 +1,6 @@
 # rosbaz
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/3338150d8ef54a1d949264825e84686f)](https://app.codacy.com/manual/janbernloehr/rosbaz?utm_source=github.com&utm_medium=referral&utm_content=janbernloehr/rosbaz&utm_campaign=Badge_Grade_Dashboard)
-![Catkin CI](https://github.com/janbernloehr/rosbaz/workflows/Catkin%20CI/badge.svg) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fjanbernloehr%2Frosbaz.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fjanbernloehr%2Frosbaz?ref=badge_shield)
+![Catkin CI](https://github.com/janbernloehr/rosbaz/workflows/Catkin%20CI/badge.svg) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/3338150d8ef54a1d949264825e84686f)](https://app.codacy.com/manual/janbernloehr/rosbaz?utm_source=github.com&utm_medium=referral&utm_content=janbernloehr/rosbaz&utm_campaign=Badge_Grade_Dashboard) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fjanbernloehr%2Frosbaz.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fjanbernloehr%2Frosbaz?ref=badge_shield)
 
 ## About
 
@@ -108,3 +107,7 @@ catkin build rosbaz
 - [azure-storage-cpplite](https://github.com/Azure/azure-storage-cpplite)
 - [CLI11](https://github.com/CLIUtils/CLI11)
 - [span-lite](https://github.com/martinmoene/span-lite)
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fjanbernloehr%2Frosbaz.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fjanbernloehr%2Frosbaz?ref=badge_large)
