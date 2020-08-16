@@ -13,7 +13,7 @@
 
 namespace rosbaz
 {
-class View;
+struct View;
 
 struct MessageRange
 {
@@ -50,7 +50,7 @@ public:
     using const_pointer = const MessageInstance*;
 
   private:
-    friend class View;
+    friend struct View;
 
     iterator(const View& view, bool end = false);
 
@@ -97,6 +97,5 @@ public:
 private:
   std::vector<MessageRange> m_ranges{};
   const Bag* m_bag{ nullptr };
-  rosbaz::io::IReader* m_reader{ nullptr };
 };
 }  // namespace rosbaz

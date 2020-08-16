@@ -6,6 +6,7 @@
 #include "rosbaz/common.h"
 #include "rosbaz/exceptions.h"
 #include "rosbaz/io/io_helpers.h"
+#include "rosbaz/io/util.h"
 
 namespace rosbaz
 {
@@ -31,7 +32,7 @@ Header Header::parse(rosbaz::DataSpan source)
       msg << "Could not find field delimiter '" << rosbag::FIELD_DELIM << "' in field data";
       throw rosbaz::RosBagFormatException(msg.str());
     }
-    const size_t name_length = std::distance(field_span.begin(), value_pos);
+    const size_t name_length = rosbaz::io::narrow<size_t>(std::distance(field_span.begin(), value_pos));
     const std::string field_name = rosbaz::io::to_string(field_span.subspan(0, name_length));
 
     assert(field_length > name_length);

@@ -25,8 +25,8 @@ class IReader;
 class Bag
 {
 public:
-  friend class View;
-  friend class MessageInstance;
+  friend struct View;
+  friend struct MessageInstance;
 
   /// Create a bag instance using the given reader.
   static Bag read(std::shared_ptr<rosbaz::io::IReader> reader, bool read_chunk_indices = true);

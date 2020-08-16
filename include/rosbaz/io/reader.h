@@ -19,7 +19,7 @@ struct HeaderBufferAndSize
 
   uint32_t data_offset() const
   {
-    return sizeof(uint32_t) + header_size + sizeof(uint32_t);
+    return static_cast<uint32_t>(sizeof(uint32_t)) + header_size + static_cast<uint32_t>(sizeof(uint32_t));
   }
 };
 
