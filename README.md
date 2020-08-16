@@ -1,6 +1,6 @@
 # rosbaz
 
-![Catkin CI](https://github.com/janbernloehr/rosbaz/workflows/Catkin%20CI/badge.svg) [![Coverity Scan Build Status](https://scan.coverity.com/projects/21585/badge.svg)](https://scan.coverity.com/projects/janbernloehr-rosbaz)
+![Catkin CI](https://github.com/janbernloehr/rosbaz/workflows/Catkin%20CI/badge.svg) [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fjanbernloehr%2Frosbaz.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fjanbernloehr%2Frosbaz?ref=badge_shield)
 
 ## About
 
