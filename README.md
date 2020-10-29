@@ -29,18 +29,18 @@ Note that only those topics with connected subscribers will actually be download
 We tried to keep the API as close to the rosbag api as possible.
 
 ```c++
-#include 
-#include 
-#include 
+#include <rosbaz/bag.h>
+#include <rosbaz/view.h>
+#include <std_msgs/Int32.h>
 
 auto url = rosbaz::AzBlobUrl::parse("https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag?SAS_TOKEN");
-auto az_reader = std::make_shared(url);
+auto az_reader = std::make_shared<rosbaz::io::AzReader>(url);
 
 auto bag = rosbaz::Bag::read(az_reader);
 
 for(const auto m : rosbag::View(bag))
 {
-  std_msgs::Int32::ConstPtr i = m.instantiate();
+  std_msgs::Int32::ConstPtr i = m.instantiate<std_msgs::Int32>();
   if (i != nullptr) {
     std::cout << i->data << std::endl;
   }
@@ -101,7 +101,7 @@ echo "export LD_LIBRARY_PATH=/usr/local/azure-storage-cpplite/lib:$LD_LIBRARY_PA
 source ~/.bashrc
 ```
 
-For more details, refer to 
+For more details, refer to https://github.com/Azure/azure-storage-cpplite/tree/v0.3.0#installation
 
 ### Build rosbaz
 

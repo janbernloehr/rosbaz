@@ -7,8 +7,8 @@
 namespace rosbaz
 {
 MessageInstance::MessageInstance(const rosbag::ConnectionInfo& connection_info, const rosbag::IndexEntry& index,
-                                 const Bag& bag, rosbaz::io::IReader& reader)
-  : m_connection_info(&connection_info), m_index_entry(&index), m_bag(&bag), m_reader(&reader)
+                                 const Bag& bag)
+  : m_connection_info(&connection_info), m_index_entry(&index), m_bag(&bag)
 {
 }
 
@@ -77,7 +77,7 @@ std::vector<rosbaz::io::byte> MessageInstance::read_subset(uint32_t offset, uint
 
   if (!m_header_buffer_and_size)
   {
-    m_header_buffer_and_size = m_reader->read_header_buffer_and_size(record_offset);
+    m_header_buffer_and_size = m_bag->reader_->read_header_buffer_and_size(record_offset);
   }
 
   const auto header = rosbaz::bag_parsing::Header::parse(m_header_buffer_and_size->header_buffer);
@@ -90,7 +90,7 @@ std::vector<rosbaz::io::byte> MessageInstance::read_subset(uint32_t offset, uint
     throw rosbaz::RosBagFormatException(msg.str());
   }
 
-  return m_reader->read(record_offset + m_header_buffer_and_size->data_offset() + offset, size);
+  return m_bag->reader_->read(record_offset + m_header_buffer_and_size->data_offset() + offset, size);
 }
 
 //! Size of serialized message

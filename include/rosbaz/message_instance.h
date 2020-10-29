@@ -51,15 +51,13 @@ public:
 private:
   friend struct View;
 
-  MessageInstance(const rosbag::ConnectionInfo& connection_info, const rosbag::IndexEntry& index, const Bag& bag,
-                  rosbaz::io::IReader& reader);
+  MessageInstance(const rosbag::ConnectionInfo& connection_info, const rosbag::IndexEntry& index, const Bag& bag);
 
   void getOffsetAndSize(uint64_t& record_offset, uint32_t& record_size) const;
 
   const rosbag::ConnectionInfo* m_connection_info{ nullptr };
   const rosbag::IndexEntry* m_index_entry{ nullptr };
   const Bag* m_bag{ nullptr };
-  rosbaz::io::IReader* m_reader{ nullptr };
 
   mutable boost::optional<rosbaz::io::HeaderBufferAndSize> m_header_buffer_and_size{};
 };
@@ -139,7 +137,7 @@ boost::shared_ptr<T> MessageInstance::instantiate() const
 
   getOffsetAndSize(record_offset, record_size);
 
-  const auto buffer = m_reader->read(record_offset, record_size);
+  const auto buffer = m_bag->reader_->read(record_offset, record_size);
   const rosbaz::DataSpan buffer_span{ buffer };
 
   const auto record = rosbaz::bag_parsing::Record::parse(buffer_span);
@@ -182,7 +180,7 @@ boost::shared_ptr<T> MessageInstance::instantiate_subset(uint32_t offset, uint32
 
   getOffsetAndSize(record_offset, record_size);
 
-  const auto header_buffer_and_size = m_reader->read_header_buffer_and_size(record_offset);
+  const auto header_buffer_and_size = m_bag->reader_->read_header_buffer_and_size(record_offset);
 
   const auto header = rosbaz::bag_parsing::Header::parse(header_buffer_and_size.header_buffer);
 
@@ -194,7 +192,7 @@ boost::shared_ptr<T> MessageInstance::instantiate_subset(uint32_t offset, uint32
     throw rosbaz::RosBagFormatException(msg.str());
   }
 
-  const auto subset_buffer = m_reader->read(record_offset + header_buffer_and_size.data_offset() + offset, size);
+  const auto subset_buffer = m_bag->reader_->read(record_offset + header_buffer_and_size.data_offset() + offset, size);
 
   auto ptr = boost::make_shared<T>();
 
@@ -211,7 +209,7 @@ void MessageInstance::write(Stream& stream) const
 
   getOffsetAndSize(record_offset, record_size);
 
-  const auto buffer = m_reader->read(record_offset, record_size);
+  const auto buffer = m_bag->reader_->read(record_offset, record_size);
   const rosbaz::DataSpan buffer_span{ buffer };
 
   const auto record = rosbaz::bag_parsing::Record::parse(buffer_span);
