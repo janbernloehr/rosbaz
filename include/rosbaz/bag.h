@@ -78,7 +78,7 @@ private:
   std::unordered_map<uint32_t, rosbag::ConnectionInfo> connections_{};
 
   std::uint32_t bag_revision_{ 0 };
-  
+
   std::uint32_t chunk_count_{ 0 };
   std::uint32_t connection_count_{ 0 };
 
