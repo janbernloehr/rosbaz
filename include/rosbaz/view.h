@@ -4,6 +4,7 @@
 #include <set>
 
 #include <boost/optional.hpp>
+#include <boost/iterator/iterator_facade.hpp>
 #include <ros/time.h>
 #include <rosbag/query.h>
 #include <rosbag/structures.h>
@@ -44,13 +45,17 @@ struct ViewIterHelperCompare
 struct View
 {
 public:
-  struct iterator : public std::iterator<std::forward_iterator_tag, MessageInstance>
+  class iterator : public boost::iterator_facade<iterator, MessageInstance, boost::forward_traversal_tag>
   {
   public:
-    using const_pointer = const MessageInstance*;
+    iterator() = default;
+    iterator(iterator const& i);
+    iterator& operator=(iterator const& i);
+    ~iterator() = default;
 
   private:
     friend struct View;
+    friend class boost::iterator_core_access;
 
     iterator(View& view, bool end = false);
 
@@ -59,19 +64,9 @@ public:
 
     void increment();
 
-  public:
-    iterator() = default;
-    iterator(iterator const& i);
-    iterator& operator=(iterator const& i);
+    bool equal(iterator const& other) const;
 
-    iterator& operator++();
-    iterator operator++(int);
-
-    bool operator==(const iterator& other) const;
-    bool operator!=(const iterator& rhs) const;
-
-    value_type operator*() const;
-    const_pointer operator->() const;
+    MessageInstance& dereference() const;
 
   protected:
     View* view_{ nullptr };

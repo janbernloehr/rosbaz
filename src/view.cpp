@@ -34,7 +34,9 @@ View::iterator::iterator(View& view, bool end) : view_(&view)
 
 void View::iterator::populate()
 {
-  message_instance_.reset();
+  assert(view_ != nullptr);
+
+  iters_.clear();
   for (const auto& range : view_->m_ranges)
   {
     if (range.begin != range.end)
@@ -49,7 +51,7 @@ void View::iterator::populate()
 
 void View::iterator::populateSeek(std::multiset<rosbag::IndexEntry>::const_iterator iter)
 {
-  assert(view_ != NULL);
+  assert(view_ != nullptr);
 
   iters_.clear();
   for (const auto& range : view_->m_ranges)
@@ -72,6 +74,8 @@ void View::iterator::populateSeek(std::multiset<rosbag::IndexEntry>::const_itera
 
 void View::iterator::increment()
 {
+  assert(view_ != nullptr);
+
   message_instance_.reset();
 
   view_->update();
@@ -94,19 +98,7 @@ void View::iterator::increment()
   std::sort(iters_.begin(), iters_.end(), ViewIterHelperCompare());
 }
 
-View::iterator& View::iterator::operator++()
-{
-  increment();
-  return *this;
-}
-View::iterator View::iterator::operator++(int)
-{
-  View::iterator tmp = *this;
-  increment();
-  return tmp;
-}
-
-bool View::iterator::operator==(const iterator& other) const
+bool View::iterator::equal(iterator const& other) const
 {
   if (iters_.empty())
   {
@@ -119,12 +111,8 @@ bool View::iterator::operator==(const iterator& other) const
 
   return iters_.back().iter == other.iters_.back().iter;
 }
-bool View::iterator::operator!=(const iterator& rhs) const
-{
-  return !(*this == rhs);
-}
 
-View::iterator::value_type View::iterator::operator*() const
+MessageInstance& View::iterator::dereference() const
 {
   if (!message_instance_)
   {
@@ -132,15 +120,6 @@ View::iterator::value_type View::iterator::operator*() const
     message_instance_.emplace(MessageInstance{ *it.range->connection_info, *it.iter, it.range->bag_query->bag });
   }
   return *message_instance_;
-}
-View::iterator::const_pointer View::iterator::operator->() const
-{
-  if (!message_instance_)
-  {
-    auto it = iters_.back();
-    message_instance_.emplace(MessageInstance{ *it.range->connection_info, *it.iter, it.range->bag_query->bag });
-  }
-  return &(*message_instance_);
 }
 
 bool ViewIterHelperCompare::operator()(ViewIterHelper const& a, ViewIterHelper const& b)
@@ -263,7 +242,7 @@ size_t View::size()
 
     for (const auto& range : m_ranges)
     {
-      m_size_cache += rosbaz::io::narrow<size_t>(std::distance(range.begin, range.end));
+      m_size_cache += rosbaz::io::narrow<uint32_t>(std::distance(range.begin, range.end));
     }
 
     m_size_revision = m_view_revision;
