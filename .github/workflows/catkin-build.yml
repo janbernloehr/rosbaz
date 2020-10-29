@@ -14,7 +14,8 @@ jobs:
 
     strategy:
       matrix:
-        compiler: ["/usr/bin/g++", "/usr/bin/clang++"]
+        #compiler: ["/usr/bin/g++", "/usr/bin/clang++"]
+        compiler: ["/usr/bin/g++"]
 
     steps:
     - name: 'checkout azure-storage-cpplite'
