@@ -1,9 +1,9 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <set>
 
-#include <boost/optional.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 #include <ros/time.h>
 #include <rosbag/query.h>
@@ -48,10 +48,10 @@ public:
   class iterator : public boost::iterator_facade<iterator, MessageInstance, boost::forward_traversal_tag>
   {
   public:
-    iterator() = default;
+    iterator();
     iterator(iterator const& i);
     iterator& operator=(iterator const& i);
-    ~iterator() = default;
+    ~iterator();
 
   private:
     friend struct View;
@@ -73,7 +73,7 @@ public:
     std::vector<ViewIterHelper> iters_{};
     uint32_t view_revision_;
 
-    mutable boost::optional<MessageInstance> message_instance_{};
+    mutable std::unique_ptr<MessageInstance> message_instance_{};
   };
 
   explicit View(const Bag& bag, const ros::Time& start_time = ros::TIME_MIN, const ros::Time& end_time = ros::TIME_MAX);
@@ -118,5 +118,8 @@ private:
 
   uint32_t m_size_cache{ 0 };
   uint32_t m_size_revision{ 0 };
+
+  MessageInstance* newMessageInstance(const rosbag::ConnectionInfo& connection_info, rosbag::IndexEntry const& index,
+                                      Bag const& bag) const;
 };
 }  // namespace rosbaz
