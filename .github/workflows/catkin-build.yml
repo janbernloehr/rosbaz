@@ -26,6 +26,8 @@ jobs:
         path: 'azure-storage-cpplite'
 
     - name: 'build azure-storage-cpplite'
+      env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       run: |
         set -ex
         sudo apt-get update -qq
