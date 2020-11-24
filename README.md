@@ -38,7 +38,7 @@ auto az_reader = std::make_shared<rosbaz::io::AzReader>(url);
 
 auto bag = rosbaz::Bag::read(az_reader);
 
-for(const auto m : rosbag::View(bag))
+for(const auto m : rosbaz::View(bag))
 {
   std_msgs::Int32::ConstPtr i = m.instantiate<std_msgs::Int32>();
   if (i != nullptr) {
