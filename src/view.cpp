@@ -7,6 +7,18 @@
 
 namespace rosbaz
 {
+View::iterator::iterator() = default;
+
+View::iterator::~iterator() = default;
+
+View::iterator::iterator(View& view, bool end) : view_(&view)
+{
+  if (!end)
+  {
+    populate();
+  }
+}
+
 View::iterator::iterator(const iterator& i)
   : view_(i.view_), iters_(i.iters_), view_revision_(i.view_revision_), message_instance_{}
 {
@@ -22,14 +34,6 @@ View::iterator& View::iterator::operator=(iterator const& i)
     message_instance_.reset();
   }
   return *this;
-}
-
-View::iterator::iterator(View& view, bool end) : view_(&view)
-{
-  if (!end)
-  {
-    populate();
-  }
 }
 
 void View::iterator::populate()
@@ -72,6 +76,20 @@ void View::iterator::populateSeek(std::multiset<rosbag::IndexEntry>::const_itera
   view_revision_ = view_->m_view_revision;
 }
 
+bool View::iterator::equal(iterator const& other) const
+{
+  if (iters_.empty())
+  {
+    return other.iters_.empty();
+  }
+  if (other.iters_.empty())
+  {
+    return false;
+  }
+
+  return iters_.back().iter == other.iters_.back().iter;
+}
+
 void View::iterator::increment()
 {
   assert(view_ != nullptr);
@@ -98,26 +116,12 @@ void View::iterator::increment()
   std::sort(iters_.begin(), iters_.end(), ViewIterHelperCompare());
 }
 
-bool View::iterator::equal(iterator const& other) const
-{
-  if (iters_.empty())
-  {
-    return other.iters_.empty();
-  }
-  if (other.iters_.empty())
-  {
-    return false;
-  }
-
-  return iters_.back().iter == other.iters_.back().iter;
-}
-
 MessageInstance& View::iterator::dereference() const
 {
   if (!message_instance_)
   {
     auto it = iters_.back();
-    message_instance_.emplace(MessageInstance{ *it.range->connection_info, *it.iter, it.range->bag_query->bag });
+    message_instance_.reset(view_->newMessageInstance(*it.range->connection_info, *it.iter, it.range->bag_query->bag));
   }
   return *message_instance_;
 }
@@ -158,7 +162,7 @@ void View::updateQueries(BagQuery& q)
       continue;
     }
 
-    auto index_found = bag.connection_indexes_.find(connection_info.first);
+    auto index_found = bag.connection_indexes_.find(connection.id);
 
     if (index_found == bag.connection_indexes_.end())
     {
@@ -201,25 +205,12 @@ void View::updateQueries(BagQuery& q)
       }
       if (!found)
       {
-        m_ranges.emplace_back(MessageRange{ begin, end, connection_info.second, q });
+        m_ranges.emplace_back(MessageRange{ begin, end, connection, q });
       }
     }
-
-    m_view_revision++;
   }
 
-  std::sort(m_ranges.begin(), m_ranges.end(),
-            [](const MessageRange& a, const MessageRange& b) { return a.begin->time > b.begin->time; });
-
-  for (const auto& range : m_ranges)
-  {
-    auto e = range.end;
-    --e;
-
-    ROS_DEBUG_STREAM(range.connection_info->topic << ": " << std::distance(range.begin, range.end)
-                                                  << " :: " << range.begin->time.sec << "." << range.begin->time.nsec
-                                                  << " - " << e->time.sec << "." << e->time.nsec);
-  }
+  m_view_revision++;
 }
 
 View::iterator View::begin()
@@ -227,6 +218,7 @@ View::iterator View::begin()
   update();
   return View::iterator(*this);
 }
+
 View::iterator View::end()
 {
   return View::iterator(*this, true);
@@ -341,6 +333,12 @@ MessageRange::MessageRange(std::multiset<rosbag::IndexEntry>::const_iterator _be
                            const rosbag::ConnectionInfo& _connection_info, const BagQuery& _bag_query)
   : begin(_begin), end(_end), connection_info(&_connection_info), bag_query(&_bag_query)
 {
+}
+
+MessageInstance* View::newMessageInstance(const rosbag::ConnectionInfo& connection_info,
+                                          rosbag::IndexEntry const& index, Bag const& bag) const
+{
+  return new MessageInstance(connection_info, index, bag);
 }
 
 }  // namespace rosbaz
