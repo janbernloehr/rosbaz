@@ -1,5 +1,6 @@
 #include "rosbaz/io/stream_reader.h"
 
+#include "rosbaz/exceptions.h"
 #include "rosbaz/io/io_helpers.h"
 #include "rosbaz/io/util.h"
 
