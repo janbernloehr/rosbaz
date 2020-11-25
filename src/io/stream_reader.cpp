@@ -13,7 +13,8 @@ std::unique_ptr<IReader> StreamReader::open(const std::string& file_path)
   rosbaz::io::RosStream ifs;
   ifs.open(file_path, std::ios_base::in | std::ios_base::binary);
 
-  if (!ifs.good()) {
+  if (!ifs.good())
+  {
     throw rosbaz::IoException("Error opening file: " + file_path);
   }
 
