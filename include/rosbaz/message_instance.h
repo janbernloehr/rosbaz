@@ -175,24 +175,7 @@ boost::shared_ptr<T> MessageInstance::instantiate() const
 template <class T>
 boost::shared_ptr<T> MessageInstance::instantiate_subset(uint32_t offset, uint32_t size) const
 {
-  uint64_t record_offset;
-  uint32_t record_size;
-
-  getOffsetAndSize(record_offset, record_size);
-
-  const auto header_buffer_and_size = m_bag->reader_->read_header_buffer_and_size(record_offset);
-
-  const auto header = rosbaz::bag_parsing::Header::parse(header_buffer_and_size.header_buffer);
-
-  if (header.op != rosbag::OP_MSG_DATA)
-  {
-    std::stringstream msg;
-    msg << "Encountered op=" << static_cast<int>(header.op) << " while deserializing message instead of "
-        << static_cast<int>(rosbag::OP_MSG_DATA);
-    throw rosbaz::RosBagFormatException(msg.str());
-  }
-
-  const auto subset_buffer = m_bag->reader_->read(record_offset + header_buffer_and_size.data_offset() + offset, size);
+  const auto subset_buffer = read_subset(offset, size);
 
   auto ptr = boost::make_shared<T>();
 
