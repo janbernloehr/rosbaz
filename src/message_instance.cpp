@@ -80,6 +80,14 @@ std::vector<rosbaz::io::byte> MessageInstance::read_subset(uint32_t offset, uint
     m_header_buffer_and_size = m_bag->reader_->read_header_buffer_and_size(record_offset);
   }
 
+  if (offset + size > m_header_buffer_and_size->data_size)
+  {
+    std::stringstream msg;
+    msg << "Requested to read [" << offset << "," << offset + size << "] but data is [0,"
+        << m_header_buffer_and_size->data_size << "]";
+    throw rosbaz::RosBagFormatException(msg.str());
+  }
+
   const auto header = rosbaz::bag_parsing::Header::parse(m_header_buffer_and_size->header_buffer);
 
   if (header.op != rosbag::OP_MSG_DATA)
@@ -98,10 +106,10 @@ uint32_t MessageInstance::size() const
 {
   if (!m_header_buffer_and_size)
   {
-  uint64_t record_offset;
-  uint32_t record_size;
+    uint64_t record_offset;
+    uint32_t record_size;
 
-  getOffsetAndSize(record_offset, record_size);
+    getOffsetAndSize(record_offset, record_size);
 
     m_header_buffer_and_size = m_bag->reader_->read_header_buffer_and_size(record_offset);
   }
