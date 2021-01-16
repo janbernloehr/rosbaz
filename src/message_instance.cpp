@@ -96,11 +96,16 @@ std::vector<rosbaz::io::byte> MessageInstance::read_subset(uint32_t offset, uint
 //! Size of serialized message
 uint32_t MessageInstance::size() const
 {
+  if (!m_header_buffer_and_size)
+  {
   uint64_t record_offset;
   uint32_t record_size;
 
   getOffsetAndSize(record_offset, record_size);
 
-  return record_size;
+    m_header_buffer_and_size = m_bag->reader_->read_header_buffer_and_size(record_offset);
+  }
+
+  return m_header_buffer_and_size->data_size;
 }
 }  // namespace rosbaz
