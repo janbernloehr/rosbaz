@@ -2,6 +2,7 @@
 
 #include <ros/console.h>
 #include <rosbag/constants.h>
+#include <boost/make_shared.hpp>
 
 #include "rosbaz/exceptions.h"
 #include "rosbaz/io/io_helpers.h"
@@ -79,6 +80,13 @@ rosbag::ConnectionInfo as_connection_info(const Header& header, rosbaz::DataSpan
 
   const auto& msg_def_field = connection_header.fields.at("message_definition");
   info.msg_def = rosbaz::io::to_string(msg_def_field);
+
+  info.header = boost::make_shared<ros::M_string>();
+
+  for (const auto& field : connection_header.fields)
+  {
+    (*info.header)[field.first] = rosbaz::io::to_string(field.second);
+  }
 
   return info;
 }
