@@ -11,6 +11,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/optional.hpp>
 #include <cstdint>
+#include <string>
 
 #include "rosbaz/bag.h"
 #include "rosbaz/exceptions.h"
@@ -30,15 +31,32 @@ public:
   const std::string& getMD5Sum() const;
   const std::string& getMessageDefinition() const;
 
+  boost::shared_ptr<ros::M_string> getConnectionHeader() const;
+
+  std::string getCallerId() const;
+  bool isLatching() const;
+
   //! Size of serialized message
   uint32_t size() const;
 
+  //! Test whether the underlying message of the specified type.
+  /*!
+   * returns true iff the message is of the template type
+   */
   template <class T>
   bool isType() const;
 
+  //! Templated call to instantiate a message
+  /*!
+   * returns NULL pointer if incompatible
+   */
   template <class T>
   boost::shared_ptr<T> instantiate() const;
 
+  //! Templated call to instantiate a ros message from a subset of the raw message
+  /*!
+   * returns NULL pointer if incompatible
+   */
   template <class T>
   boost::shared_ptr<T> instantiate_subset(uint32_t offset, uint32_t size) const;
 

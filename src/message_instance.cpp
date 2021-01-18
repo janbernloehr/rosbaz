@@ -28,9 +28,27 @@ const std::string& MessageInstance::getMD5Sum() const
 {
   return m_connection_info->md5sum;
 }
+
 const std::string& MessageInstance::getMessageDefinition() const
 {
   return m_connection_info->msg_def;
+}
+
+boost::shared_ptr<ros::M_string> MessageInstance::getConnectionHeader() const
+{
+  return m_connection_info->header;
+}
+
+std::string MessageInstance::getCallerId() const
+{
+  ros::M_string::const_iterator header_iter = m_connection_info->header->find("callerid");
+  return header_iter != m_connection_info->header->end() ? header_iter->second : std::string("");
+}
+
+bool MessageInstance::isLatching() const
+{
+  ros::M_string::const_iterator header_iter = m_connection_info->header->find("latching");
+  return header_iter != m_connection_info->header->end() && header_iter->second == "1";
 }
 
 void MessageInstance::getOffsetAndSize(uint64_t& record_offset, uint32_t& record_size) const
