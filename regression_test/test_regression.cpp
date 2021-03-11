@@ -13,24 +13,21 @@
 #include <boost/filesystem.hpp>
 #include <memory>
 
-class RegressionTests : public ::testing::Test
+class RegressionTests : public ::testing::TestWithParam<const char*>
 {
 public:
-  RegressionTests()
+  RegressionTests() : baz{ rosbaz::Bag::read(rosbaz::io::StreamReader::open(GetParam())) }, bag{ GetParam() }
   {
-    const std::string rosbag_file = "b0-2014-07-11-10-58-16.bag";
-    baz = std::unique_ptr<rosbaz::Bag>(new rosbaz::Bag(rosbaz::Bag::read(rosbaz::io::StreamReader::open(rosbag_file))));
-    bag = std::unique_ptr<rosbag::Bag>(new rosbag::Bag(rosbag_file));
   }
 
-  std::unique_ptr<rosbaz::Bag> baz;
-  std::unique_ptr<rosbag::Bag> bag;
+  rosbaz::Bag baz;
+  rosbag::Bag bag;
 };
 
-TEST_F(RegressionTests, equal_topics)
+TEST_P(RegressionTests, equal_topics)
 {
-  rosbaz::View baz_view{ *baz };
-  rosbag::View bag_view{ *bag };
+  rosbaz::View baz_view{ baz };
+  rosbag::View bag_view{ bag };
 
   const auto& bag_connections = bag_view.getConnections();
   const auto& baz_connections = baz_view.getConnections();
@@ -55,12 +52,12 @@ TEST_F(RegressionTests, equal_topics)
   }
 }
 
-TEST_F(RegressionTests, equal_messages)
+TEST_P(RegressionTests, equal_messages)
 {
   const std::string topic_name = "imu";
 
-  rosbaz::View baz_view{ *baz, rosbag::TopicQuery(topic_name) };
-  rosbag::View bag_view{ *bag, rosbag::TopicQuery(topic_name) };
+  rosbaz::View baz_view{ baz, rosbag::TopicQuery(topic_name) };
+  rosbag::View bag_view{ bag, rosbag::TopicQuery(topic_name) };
 
   ASSERT_EQ(baz_view.size(), bag_view.size());
 
@@ -83,3 +80,5 @@ TEST_F(RegressionTests, equal_messages)
     EXPECT_EQ(bag_message->header.seq, baz_message->header.seq);
   }
 }
+
+INSTANTIATE_TEST_SUITE_P(RegressionTestSuite, RegressionTests, testing::Values("b0-2014-07-11-10-58-16.bag"));
