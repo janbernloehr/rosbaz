@@ -81,4 +81,4 @@ TEST_P(RegressionTests, equal_messages)
   }
 }
 
-INSTANTIATE_TEST_SUITE_P(RegressionTestSuite, RegressionTests, testing::Values("b0-2014-07-11-10-58-16.bag"));
+INSTANTIATE_TEST_CASE_P(RegressionTestSuite, RegressionTests, testing::Values("b0-2014-07-11-10-58-16.bag"));
