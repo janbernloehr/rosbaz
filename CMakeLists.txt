@@ -5,6 +5,8 @@ if(POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW) #3.12.0 `find_package()`` uses ``<PackageName>_ROOT`` variables.
 endif()
 
+option(REGRESSION_TESTS "Build and execute regression tests" OFF)
+
 set(CMAKE_CXX_STANDARD 11)
 set(ROSBAZ_CXX_FLAGS
   -Wall
@@ -90,6 +92,25 @@ if (CATKIN_ENABLE_TESTING)
   file(GLOB _test_sources CONFIGURE_DEPENDS "test/*.cpp")
   catkin_add_gtest(test_${PROJECT_NAME} ${_test_sources})
   target_link_libraries(test_${PROJECT_NAME} ${PROJECT_NAME} ${catkin_LIBRARIES} gtest_main)
+
+  if (REGRESSION_TESTS)
+    include(ExternalProject)
+    ExternalProject_Add(bag-file
+      URL               https://storage.googleapis.com/cartographer-public-data/bags/backpack_2d/b0-2014-07-11-10-58-16.bag
+      URL_HASH          MD5=7ed841ca72cb82adcf4a3fc6b85cac5a
+      DOWNLOAD_NO_EXTRACT TRUE
+      CONFIGURE_COMMAND ""
+      INSTALL_COMMAND   ""
+      DOWNLOAD_DIR      ${CMAKE_CURRENT_BINARY_DIR}
+      BUILD_COMMAND     rosbag decompress ${CMAKE_CURRENT_BINARY_DIR}/b0-2014-07-11-10-58-16.bag
+    )
+
+    file(GLOB _regression_test_sources CONFIGURE_DEPENDS "regression_test/*.cpp")
+    catkin_add_gtest(regression_test_${PROJECT_NAME} ${_regression_test_sources})
+    target_link_libraries(regression_test_${PROJECT_NAME} ${PROJECT_NAME} ${catkin_LIBRARIES} gtest_main)
+
+    add_dependencies(regression_test_${PROJECT_NAME} bag-file)
+  endif()
 endif()
 
 install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_app
