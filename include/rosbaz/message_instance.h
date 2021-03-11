@@ -11,6 +11,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/optional.hpp>
 #include <cstdint>
+#include <string>
 
 #include "rosbaz/bag.h"
 #include "rosbaz/exceptions.h"
@@ -30,15 +31,32 @@ public:
   const std::string& getMD5Sum() const;
   const std::string& getMessageDefinition() const;
 
+  boost::shared_ptr<ros::M_string> getConnectionHeader() const;
+
+  std::string getCallerId() const;
+  bool isLatching() const;
+
   //! Size of serialized message
   uint32_t size() const;
 
+  //! Test whether the underlying message of the specified type.
+  /*!
+   * returns true iff the message is of the template type
+   */
   template <class T>
   bool isType() const;
 
+  //! Templated call to instantiate a message
+  /*!
+   * returns NULL pointer if incompatible
+   */
   template <class T>
   boost::shared_ptr<T> instantiate() const;
 
+  //! Templated call to instantiate a ros message from a subset of the raw message
+  /*!
+   * returns NULL pointer if incompatible
+   */
   template <class T>
   boost::shared_ptr<T> instantiate_subset(uint32_t offset, uint32_t size) const;
 
@@ -51,15 +69,13 @@ public:
 private:
   friend struct View;
 
-  MessageInstance(const rosbag::ConnectionInfo& connection_info, const rosbag::IndexEntry& index, const Bag& bag,
-                  rosbaz::io::IReader& reader);
+  MessageInstance(const rosbag::ConnectionInfo& connection_info, const rosbag::IndexEntry& index, const Bag& bag);
 
   void getOffsetAndSize(uint64_t& record_offset, uint32_t& record_size) const;
 
   const rosbag::ConnectionInfo* m_connection_info{ nullptr };
   const rosbag::IndexEntry* m_index_entry{ nullptr };
   const Bag* m_bag{ nullptr };
-  rosbaz::io::IReader* m_reader{ nullptr };
 
   mutable boost::optional<rosbaz::io::HeaderBufferAndSize> m_header_buffer_and_size{};
 };
@@ -139,7 +155,7 @@ boost::shared_ptr<T> MessageInstance::instantiate() const
 
   getOffsetAndSize(record_offset, record_size);
 
-  const auto buffer = m_reader->read(record_offset, record_size);
+  const auto buffer = m_bag->reader_->read(record_offset, record_size);
   const rosbaz::DataSpan buffer_span{ buffer };
 
   const auto record = rosbaz::bag_parsing::Record::parse(buffer_span);
@@ -177,24 +193,7 @@ boost::shared_ptr<T> MessageInstance::instantiate() const
 template <class T>
 boost::shared_ptr<T> MessageInstance::instantiate_subset(uint32_t offset, uint32_t size) const
 {
-  uint64_t record_offset;
-  uint32_t record_size;
-
-  getOffsetAndSize(record_offset, record_size);
-
-  const auto header_buffer_and_size = m_reader->read_header_buffer_and_size(record_offset);
-
-  const auto header = rosbaz::bag_parsing::Header::parse(header_buffer_and_size.header_buffer);
-
-  if (header.op != rosbag::OP_MSG_DATA)
-  {
-    std::stringstream msg;
-    msg << "Encountered op=" << static_cast<int>(header.op) << " while deserializing message instead of "
-        << static_cast<int>(rosbag::OP_MSG_DATA);
-    throw rosbaz::RosBagFormatException(msg.str());
-  }
-
-  const auto subset_buffer = m_reader->read(record_offset + header_buffer_and_size.data_offset() + offset, size);
+  const auto subset_buffer = read_subset(offset, size);
 
   auto ptr = boost::make_shared<T>();
 
@@ -211,7 +210,7 @@ void MessageInstance::write(Stream& stream) const
 
   getOffsetAndSize(record_offset, record_size);
 
-  const auto buffer = m_reader->read(record_offset, record_size);
+  const auto buffer = m_bag->reader_->read(record_offset, record_size);
   const rosbaz::DataSpan buffer_span{ buffer };
 
   const auto record = rosbaz::bag_parsing::Record::parse(buffer_span);

@@ -26,9 +26,8 @@ Record Record::parse(rosbaz::DataSpan source)
   ROS_DEBUG_STREAM("record: header length: " << record.header_length << " data length: " << record.data_length
                                              << " source: " << source.size());
 
-  record.data =
-      source.subspan(+sizeof(std::uint32_t) + static_cast<size_t>(record.header_length) + sizeof(std::uint32_t),
-                     record.data_length);
+  record.data = source.subspan(
+      +sizeof(std::uint32_t) + static_cast<size_t>(record.header_length) + sizeof(std::uint32_t), record.data_length);
 
   return record;
 }

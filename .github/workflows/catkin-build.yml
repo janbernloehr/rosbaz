@@ -14,7 +14,8 @@ jobs:
 
     strategy:
       matrix:
-        compiler: ["/usr/bin/g++", "/usr/bin/clang++"]
+        #compiler: ["/usr/bin/g++", "/usr/bin/clang++"]
+        compiler: ["/usr/bin/g++"]
 
     steps:
     - name: 'checkout azure-storage-cpplite'
@@ -25,6 +26,8 @@ jobs:
         path: 'azure-storage-cpplite'
 
     - name: 'build azure-storage-cpplite'
+      env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       run: |
         set -ex
         sudo apt-get update -qq

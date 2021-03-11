@@ -191,7 +191,14 @@ void Bag::parseIndexSection(std::mutex& sync, rosbaz::bag_parsing::ChunkExt& chu
         ROS_DEBUG_STREAM("chunk_pos: " << chunk_ext.chunk_info.pos << " conn: " << connection_id
                                        << " offset: " << index_entry.offset);
 
-        connection_index.insert(connection_index.end(), index_entry);
+        // we can't use connection_index.end() because many chunks are parsed in parallel. since we have a lock, its
+        // fine to find the first connection index whose chunk pos is larger then the current one - or .end().
+        auto insert_at = std::lower_bound(connection_index.begin(), connection_index.end(), index_entry.chunk_pos,
+                                          [](const rosbag::IndexEntry& other_index_entry, const uint64_t value) {
+                                            return other_index_entry.chunk_pos <= value;
+                                          });
+
+        connection_index.insert(insert_at, index_entry);
         offsets.push_back(index_entry.offset);
       }
     }
