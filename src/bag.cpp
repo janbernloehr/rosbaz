@@ -195,7 +195,7 @@ void Bag::parseIndexSection(std::mutex& sync, rosbaz::bag_parsing::ChunkExt& chu
         // fine to find the first connection index whose chunk pos is larger then the current one - or .end().
         auto insert_at = std::lower_bound(connection_index.begin(), connection_index.end(), index_entry.chunk_pos,
                                           [](const rosbag::IndexEntry& other_index_entry, const uint64_t value) {
-                                            return other_index_entry.chunk_pos < value;
+                                            return other_index_entry.chunk_pos <= value;
                                           });
 
         connection_index.insert(insert_at, index_entry);
