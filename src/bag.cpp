@@ -139,7 +139,7 @@ void Bag::parseFileTail(rosbaz::DataSpan bag_tail)
   }
 }
 
-void Bag::parseIndexSection(std::mutex& sync, rosbaz::bag_parsing::ChunkExt& chunk_ext, rosbaz::DataSpan chunk_index,
+void Bag::parseIndexSection(rosbaz::bag_parsing::ChunkExt& chunk_ext, rosbaz::DataSpan chunk_index,
                             const uint64_t index_offset)
 {
   // There may be multiple records in the given data span
@@ -174,33 +174,26 @@ void Bag::parseIndexSection(std::mutex& sync, rosbaz::bag_parsing::ChunkExt& chu
     const uint32_t connection_id = index_header.read_field_little_endian<uint32_t>(rosbag::CONNECTION_FIELD_NAME);
     const uint32_t count = index_header.read_field_little_endian<uint32_t>(rosbag::COUNT_FIELD_NAME);
 
+    for (uint32_t i = 0; i < count; i++)
     {
-      std::lock_guard<std::mutex> guard(sync);
-      auto& connection_index = connection_indexes_[connection_id];
+      rosbag::IndexEntry index_entry;
 
-      for (uint32_t i = 0; i < count; i++)
-      {
-        rosbag::IndexEntry index_entry;
+      index_entry.time =
+          rosbaz::bag_parsing::unpack_time(rosbaz::io::read_little_endian<uint64_t>(index_record.data, i * 12));
 
-        index_entry.time =
-            rosbaz::bag_parsing::unpack_time(rosbaz::io::read_little_endian<uint64_t>(index_record.data, i * 12));
+      index_entry.offset = rosbaz::io::read_little_endian<uint32_t>(index_record.data, i * 12 + 8);
+      index_entry.chunk_pos = chunk_ext.chunk_info.pos;
 
-        index_entry.offset = rosbaz::io::read_little_endian<uint32_t>(index_record.data, i * 12 + 8);
-        index_entry.chunk_pos = chunk_ext.chunk_info.pos;
+      ROS_DEBUG_STREAM("chunk_pos: " << chunk_ext.chunk_info.pos << " conn: " << connection_id
+                                     << " offset: " << index_entry.offset);
 
-        ROS_DEBUG_STREAM("chunk_pos: " << chunk_ext.chunk_info.pos << " conn: " << connection_id
-                                       << " offset: " << index_entry.offset);
-
-        // we can't use connection_index.end() because many chunks are parsed in parallel. since we have a lock, its
-        // fine to find the first connection index whose chunk pos is larger then the current one - or .end().
-        auto insert_at = std::lower_bound(connection_index.begin(), connection_index.end(), index_entry.chunk_pos,
-                                          [](const rosbag::IndexEntry& other_index_entry, const uint64_t value) {
-                                            return other_index_entry.chunk_pos <= value;
-                                          });
-
-        connection_index.insert(insert_at, index_entry);
-        offsets.push_back(index_entry.offset);
-      }
+      // adding index entries to the global connection_indexes_ is delicate since the latter is sorted on every
+      // modification using the index entry's time as a key. Moreover, there may be multiple index entries with the
+      // same time.
+      // Since many chunks are parsed in parallel, we will build a list of index entries here and add them
+      // in the order the chunks appear in the bag from a single thread later.
+      chunk_ext.index_entries.emplace_back(connection_id, index_entry);
+      offsets.push_back(index_entry.offset);
     }
 
     offset += index_record.total_size();
@@ -259,7 +252,7 @@ void Bag::parseChunkInfo(std::mutex& sync, rosbaz::io::IReader& reader, const ro
 
   const auto index_buffer = reader.read(chunk_ext->index_offset, chunk_ext->index_size);
 
-  parseIndexSection(sync, *chunk_ext, index_buffer, index_offset);
+  parseIndexSection(*chunk_ext, index_buffer, index_offset);
 }
 
 void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
@@ -292,6 +285,28 @@ void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
     }
 
     io::process_async(sync, work);
+  }
+
+  // we add the index entries of every chunk to connection_indexes_ in the order the appear in the
+  // bag file
+  for (const auto& chunk_info : chunk_infos_)
+  {
+    const auto found_chunk =
+        std::find_if(chunks_.begin(), chunks_.end(), [&chunk_info](const rosbaz::bag_parsing::ChunkExt& chunk_ext) {
+          return &chunk_ext.chunk_info == &chunk_info;
+        });
+    if (found_chunk == chunks_.end())
+    {
+      std::stringstream msg;
+      msg << "No chunk found for chunk info with pos=" << chunk_info.pos << ".";
+      throw rosbaz::UnsupportedRosBagException(msg.str());
+    }
+
+    for (const auto& index_entry_ext : found_chunk->index_entries)
+    {
+      auto& connection_index = connection_indexes_[index_entry_ext.connection_id];
+      connection_index.insert(connection_index.end(), index_entry_ext.index_entry);
+    }
   }
 
   chunk_indices_parsed_ = true;
