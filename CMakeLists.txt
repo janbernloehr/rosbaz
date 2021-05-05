@@ -105,11 +105,18 @@ if (CATKIN_ENABLE_TESTING)
       BUILD_COMMAND     rosbag decompress ${CMAKE_CURRENT_BINARY_DIR}/b0-2014-07-11-10-58-16.bag
     )
 
-    file(GLOB _regression_test_sources CONFIGURE_DEPENDS "regression_test/*.cpp")
+    file(GLOB _regression_test_sources CONFIGURE_DEPENDS "regression_test/test_*.cpp")
     catkin_add_gtest(regression_test_${PROJECT_NAME} ${_regression_test_sources})
     target_link_libraries(regression_test_${PROJECT_NAME} ${PROJECT_NAME} ${catkin_LIBRARIES} gtest_main)
 
     add_dependencies(regression_test_${PROJECT_NAME} bag-file)
+
+    find_package(benchmark QUIET)
+    if (benchmark_FOUND)
+      add_executable(regression_test_benchmark regression_test/benchmark.cpp)
+      target_link_libraries(regression_test_benchmark PRIVATE ${PROJECT_NAME} ${catkin_LIBRARIES} benchmark::benchmark)
+      add_dependencies(regression_test_benchmark bag-file)
+    endif()
   endif()
 endif()
 
