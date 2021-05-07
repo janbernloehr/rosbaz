@@ -93,6 +93,7 @@ private:
   std::vector<rosbag::ChunkInfo> chunks_{};
   // extended chunk info needed for rosbaz
   std::vector<rosbaz::bag_parsing::ChunkExt> chunk_exts_{};
+  std::unordered_map<uint64_t, const rosbaz::bag_parsing::ChunkExt*> chunk_exts_lookup_{};
 
   bool chunk_indices_parsed_ = false;
 

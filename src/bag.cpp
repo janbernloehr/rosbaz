@@ -203,14 +203,15 @@ void Bag::parseIndexSection(rosbaz::bag_parsing::ChunkExt& chunk_ext, rosbaz::Da
   std::sort(offsets.begin(), offsets.end());
 
   auto& record_sizes = chunk_ext.message_records;
+  record_sizes.reserve(offsets.size());
 
   for (size_t i = 0; i < offsets.size() - 1; ++i)
   {
-    record_sizes.emplace_back(
+    record_sizes.emplace(offsets[i],
         rosbaz::bag_parsing::MessageRecordInfo{ offsets[i], static_cast<uint32_t>(offsets[i + 1] - offsets[i]) });
   }
 
-  record_sizes.emplace_back(rosbaz::bag_parsing::MessageRecordInfo{
+  record_sizes.emplace(offsets.back(), rosbaz::bag_parsing::MessageRecordInfo{
       offsets.back(), static_cast<uint32_t>(index_offset - offsets.back() - chunk_ext.chunk_info.pos) });
 }
 
@@ -244,6 +245,7 @@ void Bag::parseChunkInfo(std::mutex& sync, rosbaz::io::IReader& reader, const ro
 
     // this only works since we reserved chunk_exts_ to the correct size so that no reallocation occurs
     chunk_ext = &chunk_exts_.back();
+    chunk_exts_lookup_[chunk_info.pos] = chunk_ext;
   }
 
   ROS_DEBUG_STREAM("chunk pos: " << chunk_ext->chunk_info.pos << " data pos: " << chunk_ext->data_offset
@@ -259,6 +261,7 @@ void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
 {
   // We need to make sure that all inserts are in-place and do not need to re-allocate
   chunk_exts_.reserve(chunks_.size());
+  chunk_exts_lookup_.reserve(chunks_.size());
 
   // keep the position of the next chunk to determine the size of the index
   // record section.
@@ -292,16 +295,7 @@ void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
   connection_indexes_.reserve(chunks_.size());
   for (const auto& chunk_info : chunks_)
   {
-    const auto found_chunk =
-        std::find_if(chunk_exts_.begin(), chunk_exts_.end(), [&chunk_info](const rosbaz::bag_parsing::ChunkExt& chunk_ext) {
-          return &chunk_ext.chunk_info == &chunk_info;
-        });
-    if (found_chunk == chunk_exts_.end())
-    {
-      std::stringstream msg;
-      msg << "No chunk found for chunk info with pos=" << chunk_info.pos << ".";
-      throw rosbaz::UnsupportedRosBagException(msg.str());
-    }
+    const auto& found_chunk = chunk_exts_lookup_.at(chunk_info.pos);
 
     for (const auto& index_entry_ext : found_chunk->index_entries)
     {
