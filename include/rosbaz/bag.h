@@ -68,13 +68,15 @@ private:
   void parseChunkInfo(std::mutex& sync, rosbaz::io::IReader& reader, const rosbag::ChunkInfo& chunk_info,
                       uint64_t next_chunk_pos);
 
-  /// Fills \p connection_indexes_ and \p chunks_.
+  /// Fills \p connection_indexes_ and \p chunk_exts_.
   ///
   /// The implementation may read data for the present chunks simultaneously.
   void parseChunkIndices(rosbaz::io::IReader& reader);
 
   mutable std::shared_ptr<rosbaz::io::IReader> reader_{};
 
+  // rosbag uses a map<uint32_t, ConnectionInfo*>. Since only parseFileTail can modify connections_
+  // it is safe to store the ConnectionInfo in the map. Only expansion would invalidate the addresses.
   std::unordered_map<uint32_t, rosbag::ConnectionInfo> connections_{};
 
   std::uint32_t bag_revision_{ 0 };
@@ -87,11 +89,14 @@ private:
 
   std::uint64_t file_size_{ 0 };
 
-  std::vector<rosbag::ChunkInfo> chunk_infos_{};
+  // plain rosbag chunk infos
+  std::vector<rosbag::ChunkInfo> chunks_{};
+  // extended chunk info needed for rosbaz
+  std::vector<rosbaz::bag_parsing::ChunkExt> chunk_exts_{};
 
   bool chunk_indices_parsed_ = false;
 
+  // rosbag uses a map. Since there are as many indices as chunk infos, it is safe to reserve once.
   std::unordered_map<uint32_t, std::multiset<rosbag::IndexEntry>> connection_indexes_{};
-  std::vector<rosbaz::bag_parsing::ChunkExt> chunks_{};
 };
 }  // namespace rosbaz
