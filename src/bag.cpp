@@ -127,7 +127,7 @@ void Bag::parseFileTail(rosbaz::DataSpan bag_tail)
       }
       break;
       case rosbag::OP_CHUNK_INFO: {
-        chunk_infos_.push_back(as_chunk_info(header, record.data));
+        chunks_.push_back(as_chunk_info(header, record.data));
       }
       break;
       default:
@@ -203,14 +203,15 @@ void Bag::parseIndexSection(rosbaz::bag_parsing::ChunkExt& chunk_ext, rosbaz::Da
   std::sort(offsets.begin(), offsets.end());
 
   auto& record_sizes = chunk_ext.message_records;
+  record_sizes.reserve(offsets.size());
 
   for (size_t i = 0; i < offsets.size() - 1; ++i)
   {
-    record_sizes.emplace_back(
+    record_sizes.emplace(offsets[i],
         rosbaz::bag_parsing::MessageRecordInfo{ offsets[i], static_cast<uint32_t>(offsets[i + 1] - offsets[i]) });
   }
 
-  record_sizes.emplace_back(rosbaz::bag_parsing::MessageRecordInfo{
+  record_sizes.emplace(offsets.back(), rosbaz::bag_parsing::MessageRecordInfo{
       offsets.back(), static_cast<uint32_t>(index_offset - offsets.back() - chunk_ext.chunk_info.pos) });
 }
 
@@ -239,11 +240,12 @@ void Bag::parseChunkInfo(std::mutex& sync, rosbaz::io::IReader& reader, const ro
 
   {
     std::lock_guard<std::mutex> guard(sync);
-    chunks_.emplace_back(chunk_info, chunk_header, data_offset, chunk_header_buffer_and_size.data_size, index_offset,
+    chunk_exts_.emplace_back(chunk_info, chunk_header, data_offset, chunk_header_buffer_and_size.data_size, index_offset,
                          static_cast<uint32_t>(next_chunk_pos - index_offset));
 
-    // this only works since we reserved chunks_ to the correct size so that no reallocation occurs
-    chunk_ext = &chunks_.back();
+    // this only works since we reserved chunk_exts_ to the correct size so that no reallocation occurs
+    chunk_ext = &chunk_exts_.back();
+    chunk_exts_lookup_[chunk_info.pos] = chunk_ext;
   }
 
   ROS_DEBUG_STREAM("chunk pos: " << chunk_ext->chunk_info.pos << " data pos: " << chunk_ext->data_offset
@@ -258,14 +260,15 @@ void Bag::parseChunkInfo(std::mutex& sync, rosbaz::io::IReader& reader, const ro
 void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
 {
   // We need to make sure that all inserts are in-place and do not need to re-allocate
-  chunks_.reserve(chunk_infos_.size());
+  chunk_exts_.reserve(chunks_.size());
+  chunk_exts_lookup_.reserve(chunks_.size());
 
   // keep the position of the next chunk to determine the size of the index
   // record section.
   std::vector<uint64_t> index_end;
-  for (size_t i = 1; i < chunk_infos_.size(); ++i)
+  for (size_t i = 1; i < chunks_.size(); ++i)
   {
-    index_end.push_back(chunk_infos_[i].pos);
+    index_end.push_back(chunks_[i].pos);
   }
   index_end.push_back(index_data_pos_);
 
@@ -275,7 +278,7 @@ void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
     std::mutex sync;
     std::vector<std::function<void(void)>> work;
 
-    for (const auto& chunk_info : chunk_infos_)
+    for (const auto& chunk_info : chunks_)
     {
       const uint64_t next_chunk_pos_value = *next_chunk_pos;
       work.emplace_back([this, &sync, &reader, &chunk_info, next_chunk_pos_value]() {
@@ -289,18 +292,10 @@ void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
 
   // we add the index entries of every chunk to connection_indexes_ in the order the appear in the
   // bag file
-  for (const auto& chunk_info : chunk_infos_)
+  connection_indexes_.reserve(chunks_.size());
+  for (const auto& chunk_info : chunks_)
   {
-    const auto found_chunk =
-        std::find_if(chunks_.begin(), chunks_.end(), [&chunk_info](const rosbaz::bag_parsing::ChunkExt& chunk_ext) {
-          return &chunk_ext.chunk_info == &chunk_info;
-        });
-    if (found_chunk == chunks_.end())
-    {
-      std::stringstream msg;
-      msg << "No chunk found for chunk info with pos=" << chunk_info.pos << ".";
-      throw rosbaz::UnsupportedRosBagException(msg.str());
-    }
+    const auto& found_chunk = chunk_exts_lookup_.at(chunk_info.pos);
 
     for (const auto& index_entry_ext : found_chunk->index_entries)
     {
@@ -328,7 +323,7 @@ std::uint32_t Bag::getMessageCountForConnectionId(uint32_t id) const
 {
   std::uint32_t count = 0;
 
-  for (const auto& chunk_info : chunk_infos_)
+  for (const auto& chunk_info : chunks_)
   {
     if (chunk_info.connection_counts.count(id) != 0)
     {
@@ -343,7 +338,7 @@ ros::Time Bag::getBeginTime() const
 {
   ros::Time begin = ros::TIME_MAX;
 
-  for (const auto& chunk_info : chunk_infos_)
+  for (const auto& chunk_info : chunks_)
   {
     if (chunk_info.start_time < begin)
     {
@@ -358,7 +353,7 @@ ros::Time Bag::getEndTime() const
 {
   ros::Time end = ros::TIME_MIN;
 
-  for (const auto& chunk_info : chunk_infos_)
+  for (const auto& chunk_info : chunks_)
   {
     if (chunk_info.end_time > end)
     {

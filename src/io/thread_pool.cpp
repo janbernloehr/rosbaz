@@ -20,10 +20,11 @@ void process_async(std::mutex& sync, std::vector<std::function<void(void)>>& wor
   }
   else
   {
-    ROS_DEBUG_STREAM("Spawning " << max_threads << " threads to process " << work_items.size() << " work items");
+    const std::size_t num_threads = std::min(max_threads, work_items.size());
+    ROS_DEBUG_STREAM("Spawning " << num_threads << " threads to process " << work_items.size() << " work items");
 
     std::vector<std::future<void>> thread_pool;
-    for (size_t i = 0; i < max_threads; ++i)
+    for (size_t i = 0; i < num_threads; ++i)
     {
       thread_pool.emplace_back(std::async(std::launch::async, [&sync, &work_items]() {
         while (true)

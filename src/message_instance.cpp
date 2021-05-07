@@ -55,35 +55,14 @@ void MessageInstance::getOffsetAndSize(uint64_t& record_offset, uint32_t& record
 {
   assert(m_bag->chunk_indices_parsed_);
 
-  auto found_chunk = std::find_if(m_bag->chunks_.begin(), m_bag->chunks_.end(),
-                                  [this](const rosbaz::bag_parsing::ChunkExt& chunk_ext) {
-                                    return chunk_ext.chunk_info.pos == m_index_entry->chunk_pos;
-                                  });
+  const auto& found_chunk = m_bag->chunk_exts_lookup_.at(m_index_entry->chunk_pos);
+  const auto& found_size = found_chunk->message_records.at(m_index_entry->offset);
 
-  if (found_chunk == m_bag->chunks_.end())
-  {
-    std::stringstream msg;
-    msg << "Requested chunk at pos=" << m_index_entry->chunk_pos << " could not be found in index.";
-    throw rosbaz::InvalidBagIndexException(msg.str());
-  }
-
-  auto found_size = std::find_if(
-      found_chunk->message_records.begin(), found_chunk->message_records.end(),
-      [this](const rosbaz::bag_parsing::MessageRecordInfo& info) { return info.offset == m_index_entry->offset; });
-
-  if (found_size == found_chunk->message_records.end())
-  {
-    std::stringstream msg;
-    msg << "Requested message record with offset=" << m_index_entry->offset << " and chunk pos "
-        << m_index_entry->chunk_pos << " could not be found in index.";
-    throw rosbaz::InvalidBagIndexException(msg.str());
-  }
-
-  ROS_DEBUG_STREAM("chunk_pos: " << m_index_entry->chunk_pos << " offset: " << found_size->offset
-                                 << " size: " << found_size->data_size);
+  ROS_DEBUG_STREAM("chunk_pos: " << m_index_entry->chunk_pos << " offset: " << found_size.offset
+                                 << " size: " << found_size.data_size);
 
   record_offset = found_chunk->data_offset + m_index_entry->offset;
-  record_size = found_size->data_size;
+  record_size = found_size.data_size;
 }
 
 std::vector<rosbaz::io::byte> MessageInstance::read_subset(uint32_t offset, uint32_t size) const

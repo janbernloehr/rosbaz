@@ -7,7 +7,7 @@ endif()
 
 option(REGRESSION_TESTS "Build and execute regression tests" OFF)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(ROSBAZ_CXX_FLAGS
   -Wall
   -Wextra
@@ -95,27 +95,34 @@ if (CATKIN_ENABLE_TESTING)
 
   if (REGRESSION_TESTS)
     include(ExternalProject)
-    ExternalProject_Add(bag-file
-      URL               https://storage.googleapis.com/cartographer-public-data/bags/backpack_2d/b0-2014-07-11-10-58-16.bag
-      URL_HASH          MD5=7ed841ca72cb82adcf4a3fc6b85cac5a
-      DOWNLOAD_NO_EXTRACT TRUE
-      CONFIGURE_COMMAND ""
-      INSTALL_COMMAND   ""
-      DOWNLOAD_DIR      ${CMAKE_CURRENT_BINARY_DIR}
-      BUILD_COMMAND     rosbag decompress ${CMAKE_CURRENT_BINARY_DIR}/b0-2014-07-11-10-58-16.bag
-    )
+
+    set(bag_files "b0-2014-07-11-10-58-16" "b0-2014-07-21-12-42-53")
+    set(bag_hashes "7ed841ca72cb82adcf4a3fc6b85cac5a" "fb3b78206276c4f871bd7ac00437f7ca")
+
+    foreach(bag_file IN ZIP_LISTS bag_files bag_hashes)
+      ExternalProject_Add(bag-file-${bag_file_0}
+        URL               "https://storage.googleapis.com/cartographer-public-data/bags/backpack_2d/${bag_file_0}.bag"
+        URL_HASH          "MD5=${bag_file_1}"
+        DOWNLOAD_NO_EXTRACT TRUE
+        CONFIGURE_COMMAND ""
+        INSTALL_COMMAND   ""
+        DOWNLOAD_DIR      ${CMAKE_CURRENT_BINARY_DIR}
+        BUILD_COMMAND     ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${bag_file_0}.bag ${CMAKE_CURRENT_BINARY_DIR}/${bag_file_0}-decompressed.bag && ${CMAKE_COMMAND} -E rm -f ${CMAKE_CURRENT_BINARY_DIR}/${bag_file_0}-decompressed.orig.bag && rosbag decompress ${CMAKE_CURRENT_BINARY_DIR}/${bag_file_0}-decompressed.bag
+      )
+      list(APPEND bag-file-targets bag-file-${bag_file_0})
+    endforeach()
 
     file(GLOB _regression_test_sources CONFIGURE_DEPENDS "regression_test/test_*.cpp")
     catkin_add_gtest(regression_test_${PROJECT_NAME} ${_regression_test_sources})
     target_link_libraries(regression_test_${PROJECT_NAME} ${PROJECT_NAME} ${catkin_LIBRARIES} gtest_main)
 
-    add_dependencies(regression_test_${PROJECT_NAME} bag-file)
+    add_dependencies(regression_test_${PROJECT_NAME} ${bag-file-targets})
 
     find_package(benchmark QUIET)
     if (benchmark_FOUND)
       add_executable(regression_test_benchmark regression_test/benchmark.cpp)
       target_link_libraries(regression_test_benchmark PRIVATE ${PROJECT_NAME} ${catkin_LIBRARIES} benchmark::benchmark)
-      add_dependencies(regression_test_benchmark bag-file)
+      add_dependencies(regression_test_benchmark ${bag-file-targets})
     endif()
   endif()
 endif()

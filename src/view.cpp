@@ -41,16 +41,16 @@ void View::iterator::populate()
   assert(view_ != nullptr);
 
   iters_.clear();
-  for (const auto& range : view_->m_ranges)
+  for (const auto& range : view_->ranges_)
   {
-    if (range.begin != range.end)
+    if (range->begin != range->end)
     {
-      iters_.emplace_back(range.begin, range);
+      iters_.emplace_back(range->begin, *range);
     }
   }
 
   std::sort(iters_.begin(), iters_.end(), ViewIterHelperCompare());
-  view_revision_ = view_->m_view_revision;
+  view_revision_ = view_->view_revision_;
 }
 
 void View::iterator::populateSeek(std::multiset<rosbag::IndexEntry>::const_iterator iter)
@@ -58,12 +58,12 @@ void View::iterator::populateSeek(std::multiset<rosbag::IndexEntry>::const_itera
   assert(view_ != nullptr);
 
   iters_.clear();
-  for (const auto& range : view_->m_ranges)
+  for (const auto& range : view_->ranges_)
   {
-    auto start = std::lower_bound(range.begin, range.end, iter->time, rosbag::IndexEntryCompare());
-    if (start != range.end)
+    auto start = std::lower_bound(range->begin, range->end, iter->time, rosbag::IndexEntryCompare());
+    if (start != range->end)
     {
-      iters_.push_back(ViewIterHelper(start, range));
+      iters_.push_back(ViewIterHelper(start, *range));
     }
   }
 
@@ -73,7 +73,7 @@ void View::iterator::populateSeek(std::multiset<rosbag::IndexEntry>::const_itera
     increment();
   }
 
-  view_revision_ = view_->m_view_revision;
+  view_revision_ = view_->view_revision_;
 }
 
 bool View::iterator::equal(iterator const& other) const
@@ -101,7 +101,7 @@ void View::iterator::increment()
   // Note, updating may have blown away our message-ranges and
   // replaced them in general the ViewIterHelpers are no longer
   // valid, but the iterator it stores should still be good.
-  if (view_revision_ != view_->m_view_revision)
+  if (view_revision_ != view_->view_revision_)
   {
     populateSeek(iters_.back().iter);
   }
@@ -121,19 +121,9 @@ MessageInstance& View::iterator::dereference() const
   if (!message_instance_)
   {
     auto it = iters_.back();
-    message_instance_.reset(view_->newMessageInstance(*it.range->connection_info, *it.iter, it.range->bag_query->bag));
+    message_instance_.reset(view_->newMessageInstance(*it.range->connection_info, *it.iter, *it.range->bag_query->bag));
   }
   return *message_instance_;
-}
-
-bool ViewIterHelperCompare::operator()(ViewIterHelper const& a, ViewIterHelper const& b)
-{
-  return (a.iter)->time > (b.iter)->time;
-}
-
-ViewIterHelper::ViewIterHelper(std::multiset<rosbag::IndexEntry>::const_iterator _iter, const MessageRange& _range)
-  : iter(_iter), range(&_range)
-{
 }
 
 View::View(const Bag& bag, const ros::Time& start_time, const ros::Time& end_time)
@@ -150,9 +140,11 @@ View::View(const Bag& bag, std::function<bool(rosbag::ConnectionInfo const*)> qu
   addQuery(bag, query, start_time, end_time);
 }
 
+View::~View() = default;
+
 void View::updateQueries(BagQuery& q)
 {
-  const Bag& bag = q.bag;
+  const Bag& bag = *q.bag;
   for (const auto& connection_info : bag.connections_)
   {
     const rosbag::ConnectionInfo& connection = connection_info.second;
@@ -192,25 +184,25 @@ void View::updateQueries(BagQuery& q)
     {
       // todo: make faster with a map of maps
       bool found = false;
-      for (auto& range : m_ranges)
+      for (auto& range : ranges_)
       {
         // If the topic and query are already in our ranges, we update
-        if (range.bag_query == &q && range.connection_info->id == connection.id)
+        if (range->bag_query == &q && range->connection_info->id == connection.id)
         {
-          range.begin = begin;
-          range.end = end;
+          range->begin = begin;
+          range->end = end;
           found = true;
           break;
         }
       }
       if (!found)
       {
-        m_ranges.emplace_back(MessageRange{ begin, end, connection, q });
+        ranges_.emplace_back(std::make_unique<MessageRange>(begin, end, connection, q));
       }
     }
   }
 
-  m_view_revision++;
+  view_revision_++;
 }
 
 View::iterator View::begin()
@@ -228,19 +220,19 @@ size_t View::size()
 {
   update();
 
-  if (m_size_revision != m_view_revision)
+  if (size_revision_ != view_revision_)
   {
-    m_size_cache = 0;
+    size_cache_ = 0;
 
-    for (const auto& range : m_ranges)
+    for (const auto& range : ranges_)
     {
-      m_size_cache += rosbaz::io::narrow<uint32_t>(std::distance(range.begin, range.end));
+      size_cache_ += rosbaz::io::narrow<uint32_t>(std::distance(range->begin, range->end));
     }
 
-    m_size_revision = m_view_revision;
+    size_revision_ = view_revision_;
   }
 
-  return m_size_cache;
+  return size_cache_;
 }
 
 ros::Time View::getBeginTime()
@@ -249,11 +241,11 @@ ros::Time View::getBeginTime()
 
   ros::Time begin = ros::TIME_MAX;
 
-  for (const auto& range : m_ranges)
+  for (const auto& range : ranges_)
   {
-    if (range.begin->time < begin)
+    if (range->begin->time < begin)
     {
-      begin = range.begin->time;
+      begin = range->begin->time;
     }
   }
 
@@ -266,9 +258,9 @@ ros::Time View::getEndTime()
 
   ros::Time end = ros::TIME_MIN;
 
-  for (const auto& range : m_ranges)
+  for (const auto& range : ranges_)
   {
-    auto e = range.end;
+    auto e = range->end;
     e--;
 
     if (e->time > end)
@@ -282,13 +274,7 @@ ros::Time View::getEndTime()
 
 void View::addQuery(const Bag& bag, const ros::Time& start_time, const ros::Time& end_time)
 {
-  assert(bag.chunk_indices_parsed_);
-
-  boost::function<bool(rosbag::ConnectionInfo const*)> query = rosbag::View::TrueQuery();
-
-  m_queries.push_back(BagQuery(bag, rosbag::Query(query, start_time, end_time), bag.bag_revision_));
-
-  updateQueries(m_queries.back());
+  addQuery(bag, rosbag::View::TrueQuery(), start_time, end_time);
 }
 
 void View::addQuery(const Bag& bag, boost::function<bool(rosbag::ConnectionInfo const*)> query,
@@ -296,21 +282,21 @@ void View::addQuery(const Bag& bag, boost::function<bool(rosbag::ConnectionInfo 
 {
   assert(bag.chunk_indices_parsed_);
 
-  m_queries.push_back(BagQuery(bag, rosbag::Query(query, start_time, end_time), bag.bag_revision_));
+  queries_.emplace_back(std::make_unique<BagQuery>(bag, rosbag::Query(query, start_time, end_time), bag.bag_revision_));
 
-  updateQueries(m_queries.back());
+  updateQueries(*queries_.back());
 }
 
 void View::update()
 {
-  for (auto& query : m_queries)
+  for (auto& query : queries_)
   {
-    const Bag& query_bag = query.bag;
+    const Bag& query_bag = *query->bag;
 
-    if (query_bag.bag_revision_ != query.bag_revision)
+    if (query_bag.bag_revision_ != query->bag_revision)
     {
-      updateQueries(query);
-      query.bag_revision = query_bag.bag_revision_;
+      updateQueries(*query);
+      query->bag_revision = query_bag.bag_revision_;
     }
   }
 }
@@ -318,21 +304,14 @@ void View::update()
 std::vector<const rosbag::ConnectionInfo*> View::getConnections() const
 {
   std::vector<const rosbag::ConnectionInfo*> connections;
-  connections.reserve(m_ranges.size());
+  connections.reserve(ranges_.size());
 
-  for (const auto& range : m_ranges)
+  for (const auto& range : ranges_)
   {
-    connections.push_back(range.connection_info);
+    connections.push_back(range->connection_info);
   }
 
   return connections;
-}
-
-MessageRange::MessageRange(std::multiset<rosbag::IndexEntry>::const_iterator _begin,
-                           std::multiset<rosbag::IndexEntry>::const_iterator _end,
-                           const rosbag::ConnectionInfo& _connection_info, const BagQuery& _bag_query)
-  : begin(_begin), end(_end), connection_info(&_connection_info), bag_query(&_bag_query)
-{
 }
 
 MessageInstance* View::newMessageInstance(const rosbag::ConnectionInfo& connection_info,

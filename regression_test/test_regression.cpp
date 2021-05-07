@@ -81,4 +81,58 @@ TEST_P(RegressionTests, equal_messages)
   }
 }
 
-INSTANTIATE_TEST_CASE_P(RegressionTestSuite, RegressionTests, testing::Values("b0-2014-07-11-10-58-16.bag"));
+INSTANTIATE_TEST_CASE_P(RegressionTestSuite, RegressionTests,
+                        testing::Values("b0-2014-07-11-10-58-16-decompressed.bag"));
+
+class TwoFileRegressionTests : public ::testing::TestWithParam<std::tuple<const char*, const char*>>
+{
+public:
+  TwoFileRegressionTests()
+    : baz0{ rosbaz::Bag::read(rosbaz::io::StreamReader::open(std::get<0>(GetParam()))) }
+    , baz1{ rosbaz::Bag::read(rosbaz::io::StreamReader::open(std::get<1>(GetParam()))) }
+    , bag0{ std::get<0>(GetParam()) }
+    , bag1{ std::get<1>(GetParam()) }
+  {
+  }
+
+  rosbaz::Bag baz0;
+  rosbaz::Bag baz1;
+  rosbag::Bag bag0;
+  rosbag::Bag bag1;
+};
+
+TEST_P(TwoFileRegressionTests, two_bags)
+{
+  const std::string topic_name = "imu";
+
+  rosbaz::View baz_view{ baz0, rosbag::TopicQuery(topic_name) };
+  baz_view.addQuery(baz1, rosbag::TopicQuery(topic_name));
+  rosbag::View bag_view{ bag0, rosbag::TopicQuery(topic_name) };
+  bag_view.addQuery(bag1, rosbag::TopicQuery(topic_name));
+
+  ASSERT_EQ(baz_view.size(), bag_view.size());
+
+  for (size_t i = 0; i < baz_view.size(); ++i)
+  {
+    auto baz_m = baz_view.begin();
+    std::advance(baz_m, i);
+    auto baz_message = baz_m->instantiate<sensor_msgs::Imu>();
+
+    auto bag_m = bag_view.begin();
+    std::advance(bag_m, i);
+    auto bag_message = bag_m->instantiate<sensor_msgs::Imu>();
+
+    EXPECT_EQ(bag_m->getTime(), baz_m->getTime());
+    EXPECT_EQ(bag_m->getTopic(), baz_m->getTopic());
+    EXPECT_EQ(bag_m->getDataType(), baz_m->getDataType());
+    EXPECT_EQ(bag_m->getMD5Sum(), baz_m->getMD5Sum());
+    EXPECT_EQ(bag_m->getMessageDefinition(), baz_m->getMessageDefinition());
+
+    EXPECT_EQ(bag_message->header.seq, baz_message->header.seq);
+  }
+}
+
+INSTANTIATE_TEST_CASE_P(TwoFileRegressionTestSuite, TwoFileRegressionTests,
+                        testing::Values(std::make_tuple("b0-2014-07-11-10-58-16-decompressed.bag", "b0-2014-07-21-12-"
+                                                                                                   "42-53-decompressed."
+                                                                                                   "bag")));

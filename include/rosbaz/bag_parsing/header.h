@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <sstream>
-#include <unordered_map>
+#include <map>
 
 #include "rosbaz/common.h"
 #include "rosbaz/exceptions.h"
@@ -18,7 +18,8 @@ namespace bag_parsing
 struct Header
 {
   std::uint8_t op{ 0 };
-  std::unordered_map<std::string, rosbaz::DataSpan> fields{};
+  // in this scenario, a map is faster than an unordered map
+  std::map<std::string, rosbaz::DataSpan> fields{};
 
   template <class T>
   T read_field_little_endian(const std::string& field_name) const
