@@ -81,7 +81,8 @@ TEST_P(RegressionTests, equal_messages)
   }
 }
 
-INSTANTIATE_TEST_CASE_P(RegressionTestSuite, RegressionTests, testing::Values("b0-2014-07-11-10-58-16.bag"));
+INSTANTIATE_TEST_CASE_P(RegressionTestSuite, RegressionTests,
+                        testing::Values("b0-2014-07-11-10-58-16-decompressed.bag"));
 
 class TwoFileRegressionTests : public ::testing::TestWithParam<std::tuple<const char*, const char*>>
 {
@@ -105,9 +106,9 @@ TEST_P(TwoFileRegressionTests, two_bags)
   const std::string topic_name = "imu";
 
   rosbaz::View baz_view{ baz0, rosbag::TopicQuery(topic_name) };
-  baz_view.addQuery(baz1, rosbag::TopicQuery(topic_name) );
+  baz_view.addQuery(baz1, rosbag::TopicQuery(topic_name));
   rosbag::View bag_view{ bag0, rosbag::TopicQuery(topic_name) };
-  bag_view.addQuery(bag1, rosbag::TopicQuery(topic_name) );
+  bag_view.addQuery(bag1, rosbag::TopicQuery(topic_name));
 
   ASSERT_EQ(baz_view.size(), bag_view.size());
 
@@ -132,4 +133,6 @@ TEST_P(TwoFileRegressionTests, two_bags)
 }
 
 INSTANTIATE_TEST_CASE_P(TwoFileRegressionTestSuite, TwoFileRegressionTests,
-                        testing::Values(std::make_tuple("b0-2014-07-11-10-58-16.bag", "b0-2014-07-21-12-42-53.bag")));
+                        testing::Values(std::make_tuple("b0-2014-07-11-10-58-16-decompressed.bag", "b0-2014-07-21-12-"
+                                                                                                   "42-53-decompressed."
+                                                                                                   "bag")));
