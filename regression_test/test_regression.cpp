@@ -81,6 +81,29 @@ TEST_P(RegressionTests, equal_messages)
   }
 }
 
+TEST_P(RegressionTests, instantiate_subset)
+{
+  const std::string topic_name = "imu";
+
+  rosbaz::View baz_view{ baz, rosbag::TopicQuery(topic_name) };
+
+  auto baz_m = baz_view.begin();
+  auto baz_message = baz_m->instantiate<sensor_msgs::Imu>();
+
+  auto header = baz_m->instantiate_subset<std_msgs::Header>(0, 4 + 4 + 4 + 4 + 8);
+
+  ASSERT_EQ(baz_message->header.frame_id, header->frame_id);
+  ASSERT_EQ(baz_message->header.seq, header->seq);
+  ASSERT_EQ(baz_message->header.stamp, header->stamp);
+
+  auto quaternion = baz_m->instantiate_subset<geometry_msgs::Quaternion>(4 + 4 + 4 + 4 + 8, 4 * 8);
+
+  ASSERT_EQ(baz_message->orientation.x, quaternion->x);
+  ASSERT_EQ(baz_message->orientation.y, quaternion->y);
+  ASSERT_EQ(baz_message->orientation.z, quaternion->z);
+  ASSERT_EQ(baz_message->orientation.w, quaternion->w);
+}
+
 INSTANTIATE_TEST_CASE_P(RegressionTestSuite, RegressionTests,
                         testing::Values("b0-2014-07-11-10-58-16-decompressed.bag"));
 
