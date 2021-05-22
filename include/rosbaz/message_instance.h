@@ -200,6 +200,8 @@ boost::shared_ptr<T> MessageInstance::instantiate_subset(uint32_t offset, uint32
   ros::serialization::IStream s(const_cast<uint8_t*>(&(*subset_buffer.begin())),
                                 static_cast<uint32_t>(subset_buffer.size()));
   ros::serialization::deserialize(s, *ptr);
+
+  return ptr;
 }
 
 template <typename Stream>
