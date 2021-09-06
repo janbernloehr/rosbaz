@@ -67,6 +67,12 @@ AzReader::AzReader(const AzBlobUrl& blob_url, const std::string& account_key, co
   client_ = std::make_shared<azure::storage_lite::blob_client>(account, connection_count);
 }
 
+std::string AzReader::filepath()
+{
+  return client_->account()->get_url(azure::storage_lite::storage_account::service::blob).to_string() + "/" +
+         container_ + "/" + blob_;
+}
+
 size_t AzReader::size()
 {
   auto ret = client_->get_blob_properties(container_, blob_).get();

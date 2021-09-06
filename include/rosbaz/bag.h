@@ -19,6 +19,27 @@ namespace io
 class IReader;
 }  // namespace io
 
+namespace compression
+{
+enum CompressionType
+{
+  Uncompressed = 0,
+  BZ2 = 1,
+};
+}  // namespace compression
+using CompressionType = compression::CompressionType;
+
+namespace bagmode
+{
+enum BagMode
+{
+  Write = 1,
+  Read = 2,
+  Append = 4
+};
+}  // namespace bagmode
+using BagMode = bagmode::BagMode;
+
 /// Implements a subset of the functionality provided by rosbag::Bag offloading
 /// the actual data reading to an implementation of rosbaz::io::IReader provided
 /// by the user.
@@ -35,14 +56,29 @@ public:
 
   std::uint32_t getMessageCountForConnectionId(uint32_t id) const;
 
-  std::uint64_t getSize() const
-  {
-    return file_size_;
-  }
-  std::uint32_t getChunkCount() const
-  {
-    return chunk_count_;
-  }
+  /// Get the filepath of the bag.
+  std::string getFilePath() const;
+
+  /// Get the mode the bag is in.
+  BagMode getMode() const;
+
+  /// Get the major-version of the open bag file.
+  uint32_t getMajorVersion() const;
+
+  /// Get the minor-version of the open bag file.
+  uint32_t getMinorVersion() const;
+
+  /// Get the current size of the bag file (a lower bound)
+  std::uint64_t getSize() const;
+
+  /// Get the total number of chunks in the bag file.
+  std::uint32_t getChunkCount() const;
+
+  /// Get the threshold for creating new chunks.
+  uint32_t getChunkThreshold() const;
+
+  /// Get the compression method to use for writing chunks.
+  CompressionType getCompression() const;
 
   ros::Time getBeginTime() const;
   ros::Time getEndTime() const;

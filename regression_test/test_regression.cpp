@@ -24,6 +24,15 @@ public:
   rosbag::Bag bag;
 };
 
+TEST_P(RegressionTests, equal_properties)
+{
+  ASSERT_EQ(baz.getFilePath(), bag.getFileName());
+  ASSERT_EQ(baz.getSize(), bag.getSize());
+  ASSERT_EQ(baz.getMode(), bag.getMode());
+  ASSERT_EQ(baz.getMajorVersion(), bag.getMajorVersion());
+  ASSERT_EQ(baz.getMinorVersion(), bag.getMinorVersion());
+}
+
 TEST_P(RegressionTests, equal_topics)
 {
   rosbaz::View baz_view{ baz };

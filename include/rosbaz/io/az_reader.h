@@ -26,6 +26,8 @@ public:
 
   size_t size() override;
 
+  std::string filepath() override;
+
   std::int32_t num_requests() const
   {
     return num_requests_;
