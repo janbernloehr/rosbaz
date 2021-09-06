@@ -17,6 +17,7 @@
 #include "rosbaz/io/az_reader.h"
 #include "rosbaz/io/stream_reader.h"
 #include "rosbaz/view.h"
+#include "rosbaz/bag_statistics.h"
 
 namespace container
 {
@@ -41,6 +42,8 @@ struct CommonOptions
 struct InfoOptions
 {
   std::string file_or_blob_url{};
+
+  bool topic_message_frequency_statistics = false;
 };
 
 struct PlayOptions
@@ -71,65 +74,71 @@ void print_bag(const rosbaz::Bag& bag)
   auto end_time = bag.getEndTime();
   auto duration = end_time - start_time;
 
+  std::cout << "path:     " << bag.getFilePath() << "\n";
+  std::cout << "version:  " << bag.getMajorVersion() << "." << bag.getMinorVersion() << "\n";
   std::cout << "duration: " << duration.toSec() << "s\n";
   std::cout << "start:    " << start_time.sec << "." << start_time.nsec << "\n";
   std::cout << "end:      " << end_time.sec << "." << end_time.nsec << "\n";
   std::cout << "size:     " << static_cast<float>(bag.getSize()) / 1024.f / 1024.f / 1024.f << " GB\n";
 
   std::map<uint32_t, uint32_t> total_connection_counts;
+  std::map<uint32_t, boost::optional<double>> connection_frequencies;
 
-  uint32_t message_count = 0;
+  rosbaz::BagSatistics stats{ bag };
 
-  for (const auto* connection_info : bag.getConnections())
-  {
-    const uint32_t count = bag.getMessageCountForConnectionId(connection_info->id);
-    total_connection_counts[connection_info->id] = count;
-    message_count += count;
-  }
-
-  std::cout << "messages: " << message_count << "\n";
+  std::cout << "messages: " << stats.getTotalMessageCount() << "\n";
   std::cout << "chunks:   " << bag.getChunkCount() << "\n";
 
-  std::cout << "types:";
-  size_t max_type_name_length = 0;
-  std::string prefix = "    ";
+  const auto msg_type_infos = stats.getMessageTypeInfos();
+  const auto max_datatype =
+      std::max_element(msg_type_infos.begin(), msg_type_infos.end(),
+                       [](const auto& a, const auto& b) { return a.datatype.size() < b.datatype.size(); });
 
-  std::map<std::string, std::string> data_type_2_md5;
-  for (const auto* connection_info : bag.getConnections())
+  boost::format type_fmt("%s %-" + std::to_string(max_datatype->datatype.size()) + "s [%s]\n");
+
+  std::string prefix = "types:   ";
+  for (const auto& msg_type_info : msg_type_infos)
   {
-    max_type_name_length = std::max(max_type_name_length, connection_info->datatype.size());
-    data_type_2_md5[connection_info->datatype] = connection_info->md5sum;
+    std::cout << boost::str(type_fmt % prefix % msg_type_info.datatype % msg_type_info.md5sum);
+    prefix = "         ";
   }
 
-  for (const auto& data_type_md5 : data_type_2_md5)
+  const auto topic_infos = stats.getMessageTopicInfos();
+  const auto max_topic_it = std::max_element(topic_infos.begin(), topic_infos.end(),
+                                          [](const auto& a, const auto& b) { return a.topic.size() < b.topic.size(); });
+  const auto max_msgs_it = std::max_element(topic_infos.begin(), topic_infos.end(),
+                                         [](const auto& a, const auto& b) { return a.num_messages < b.num_messages; });
+  const auto max_freq_it = std::max_element(topic_infos.begin(), topic_infos.end(),
+                                         [](const auto& a, const auto& b) { return (a.frequency && b.frequency) && a.frequency < b.frequency; });
+
+  const size_t max_topic = max_topic_it != topic_infos.end() ? max_topic_it->topic.size() : 0;
+  const size_t max_msgs = max_msgs_it != topic_infos.end() ? max_msgs_it->num_messages : 0;
+  const size_t max_freq = max_freq_it != topic_infos.end() ? static_cast<size_t>(max_freq_it->frequency.value_or(0.)) : 0;
+
+  std::string topic_fmt_string = "%s %-" + std::to_string(max_topic) + "s  %" +
+                                 std::to_string(std::to_string(max_msgs).size()) +
+                                 "s msgs @ %" + std::to_string(std::to_string(max_freq).size() + 2) + ".1f %s : %s\n";
+  std::string topic_fmt_no_freq_string = "%s %-" + std::to_string(max_topic) + "s  %" +
+                                         std::to_string(std::to_string(max_msgs).size()) +
+                                         "s msgs    : %s\n";
+
+  boost::format topic_fmt(topic_fmt_string);
+  boost::format topic_fmt_no_freq(topic_fmt_no_freq_string);
+
+  prefix = "topics:  ";
+  for (const auto& topic_info : topic_infos)
   {
-    std::string padded_name = data_type_md5.first;
-    padded_name.append(max_type_name_length - padded_name.size(), ' ');
-    std::cout << prefix << padded_name << " [" << data_type_md5.second << "]\n";
-    prefix = "          ";
-  }
-
-  std::cout << "topics:";
-  size_t max_topic_name_length = 0;
-
-  std::map<std::string, std::tuple<std::uint32_t, std::string>> topic_2_count_and_type;
-  for (const auto* connection_info : bag.getConnections())
-  {
-    max_topic_name_length = std::max(max_topic_name_length, connection_info->topic.size());
-    topic_2_count_and_type[connection_info->topic] =
-        std::make_tuple(total_connection_counts[connection_info->id], connection_info->datatype);
-  }
-
-  prefix = "   ";
-
-  for (const auto& topic_count_type : topic_2_count_and_type)
-  {
-    std::string padded_name = topic_count_type.first;
-    padded_name.append(max_topic_name_length - padded_name.size(), ' ');
-    std::cout << prefix << padded_name << " " << std::get<0>(topic_count_type.second)
-              << " msgs   : " << std::get<1>(topic_count_type.second) << "\n";
-
-    prefix = "          ";
+    if (topic_info.frequency)
+    {
+      std::cout << boost::str(topic_fmt % prefix % topic_info.topic % topic_info.num_messages % *topic_info.frequency % "hz" %
+                              topic_info.datatype);
+    }
+    else
+    {
+      std::cout << boost::str(topic_fmt_no_freq % prefix % topic_info.topic % topic_info.num_messages %
+                              topic_info.datatype);
+    }
+    prefix = "         ";
   }
 }
 
@@ -161,7 +170,7 @@ std::shared_ptr<rosbaz::io::IReader> create_reader(const std::string& path_or_ur
 void info_command(const CommonOptions& common_options, const InfoOptions& info_options)
 {
   auto az_reader = create_reader(info_options.file_or_blob_url, common_options.account_key, common_options.token);
-  auto az_bag = rosbaz::Bag::read(az_reader, false);
+  auto az_bag = rosbaz::Bag::read(az_reader, info_options.topic_message_frequency_statistics);
   print_bag(az_bag);
 
   if (common_options.print_transfer_stats)
@@ -301,6 +310,8 @@ int main(int argc, char** argv)
   info->add_option("file_or_blob_url", info_options.file_or_blob_url,
                    "Either a path to a file or a blob url (may including SAS token)")
       ->required();
+  info->add_flag("--freq", info_options.topic_message_frequency_statistics,
+                 "display topic message frequency statistics");
 
   PlayOptions play_options;
   CLI::App* play = app.add_subcommand("play", "Play the contents of one bag file.")->fallthrough();

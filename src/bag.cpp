@@ -319,21 +319,6 @@ std::vector<const rosbag::ConnectionInfo*> Bag::getConnections() const
   return result;
 }
 
-std::uint32_t Bag::getMessageCountForConnectionId(uint32_t id) const
-{
-  std::uint32_t count = 0;
-
-  for (const auto& chunk_info : chunks_)
-  {
-    if (chunk_info.connection_counts.count(id) != 0)
-    {
-      count += chunk_info.connection_counts.at(id);
-    }
-  }
-
-  return count;
-}
-
 ros::Time Bag::getBeginTime() const
 {
   ros::Time begin = ros::TIME_MAX;
