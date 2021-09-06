@@ -29,6 +29,15 @@ set(ROSBAZ_CXX_FLAGS
   -Woverloaded-virtual
   -Wpedantic
   -Wconversion
+  -Wdouble-promotion
+  -Wlogical-op
+  -Wformat=2
+  -Wuseless-cast
+  -Wnull-dereference
+  -Wduplicated-cond
+  -Wno-noexcept-type
+  -Wno-misleading-indentation
+  -Werror=return-type
   # Google style does not use unsigned integers though STL containers
   # have unsigned types.
   -Wno-sign-compare

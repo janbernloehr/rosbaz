@@ -62,7 +62,7 @@ Bag Bag::read(std::shared_ptr<rosbaz::io::IReader> reader, bool read_chunk_indic
     throw RosBagUnindexedException(msg.str());
   }
 
-  const size_t reminder_size = static_cast<size_t>(bag.file_size_ - bag.index_data_pos_);
+  const size_t reminder_size = bag.file_size_ - bag.index_data_pos_;
 
   const auto bag_tail = reader->read(bag.index_data_pos_, reminder_size);
   bag.parseFileTail(bag_tail);
@@ -207,8 +207,7 @@ void Bag::parseIndexSection(rosbaz::bag_parsing::ChunkExt& chunk_ext, rosbaz::Da
 
   for (size_t i = 0; i < offsets.size() - 1; ++i)
   {
-    record_sizes.emplace(offsets[i], rosbaz::bag_parsing::MessageRecordInfo{
-                                         offsets[i], static_cast<uint32_t>(offsets[i + 1] - offsets[i]) });
+    record_sizes.emplace(offsets[i], rosbaz::bag_parsing::MessageRecordInfo{ offsets[i], offsets[i + 1] - offsets[i] });
   }
 
   record_sizes.emplace(offsets.back(), rosbaz::bag_parsing::MessageRecordInfo{
