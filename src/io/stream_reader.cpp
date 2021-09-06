@@ -18,10 +18,10 @@ std::unique_ptr<IReader> StreamReader::open(const std::string& file_path)
     throw rosbaz::IoException("Error opening file: " + file_path);
   }
 
-  return std::unique_ptr<rosbaz::io::IReader>{ new rosbaz::io::StreamReader{ std::move(ifs) } };
+  return std::unique_ptr<rosbaz::io::IReader>{ new rosbaz::io::StreamReader{ std::move(ifs), file_path } };
 }
 
-StreamReader::StreamReader(rosbaz::io::RosStream source) : m_source(std::move(source))
+StreamReader::StreamReader(rosbaz::io::RosStream source, const std::string& filepath) : m_source(std::move(source)), m_filepath(filepath)
 {
 }
 
@@ -30,6 +30,11 @@ size_t StreamReader::size()
   std::lock_guard<std::mutex> lock_guard(m_mutex);
   m_source.seekg(0, rosbaz::io::RosStream::end);
   return rosbaz::io::narrow<size_t>(m_source.tellg());
+}
+
+std::string StreamReader::filepath()
+{
+  return m_filepath;
 }
 
 void StreamReader::read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t count)

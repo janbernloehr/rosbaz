@@ -30,6 +30,8 @@ public:
 
   virtual size_t size() = 0;
 
+  virtual std::string filepath() = 0;
+
   std::vector<rosbaz::io::byte> read(size_t offset, size_t count);
 
   template <size_t N>

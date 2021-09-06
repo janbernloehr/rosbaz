@@ -207,12 +207,13 @@ void Bag::parseIndexSection(rosbaz::bag_parsing::ChunkExt& chunk_ext, rosbaz::Da
 
   for (size_t i = 0; i < offsets.size() - 1; ++i)
   {
-    record_sizes.emplace(offsets[i],
-        rosbaz::bag_parsing::MessageRecordInfo{ offsets[i], static_cast<uint32_t>(offsets[i + 1] - offsets[i]) });
+    record_sizes.emplace(offsets[i], rosbaz::bag_parsing::MessageRecordInfo{
+                                         offsets[i], static_cast<uint32_t>(offsets[i + 1] - offsets[i]) });
   }
 
   record_sizes.emplace(offsets.back(), rosbaz::bag_parsing::MessageRecordInfo{
-      offsets.back(), static_cast<uint32_t>(index_offset - offsets.back() - chunk_ext.chunk_info.pos) });
+                                           offsets.back(), static_cast<uint32_t>(index_offset - offsets.back() -
+                                                                                 chunk_ext.chunk_info.pos) });
 }
 
 void Bag::parseChunkInfo(std::mutex& sync, rosbaz::io::IReader& reader, const rosbag::ChunkInfo& chunk_info,
@@ -240,8 +241,8 @@ void Bag::parseChunkInfo(std::mutex& sync, rosbaz::io::IReader& reader, const ro
 
   {
     std::lock_guard<std::mutex> guard(sync);
-    chunk_exts_.emplace_back(chunk_info, chunk_header, data_offset, chunk_header_buffer_and_size.data_size, index_offset,
-                         static_cast<uint32_t>(next_chunk_pos - index_offset));
+    chunk_exts_.emplace_back(chunk_info, chunk_header, data_offset, chunk_header_buffer_and_size.data_size,
+                             index_offset, static_cast<uint32_t>(next_chunk_pos - index_offset));
 
     // this only works since we reserved chunk_exts_ to the correct size so that no reallocation occurs
     chunk_ext = &chunk_exts_.back();
@@ -362,6 +363,46 @@ ros::Time Bag::getEndTime() const
   }
 
   return end;
+}
+
+std::uint64_t Bag::getSize() const
+{
+  return file_size_;
+}
+
+std::uint32_t Bag::getChunkCount() const
+{
+  return chunk_count_;
+}
+
+uint32_t Bag::getChunkThreshold() const
+{
+  return 0;
+}
+
+CompressionType Bag::getCompression() const
+{
+  return CompressionType::Uncompressed;
+}
+
+std::string Bag::getFilePath() const
+{
+  return reader_->filepath();
+}
+
+uint32_t Bag::getMajorVersion() const
+{
+  return 2;
+}
+
+uint32_t Bag::getMinorVersion() const
+{
+  return 0;
+}
+
+BagMode Bag::getMode() const
+{
+  return BagMode::Read;
 }
 
 }  // namespace rosbaz
