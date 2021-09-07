@@ -42,17 +42,17 @@ boost::optional<double> BagSatistics::getMessageFrequencyForConnectionId(uint32_
     return {};
   }
 
-  boost::optional<double> last_time;
+  boost::optional<ros::Time> last_time;
   boost::accumulators::accumulator_set<double, boost::accumulators::features<boost::accumulators::tag::median>> acc;
 
   for (const auto& entry : indexes)
   {
     if (last_time)
     {
-      acc(entry.time.toSec() - *last_time);
+      acc((entry.time - *last_time).toSec());
     }
 
-    last_time = entry.time.toSec();
+    last_time = entry.time;
   }
 
   const double median_period = boost::accumulators::median(acc);
