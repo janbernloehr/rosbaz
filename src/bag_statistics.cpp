@@ -74,7 +74,7 @@ std::set<BagMessageTypeInfo> BagStatistics::getMessageTypeInfos()
     result.emplace(BagMessageTypeInfo{ connection_info->datatype, connection_info->md5sum });
   }
 
-  //   std::sort(result.begin(), result.end());
+  std::sort(result.begin(), result.end());
 
   return result;
 }
