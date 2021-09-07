@@ -15,4 +15,7 @@ struct AzBlobUrl
 
   static AzBlobUrl parse(const std::string& url);
 };
+
+bool is_url(const std::string& path);
+
 }  // namespace rosbaz

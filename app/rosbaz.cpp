@@ -12,12 +12,13 @@
 #include "terminal/pausable_context.h"
 #include "terminal/progress_bar.h"
 
+#include "rosbaz/app/bag_printer.h"
+#include "rosbaz/app/options.h"
 #include "rosbaz/bag.h"
 #include "rosbaz/blob_url.h"
 #include "rosbaz/io/az_reader.h"
 #include "rosbaz/io/stream_reader.h"
 #include "rosbaz/view.h"
-#include "rosbaz/bag_statistics.h"
 
 namespace container
 {
@@ -31,165 +32,16 @@ inline std::istream& operator>>(std::istream& stream, boost::optional<T>& option
 
 }  // namespace container
 
-struct CommonOptions
-{
-  std::string account_key{};
-  std::string token{};
-
-  bool print_transfer_stats{ false };
-};
-
-struct InfoOptions
-{
-  std::string file_or_blob_url{};
-
-  bool topic_message_frequency_statistics = false;
-  bool yaml_output = false;
-};
-
-struct PlayOptions
-{
-  std::string file_or_blob_url{};
-
-  boost::optional<float> start_offset{};
-  boost::optional<float> duration{};
-
-  bool loop = false;
-  bool start_paused = false;
-  bool is_quiet = false;
-};
-
 namespace
 {
-std::regex is_url_rgx("^(https*)://");
-
-bool is_url(const std::string& path_or_url)
-{
-  std::smatch matches;
-  return std::regex_search(path_or_url, matches, is_url_rgx);
-}
-
 void print_bag(const rosbaz::Bag& bag)
 {
-  auto start_time = bag.getBeginTime();
-  auto end_time = bag.getEndTime();
-  auto duration = end_time - start_time;
-
-  std::cout << "path:     " << bag.getFilePath() << "\n";
-  std::cout << "version:  " << bag.getMajorVersion() << "." << bag.getMinorVersion() << "\n";
-  std::cout << "duration: " << duration.toSec() << "s\n";
-  std::cout << "start:    " << start_time.toSec() << "\n";
-  std::cout << "end:      " << end_time.toSec() << "\n";
-  std::cout << "size:     " << static_cast<float>(bag.getSize()) / 1024.f / 1024.f / 1024.f << " GB\n";
-
-  rosbaz::BagStatistics stats{ bag };
-
-  std::cout << "messages: " << stats.getTotalMessageCount() << "\n";
-  std::cout << "chunks:   " << bag.getChunkCount() << "\n";
-
-  const auto msg_type_infos = stats.getMessageTypeInfos();
-  const auto max_datatype =
-      std::max_element(msg_type_infos.begin(), msg_type_infos.end(),
-                       [](const auto& a, const auto& b) { return a.datatype.size() < b.datatype.size(); });
-
-  boost::format type_fmt("%s %-" + std::to_string(max_datatype->datatype.size()) + "s [%s]\n");
-
-  std::string prefix = "types:   ";
-  for (const auto& msg_type_info : msg_type_infos)
-  {
-    std::cout << boost::str(type_fmt % prefix % msg_type_info.datatype % msg_type_info.md5sum);
-    prefix = "         ";
-  }
-
-  const auto topic_infos = stats.getMessageTopicInfos();
-  const auto max_topic_it = std::max_element(topic_infos.begin(), topic_infos.end(), [](const auto& a, const auto& b) {
-    return a.topic.size() < b.topic.size();
-  });
-  const auto max_msgs_it = std::max_element(topic_infos.begin(), topic_infos.end(), [](const auto& a, const auto& b) {
-    return a.num_messages < b.num_messages;
-  });
-  const auto max_freq_it = std::max_element(topic_infos.begin(), topic_infos.end(), [](const auto& a, const auto& b) {
-    return a.frequency.value_or(-1.) < b.frequency.value_or(-1.);
-  });
-
-  const size_t max_topic = max_topic_it != topic_infos.end() ? max_topic_it->topic.size() : 0;
-  const size_t max_msgs = max_msgs_it != topic_infos.end() ? max_msgs_it->num_messages : 0;
-  const double max_freq = max_freq_it != topic_infos.end() ? max_freq_it->frequency.value_or(0.) : 0.;
-
-  std::string topic_fmt_string = "%s %-" + std::to_string(max_topic) + "s  %" +
-                                 std::to_string(std::to_string(max_msgs).size()) + "s msgs @ %" +
-                                 std::to_string((boost::format("%.1f") % max_freq).size()) + ".1f %s : %s\n";
-  std::string topic_fmt_no_freq_string = "%s %-" + std::to_string(max_topic) + "s  %" +
-                                         std::to_string(std::to_string(max_msgs).size()) + "s msgs    : %s\n";
-
-  boost::format topic_fmt(topic_fmt_string);
-  boost::format topic_fmt_no_freq(topic_fmt_no_freq_string);
-
-  prefix = "topics:  ";
-  for (const auto& topic_info : topic_infos)
-  {
-    if (topic_info.frequency)
-    {
-      std::cout << boost::str(topic_fmt % prefix % topic_info.topic % topic_info.num_messages % *topic_info.frequency %
-                              "hz" % topic_info.datatype);
-    }
-    else
-    {
-      std::cout << boost::str(topic_fmt_no_freq % prefix % topic_info.topic % topic_info.num_messages %
-                              topic_info.datatype);
-    }
-    prefix = "         ";
-  }
+  rosbaz::app::write_bag_human_friendly(bag, std::cout);
 }
 
 void print_bag_yaml(const rosbaz::Bag& bag)
 {
-  auto start_time = bag.getBeginTime();
-  auto end_time = bag.getEndTime();
-  auto duration = end_time - start_time;
-
-  std::cout << "path: " << bag.getFilePath() << "\n";
-  std::cout << "version: " << bag.getMajorVersion() << "." << bag.getMinorVersion() << "\n";
-  std::cout << "duration: " << duration.toSec() << "\n";
-  std::cout << "start: " << start_time.toSec() << "\n";
-  std::cout << "end: " << end_time.toSec() << "\n";
-  std::cout << "size: " << bag.getSize() << "\n";
-
-  rosbaz::BagStatistics stats{ bag };
-
-  std::cout << "messages: " << stats.getTotalMessageCount() << "\n";
-  std::cout << "indexed: "
-            << "True"
-            << "\n";
-  std::cout << "compression: "
-            << "none"
-            << "\n";
-
-  std::cout << "types:\n";
-
-  const auto msg_type_infos = stats.getMessageTypeInfos();
-
-  for (const auto& msg_type_info : msg_type_infos)
-  {
-    std::cout << "    - type: " << msg_type_info.datatype << "\n";
-    std::cout << "      md5: " << msg_type_info.md5sum << "\n";
-  }
-
-  std::cout << "topics:\n";
-
-  const auto topic_infos = stats.getMessageTopicInfos();
-
-  for (const auto& topic_info : topic_infos)
-  {
-    std::cout << "    - topic: " << topic_info.topic << "\n";
-    std::cout << "      type: " << topic_info.datatype << "\n";
-    std::cout << "      messages: " << topic_info.num_messages << "\n";
-
-    if (topic_info.frequency)
-    {
-      std::cout << "      frequency: " << *topic_info.frequency << "\n";
-    }
-  }
+  rosbaz::app::write_bag_yaml(bag, std::cout);
 }
 
 void print_transfer_stats(const rosbaz::io::IReader& reader)
@@ -205,7 +57,7 @@ void print_transfer_stats(const rosbaz::io::IReader& reader)
 std::shared_ptr<rosbaz::io::IReader> create_reader(const std::string& path_or_url, const std::string& account_key,
                                                    const std::string& token)
 {
-  if (is_url(path_or_url))
+  if (rosbaz::is_url(path_or_url))
   {
     auto url = rosbaz::AzBlobUrl::parse(path_or_url);
 
@@ -217,7 +69,7 @@ std::shared_ptr<rosbaz::io::IReader> create_reader(const std::string& path_or_ur
   }
 }
 
-void info_command(const CommonOptions& common_options, const InfoOptions& info_options)
+void info_command(const rosbaz::app::CommonOptions& common_options, const rosbaz::app::InfoOptions& info_options)
 {
   auto az_reader = create_reader(info_options.file_or_blob_url, common_options.account_key, common_options.token);
   auto az_bag = rosbaz::Bag::read(az_reader, info_options.topic_message_frequency_statistics);
@@ -237,7 +89,7 @@ void info_command(const CommonOptions& common_options, const InfoOptions& info_o
   }
 }
 
-void play_command(const CommonOptions& common_options, const PlayOptions& play_options)
+void play_command(const rosbaz::app::CommonOptions& common_options, const rosbaz::app::PlayOptions& play_options)
 {
   // setup node handle
   std::map<std::string, std::string> mapping{};
@@ -347,7 +199,7 @@ int main(int argc, char** argv)
 {
   CLI::App app("rosbaz - rosbag for azure storage");
 
-  CommonOptions common_options;
+  rosbaz::app::CommonOptions common_options;
 
   app.add_option("--account-key", common_options.account_key,
                  "The storage account key, which you can obtain from the azure portal.");
@@ -361,7 +213,7 @@ int main(int argc, char** argv)
   app.add_flag("--print-transfer-stats", common_options.print_transfer_stats,
                "Print transfer statistics at command completion.");
 
-  InfoOptions info_options;
+  rosbaz::app::InfoOptions info_options;
 
   CLI::App* info = app.add_subcommand("info", "Summarize the contents of one bag file.")->fallthrough();
 
@@ -372,7 +224,7 @@ int main(int argc, char** argv)
                  "display topic message frequency statistics");
   info->add_flag("-y,--yaml", info_options.yaml_output, "print information in YAML format");
 
-  PlayOptions play_options;
+  rosbaz::app::PlayOptions play_options;
   CLI::App* play = app.add_subcommand("play", "Play the contents of one bag file.")->fallthrough();
   app.require_subcommand(1);
 

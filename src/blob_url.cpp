@@ -5,6 +5,11 @@
 
 #include "rosbaz/exceptions.h"
 
+namespace
+{
+std::regex is_url_rgx("^(https*)://");
+}
+
 namespace rosbaz
 {
 AzBlobUrl AzBlobUrl::parse(const std::string& url)
@@ -38,4 +43,11 @@ AzBlobUrl AzBlobUrl::parse(const std::string& url)
 
   return result;
 }
+
+bool is_url(const std::string& path)
+{
+  std::smatch matches;
+  return std::regex_search(path, matches, is_url_rgx);
+}
+
 }  // namespace rosbaz
