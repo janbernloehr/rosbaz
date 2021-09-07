@@ -52,7 +52,7 @@ jobs:
         workspace: '$GITHUB_WORKSPACE'
 
     - name: 'build rosbaz'
-      run: catkin build -sc --no-status --no-notify -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
+      run: catkin build -sc --no-status --no-notify -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} -DCMAKE_BUILD_TYPE=RelWithDebInfo
 
     - name: 'test rosbaz'
       run: catkin run_tests -DREGRESSION_TESTS=ON && catkin_test_results
