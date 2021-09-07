@@ -82,7 +82,7 @@ void print_bag(const rosbaz::Bag& bag)
   std::cout << "end:      " << end_time.toSec() << "\n";
   std::cout << "size:     " << static_cast<float>(bag.getSize()) / 1024.f / 1024.f / 1024.f << " GB\n";
 
-  rosbaz::BagSatistics stats{ bag };
+  rosbaz::BagStatistics stats{ bag };
 
   std::cout << "messages: " << stats.getTotalMessageCount() << "\n";
   std::cout << "chunks:   " << bag.getChunkCount() << "\n";
@@ -155,7 +155,7 @@ void print_bag_yaml(const rosbaz::Bag& bag)
   std::cout << "end: " << end_time.toSec() << "\n";
   std::cout << "size: " << bag.getSize() << "\n";
 
-  rosbaz::BagSatistics stats{ bag };
+  rosbaz::BagStatistics stats{ bag };
 
   std::cout << "messages: " << stats.getTotalMessageCount() << "\n";
   std::cout << "indexed: "
@@ -176,7 +176,7 @@ void print_bag_yaml(const rosbaz::Bag& bag)
   }
 
   std::cout << "topics:\n";
-  
+
   const auto topic_infos = stats.getMessageTopicInfos();
 
   for (const auto& topic_info : topic_infos)
