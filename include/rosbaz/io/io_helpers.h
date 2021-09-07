@@ -20,7 +20,7 @@ void read_from(RosStream& ifs, byte* target, const size_t count);
 /// terminated.
 inline std::string to_string(rosbaz::DataSpan data)
 {
-  return std::string{ reinterpret_cast<const char*>(data.begin()), static_cast<size_t>(data.size()) };
+  return std::string{ reinterpret_cast<const char*>(data.begin()), data.size() };
 }
 
 /// Deserialize a T at \p offset from \p buffer.
