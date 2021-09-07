@@ -40,6 +40,8 @@ enum BagMode
 }  // namespace bagmode
 using BagMode = bagmode::BagMode;
 
+class BagSatistics;
+
 /// Implements a subset of the functionality provided by rosbag::Bag offloading
 /// the actual data reading to an implementation of rosbaz::io::IReader provided
 /// by the user.
@@ -48,13 +50,12 @@ class Bag
 public:
   friend struct View;
   friend struct MessageInstance;
+  friend class BagSatistics;
 
   /// Create a bag instance using the given reader.
   static Bag read(std::shared_ptr<rosbaz::io::IReader> reader, bool read_chunk_indices = true);
 
   std::vector<const rosbag::ConnectionInfo*> getConnections() const;
-
-  std::uint32_t getMessageCountForConnectionId(uint32_t id) const;
 
   /// Get the filepath of the bag.
   std::string getFilePath() const;
