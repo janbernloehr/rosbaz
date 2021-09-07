@@ -76,7 +76,6 @@ rosbaz info https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag
 -   no support for encryption
 -   no support for compressed chunks
 -   only reading (not writing bags) is supported
--   only single bag views
 
 ## Build (Linux)
 
