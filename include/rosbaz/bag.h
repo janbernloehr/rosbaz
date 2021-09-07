@@ -40,7 +40,7 @@ enum BagMode
 }  // namespace bagmode
 using BagMode = bagmode::BagMode;
 
-class BagSatistics;
+class BagStatistics;
 
 /// Implements a subset of the functionality provided by rosbag::Bag offloading
 /// the actual data reading to an implementation of rosbaz::io::IReader provided
@@ -50,7 +50,7 @@ class Bag
 public:
   friend struct View;
   friend struct MessageInstance;
-  friend class BagSatistics;
+  friend class BagStatistics;
 
   /// Create a bag instance using the given reader.
   static Bag read(std::shared_ptr<rosbaz::io::IReader> reader, bool read_chunk_indices = true);

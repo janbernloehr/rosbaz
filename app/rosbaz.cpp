@@ -78,11 +78,11 @@ void print_bag(const rosbaz::Bag& bag)
   std::cout << "path:     " << bag.getFilePath() << "\n";
   std::cout << "version:  " << bag.getMajorVersion() << "." << bag.getMinorVersion() << "\n";
   std::cout << "duration: " << duration.toSec() << "s\n";
-  std::cout << "start:    " << start_time.sec << "." << start_time.nsec << "\n";
-  std::cout << "end:      " << end_time.sec << "." << end_time.nsec << "\n";
+  std::cout << "start:    " << start_time.toSec() << "\n";
+  std::cout << "end:      " << end_time.toSec() << "\n";
   std::cout << "size:     " << static_cast<float>(bag.getSize()) / 1024.f / 1024.f / 1024.f << " GB\n";
 
-  rosbaz::BagSatistics stats{ bag };
+  rosbaz::BagStatistics stats{ bag };
 
   std::cout << "messages: " << stats.getTotalMessageCount() << "\n";
   std::cout << "chunks:   " << bag.getChunkCount() << "\n";
@@ -109,17 +109,16 @@ void print_bag(const rosbaz::Bag& bag)
     return a.num_messages < b.num_messages;
   });
   const auto max_freq_it = std::max_element(topic_infos.begin(), topic_infos.end(), [](const auto& a, const auto& b) {
-    return (a.frequency && b.frequency) && a.frequency < b.frequency;
+    return a.frequency.value_or(-1.) < b.frequency.value_or(-1.);
   });
 
   const size_t max_topic = max_topic_it != topic_infos.end() ? max_topic_it->topic.size() : 0;
   const size_t max_msgs = max_msgs_it != topic_infos.end() ? max_msgs_it->num_messages : 0;
-  const size_t max_freq =
-      max_freq_it != topic_infos.end() ? static_cast<size_t>(max_freq_it->frequency.value_or(0.)) : 0;
+  const double max_freq = max_freq_it != topic_infos.end() ? max_freq_it->frequency.value_or(0.) : 0.;
 
   std::string topic_fmt_string = "%s %-" + std::to_string(max_topic) + "s  %" +
                                  std::to_string(std::to_string(max_msgs).size()) + "s msgs @ %" +
-                                 std::to_string(std::to_string(max_freq).size() + 2) + ".1f %s : %s\n";
+                                 std::to_string((boost::format("%.1f") % max_freq).size()) + ".1f %s : %s\n";
   std::string topic_fmt_no_freq_string = "%s %-" + std::to_string(max_topic) + "s  %" +
                                          std::to_string(std::to_string(max_msgs).size()) + "s msgs    : %s\n";
 
@@ -151,12 +150,12 @@ void print_bag_yaml(const rosbaz::Bag& bag)
 
   std::cout << "path: " << bag.getFilePath() << "\n";
   std::cout << "version: " << bag.getMajorVersion() << "." << bag.getMinorVersion() << "\n";
-  std::cout << "duration: " << duration.toSec() << "s\n";
-  std::cout << "start: " << start_time.sec << "." << start_time.nsec << "\n";
-  std::cout << "end: " << end_time.sec << "." << end_time.nsec << "\n";
+  std::cout << "duration: " << duration.toSec() << "\n";
+  std::cout << "start: " << start_time.toSec() << "\n";
+  std::cout << "end: " << end_time.toSec() << "\n";
   std::cout << "size: " << bag.getSize() << "\n";
 
-  rosbaz::BagSatistics stats{ bag };
+  rosbaz::BagStatistics stats{ bag };
 
   std::cout << "messages: " << stats.getTotalMessageCount() << "\n";
   std::cout << "indexed: "
@@ -177,7 +176,7 @@ void print_bag_yaml(const rosbaz::Bag& bag)
   }
 
   std::cout << "topics:\n";
-  
+
   const auto topic_infos = stats.getMessageTopicInfos();
 
   for (const auto& topic_info : topic_infos)

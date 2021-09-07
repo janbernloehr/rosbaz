@@ -10,11 +10,11 @@ bool BagMessageTypeInfo::operator==(const BagMessageTypeInfo& other) const
   return (other.datatype == this->datatype) && (other.md5sum == this->md5sum);
 }
 
-BagSatistics::BagSatistics(const rosbaz::Bag& bag) : bag_{ bag }
+BagStatistics::BagStatistics(const rosbaz::Bag& bag) : bag_{ bag }
 {
 }
 
-std::uint32_t BagSatistics::getMessageCountForConnectionId(uint32_t id)
+std::uint32_t BagStatistics::getMessageCountForConnectionId(uint32_t id)
 {
   std::uint32_t count = 0;
 
@@ -29,7 +29,7 @@ std::uint32_t BagSatistics::getMessageCountForConnectionId(uint32_t id)
   return count;
 }
 
-boost::optional<double> BagSatistics::getMessageFrequencyForConnectionId(uint32_t id)
+boost::optional<double> BagStatistics::getMessageFrequencyForConnectionId(uint32_t id)
 {
   if (bag_.connection_indexes_.count(id) == 0)
   {
@@ -65,7 +65,7 @@ boost::optional<double> BagSatistics::getMessageFrequencyForConnectionId(uint32_
   return {};
 }
 
-std::set<BagMessageTypeInfo> BagSatistics::getMessageTypeInfos()
+std::set<BagMessageTypeInfo> BagStatistics::getMessageTypeInfos()
 {
   std::set<BagMessageTypeInfo> result;
 
@@ -79,7 +79,7 @@ std::set<BagMessageTypeInfo> BagSatistics::getMessageTypeInfos()
   return result;
 }
 
-std::vector<BagMessageTopicInfo> BagSatistics::getMessageTopicInfos()
+std::vector<BagMessageTopicInfo> BagStatistics::getMessageTopicInfos()
 {
   const auto& cache = getCacheConnectionIdToCount();
   std::vector<BagMessageTopicInfo> result;
@@ -96,7 +96,7 @@ std::vector<BagMessageTopicInfo> BagSatistics::getMessageTopicInfos()
   return result;
 }
 
-const std::map<uint32_t, uint32_t>& BagSatistics::getCacheConnectionIdToCount()
+const std::map<uint32_t, uint32_t>& BagStatistics::getCacheConnectionIdToCount()
 {
   if (!cache_connection_id_to_count_valid_)
   {
@@ -112,7 +112,7 @@ const std::map<uint32_t, uint32_t>& BagSatistics::getCacheConnectionIdToCount()
   return cache_connection_id_to_count_;
 }
 
-std::uint32_t BagSatistics::getTotalMessageCount()
+std::uint32_t BagStatistics::getTotalMessageCount()
 {
   const auto& cache = getCacheConnectionIdToCount();
 

@@ -62,9 +62,9 @@ Bag Bag::read(std::shared_ptr<rosbaz::io::IReader> reader, bool read_chunk_indic
     throw RosBagUnindexedException(msg.str());
   }
 
-  const size_t reminder_size = bag.file_size_ - bag.index_data_pos_;
+  const size_t remainder_size = bag.file_size_ - bag.index_data_pos_;
 
-  const auto bag_tail = reader->read(bag.index_data_pos_, reminder_size);
+  const auto bag_tail = reader->read(bag.index_data_pos_, remainder_size);
   bag.parseFileTail(bag_tail);
 
   if (read_chunk_indices)

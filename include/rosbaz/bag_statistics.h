@@ -27,10 +27,10 @@ struct BagMessageTopicInfo
   std::string datatype;
 };
 
-class BagSatistics
+class BagStatistics
 {
 public:
-  explicit BagSatistics(const rosbaz::Bag& bag);
+  explicit BagStatistics(const rosbaz::Bag& bag);
 
   std::uint32_t getTotalMessageCount();
 
