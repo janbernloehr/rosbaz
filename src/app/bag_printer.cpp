@@ -3,6 +3,25 @@
 #include "rosbaz/bag_statistics.h"
 #include <boost/format.hpp>
 
+namespace
+{
+std::string human_readable_size(size_t size)
+{
+  if (size > 1024 * 1024 * 1024)
+  {
+    return std::to_string(static_cast<float>(size) / 1024.f / 1024.f / 1024.f) + " GB";
+  }
+  else if (size > 1024 * 1024)
+  {
+    return std::to_string(static_cast<float>(size) / 1024.f / 1024.f) + " MB";
+  }
+  else
+  {
+    return std::to_string(static_cast<float>(size) / 1024.f) + " KB";
+  }
+}
+}  // namespace
+
 namespace rosbaz
 {
 namespace app
@@ -16,9 +35,12 @@ void write_bag_human_friendly(const rosbaz::Bag& bag, std::ostream& stream)
   stream << "path:     " << bag.getFilePath() << "\n";
   stream << "version:  " << bag.getMajorVersion() << "." << bag.getMinorVersion() << "\n";
   stream << "duration: " << duration.toSec() << "s\n";
-  stream << "start:    " << start_time.toSec() << "\n";
+  std::ios_base::fmtflags f(stream.flags());
+  stream << "start:    " << std::fixed << std::setprecision(6) << start_time.toSec() << "\n";
   stream << "end:      " << end_time.toSec() << "\n";
-  stream << "size:     " << static_cast<float>(bag.getSize()) / 1024.f / 1024.f / 1024.f << " GB\n";
+  stream.flags(f);
+
+  stream << "size:     " << human_readable_size(bag.getSize()) << "\n";
 
   rosbaz::BagStatistics stats{ bag };
 
@@ -89,8 +111,10 @@ void write_bag_yaml(const rosbaz::Bag& bag, std::ostream& stream)
   stream << "path: " << bag.getFilePath() << "\n";
   stream << "version: " << bag.getMajorVersion() << "." << bag.getMinorVersion() << "\n";
   stream << "duration: " << duration.toSec() << "\n";
-  stream << "start: " << start_time.toSec() << "\n";
+  std::ios_base::fmtflags f(stream.flags());
+  stream << "start: " << std::fixed << std::setprecision(6) << start_time.toSec() << "\n";
   stream << "end: " << end_time.toSec() << "\n";
+  stream.flags(f);
   stream << "size: " << bag.getSize() << "\n";
 
   rosbaz::BagStatistics stats{ bag };
