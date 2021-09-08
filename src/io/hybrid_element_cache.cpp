@@ -28,8 +28,7 @@ bool HybridElementCacheStrategy::retrieve(rosbaz::io::byte* buffer, size_t offse
 
     assert(offset >= large_cache_found->offset);
 
-    std::copy_n(large_cache_found->data.begin() + (offset - large_cache_found->offset), count,
-                buffer);
+    std::copy_n(large_cache_found->data.begin() + (offset - large_cache_found->offset), count, buffer);
 
     return true;
   }
@@ -47,8 +46,7 @@ bool HybridElementCacheStrategy::retrieve(rosbaz::io::byte* buffer, size_t offse
 
     assert(offset >= small_cache_found->offset);
 
-    std::copy_n(small_cache_found->data.begin() + (offset - small_cache_found->offset), count,
-                buffer);
+    std::copy_n(small_cache_found->data.begin() + (offset - small_cache_found->offset), count, buffer);
 
     return true;
   }

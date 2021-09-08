@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <boost/optional.hpp>
+#include <vector>
 
 #include "rosbaz/bag.h"
 
@@ -11,12 +12,6 @@ struct BagMessageTypeInfo
 {
   std::string datatype;
   std::string md5sum;
-
-  bool operator==(const BagMessageTypeInfo& other) const;
-  friend bool operator<(const BagMessageTypeInfo& l, const BagMessageTypeInfo& r)
-  {
-    return (l.datatype < r.datatype) || ((l.datatype == r.datatype) && (l.md5sum < r.md5sum));
-  }
 };
 
 struct BagMessageTopicInfo
@@ -34,7 +29,7 @@ public:
 
   std::uint32_t getTotalMessageCount();
 
-  std::set<BagMessageTypeInfo> getMessageTypeInfos();
+  std::vector<BagMessageTypeInfo> getMessageTypeInfos();
 
   std::vector<BagMessageTopicInfo> getMessageTopicInfos();
 

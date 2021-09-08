@@ -5,11 +5,6 @@
 
 namespace rosbaz
 {
-bool BagMessageTypeInfo::operator==(const BagMessageTypeInfo& other) const
-{
-  return (other.datatype == this->datatype) && (other.md5sum == this->md5sum);
-}
-
 BagStatistics::BagStatistics(const rosbaz::Bag& bag) : bag_{ bag }
 {
 }
@@ -65,16 +60,22 @@ boost::optional<double> BagStatistics::getMessageFrequencyForConnectionId(uint32
   return {};
 }
 
-std::set<BagMessageTypeInfo> BagStatistics::getMessageTypeInfos()
+std::vector<BagMessageTypeInfo> BagStatistics::getMessageTypeInfos()
 {
-  std::set<BagMessageTypeInfo> result;
+  std::vector<BagMessageTypeInfo> result;
 
   for (const auto* connection_info : bag_.getConnections())
   {
-    result.emplace(BagMessageTypeInfo{ connection_info->datatype, connection_info->md5sum });
+    if (std::find_if(result.begin(), result.end(), [&connection_info](const auto& other) {
+          return other.datatype == connection_info->datatype;
+        }) == result.end())
+    {
+      continue;
+    }
+    result.emplace_back(BagMessageTypeInfo{ connection_info->datatype, connection_info->md5sum });
   }
 
-//   std::sort(result.begin(), result.end());
+  std::sort(result.begin(), result.end(), [](const auto& a, const auto& b) { return a.datatype < b.datatype; });
 
   return result;
 }
