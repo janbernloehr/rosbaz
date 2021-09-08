@@ -62,13 +62,20 @@ boost::optional<double> BagStatistics::getMessageFrequencyForConnectionId(uint32
 
 std::vector<BagMessageTypeInfo> BagStatistics::getMessageTypeInfos()
 {
+  const auto connections = bag_.getConnections();
+  return getMessageTypeInfos(connections);
+}
+
+std::vector<BagMessageTypeInfo>
+BagStatistics::getMessageTypeInfos(const nonstd::span<const rosbag::ConnectionInfo* const> connections)
+{
   std::vector<BagMessageTypeInfo> result;
 
-  for (const auto* connection_info : bag_.getConnections())
+  for (const auto* connection_info : connections)
   {
     if (std::find_if(result.begin(), result.end(), [&connection_info](const auto& other) {
           return other.datatype == connection_info->datatype;
-        }) == result.end())
+        }) != result.end())
     {
       continue;
     }
@@ -82,10 +89,17 @@ std::vector<BagMessageTypeInfo> BagStatistics::getMessageTypeInfos()
 
 std::vector<BagMessageTopicInfo> BagStatistics::getMessageTopicInfos()
 {
+  const auto connections = bag_.getConnections();
+  return getMessageTopicInfos(connections);
+}
+
+std::vector<BagMessageTopicInfo>
+BagStatistics::getMessageTopicInfos(const nonstd::span<const rosbag::ConnectionInfo* const> connections)
+{
   const auto& cache = getCacheConnectionIdToCount();
   std::vector<BagMessageTopicInfo> result;
 
-  for (const auto* connection_info : bag_.getConnections())
+  for (const auto* connection_info : connections)
   {
     result.emplace_back(BagMessageTopicInfo{ connection_info->topic, cache.at(connection_info->id),
                                              getMessageFrequencyForConnectionId(connection_info->id),
