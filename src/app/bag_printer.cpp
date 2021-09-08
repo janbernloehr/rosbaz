@@ -28,6 +28,13 @@ namespace app
 {
 void write_bag_human_friendly(const rosbaz::Bag& bag, std::ostream& stream)
 {
+  const auto connection = bag.getConnections();
+  write_bag_human_friendly(bag, connection, stream);
+}
+
+void write_bag_human_friendly(const rosbaz::Bag& bag,
+                              const nonstd::span<const rosbag::ConnectionInfo* const> connections, std::ostream& stream)
+{
   auto start_time = bag.getBeginTime();
   auto end_time = bag.getEndTime();
   auto duration = end_time - start_time;
@@ -47,7 +54,7 @@ void write_bag_human_friendly(const rosbaz::Bag& bag, std::ostream& stream)
   stream << "messages: " << stats.getTotalMessageCount() << "\n";
   stream << "chunks:   " << bag.getChunkCount() << "\n";
 
-  const auto msg_type_infos = stats.getMessageTypeInfos();
+  const auto msg_type_infos = stats.getMessageTypeInfos(connections);
   const auto max_datatype =
       std::max_element(msg_type_infos.begin(), msg_type_infos.end(),
                        [](const auto& a, const auto& b) { return a.datatype.size() < b.datatype.size(); });
@@ -61,7 +68,7 @@ void write_bag_human_friendly(const rosbaz::Bag& bag, std::ostream& stream)
     prefix = "         ";
   }
 
-  const auto topic_infos = stats.getMessageTopicInfos();
+  const auto topic_infos = stats.getMessageTopicInfos(connections);
   const auto max_topic_it = std::max_element(topic_infos.begin(), topic_infos.end(), [](const auto& a, const auto& b) {
     return a.topic.size() < b.topic.size();
   });
@@ -104,6 +111,13 @@ void write_bag_human_friendly(const rosbaz::Bag& bag, std::ostream& stream)
 
 void write_bag_yaml(const rosbaz::Bag& bag, std::ostream& stream)
 {
+  const auto connection = bag.getConnections();
+  write_bag_yaml(bag, connection, stream);
+}
+
+void write_bag_yaml(const rosbaz::Bag& bag, const nonstd::span<const rosbag::ConnectionInfo* const> connections,
+                    std::ostream& stream)
+{
   auto start_time = bag.getBeginTime();
   auto end_time = bag.getEndTime();
   auto duration = end_time - start_time;
@@ -129,7 +143,7 @@ void write_bag_yaml(const rosbaz::Bag& bag, std::ostream& stream)
 
   stream << "types:\n";
 
-  const auto msg_type_infos = stats.getMessageTypeInfos();
+  const auto msg_type_infos = stats.getMessageTypeInfos(connections);
 
   for (const auto& msg_type_info : msg_type_infos)
   {
@@ -139,7 +153,7 @@ void write_bag_yaml(const rosbaz::Bag& bag, std::ostream& stream)
 
   stream << "topics:\n";
 
-  const auto topic_infos = stats.getMessageTopicInfos();
+  const auto topic_infos = stats.getMessageTopicInfos(connections);
 
   for (const auto& topic_info : topic_infos)
   {

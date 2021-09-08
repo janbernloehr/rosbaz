@@ -1,10 +1,12 @@
 #pragma once
 
-#include <cstdint>
-#include <boost/optional.hpp>
-#include <vector>
-
 #include "rosbaz/bag.h"
+
+#include <boost/optional.hpp>
+#include <rosbaz/internal/nonstd/span.hpp>
+
+#include <cstdint>
+#include <vector>
 
 namespace rosbaz
 {
@@ -30,8 +32,12 @@ public:
   std::uint32_t getTotalMessageCount();
 
   std::vector<BagMessageTypeInfo> getMessageTypeInfos();
+  std::vector<BagMessageTypeInfo>
+  getMessageTypeInfos(const nonstd::span<const rosbag::ConnectionInfo* const> connections);
 
   std::vector<BagMessageTopicInfo> getMessageTopicInfos();
+  std::vector<BagMessageTopicInfo>
+  getMessageTopicInfos(const nonstd::span<const rosbag::ConnectionInfo* const> connections);
 
 private:
   const std::map<uint32_t, uint32_t>& getCacheConnectionIdToCount();
