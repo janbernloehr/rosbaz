@@ -30,13 +30,17 @@ jobs:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       run: |
         set -ex
+
+        curl -s https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
+        sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
+
         sudo apt-get update -qq
-        sudo apt-get install -y libssl-dev libcurl4-openssl-dev cmake g++ uuid-dev
+        sudo apt-get install -y libssl-dev libcurl4-openssl-dev cmake g++ uuid-dev cmake=3.20.4-0kitware1
         cd azure-sdk-for-cpp
         mkdir build.release
         cd build.release
         cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
-        cmake --build .
+        cmake --build --parallel .
         sudo cmake --build . --target install
 
     - name: 'checkout rosbaz'
