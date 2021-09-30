@@ -53,14 +53,12 @@ find_package(catkin REQUIRED
     rosbag
 )
 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-find_package(azure_storage_cpplite REQUIRED)
+find_package(azure-storage-blobs-cpp CONFIG REQUIRED)
 
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS roscpp rosbag
-  DEPENDS azure_storage_cpplite
 )
 
 file(GLOB _lib_sources CONFIGURE_DEPENDS "src/*.cpp" "src/**/*.cpp")
@@ -80,8 +78,11 @@ target_include_directories(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
   PUBLIC
-    azure_storage_cpplite::azure_storage_cpplite
     ${catkin_LIBRARIES}
+)
+
+target_link_libraries(${PROJECT_NAME}
+  PRIVATE Azure::azure-storage-blobs
 )
 
 file(GLOB _app_sources CONFIGURE_DEPENDS "app/*.cpp" "app/**/*.cpp")

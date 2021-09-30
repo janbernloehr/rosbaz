@@ -2,6 +2,8 @@
 
 #include <ros/console.h>
 
+#include <azure/core.hpp>
+#include <azure/storage/blobs.hpp>
 #include <boost/make_unique.hpp>
 
 #include "rosbaz/exceptions.h"
@@ -10,32 +12,25 @@
 
 namespace
 {
-std::shared_ptr<azure::storage_lite::storage_credential> create_credential(const rosbaz::AzBlobUrl& blob_url,
-                                                                           const std::string& account_key = "",
-                                                                           const std::string& token = "")
+class BearerToken : public Azure::Core::Credentials::TokenCredential
 {
-  std::shared_ptr<azure::storage_lite::storage_credential> credential;
-
-  if (!token.empty())
+public:
+  BearerToken(const std::string& token) : m_token{ token }
   {
-    credential = std::make_shared<azure::storage_lite::token_credential>(token);
-  }
-  else if (!blob_url.sas_token.empty())
-  {
-    credential = std::make_shared<azure::storage_lite::shared_access_signature_credential>(blob_url.sas_token);
-  }
-  else if (!account_key.empty())
-  {
-    credential = std::make_shared<azure::storage_lite::shared_key_credential>(blob_url.account_name, account_key);
-  }
-  else
-  {
-    throw rosbaz::MissingCredentialsException("You must provide either a bearer token, a sas "
-                                              "token, or an account key.");
   }
 
-  return credential;
-}
+  Azure::Core::Credentials::AccessToken
+  GetToken(Azure::Core::Credentials::TokenRequestContext const& tokenRequestContext,
+           Azure::Core::Context const& context) const override
+  {
+    Azure::Core::Credentials::AccessToken t;
+    t.Token = m_token;
+    return t;
+  }
+
+private:
+  std::string m_token;
+};
 }  // namespace
 
 namespace rosbaz
@@ -56,51 +51,51 @@ AzReader::AzReader(const AzBlobUrl& blob_url, const std::string& account_key, co
                    std::unique_ptr<ICacheStrategy> cache_strategy)
   : container_(blob_url.container_name), blob_(blob_url.blob_name), cache_strategy_(std::move(cache_strategy))
 {
-  const bool use_https = blob_url.schema == "https";
-  const int connection_count = static_cast<int>(std::thread::hardware_concurrency());
+  std::shared_ptr<Azure::Storage::Blobs::BlobClient> blobClient;
 
-  auto credential = create_credential(blob_url, account_key, token);
-
-  // Setup the client
-  auto account = std::make_shared<azure::storage_lite::storage_account>(blob_url.account_name, credential, use_https,
-                                                                        blob_url.blob_endpoint);
-  client_ = std::make_shared<azure::storage_lite::blob_client>(account, connection_count);
+  if (!token.empty())
+  {
+    auto credential = std::make_shared<BearerToken>(token);
+    client_ = std::make_shared<Azure::Storage::Blobs::BlobClient>(blob_url.to_string(), credential);
+  }
+  else if (!blob_url.sas_token.empty())
+  {
+    client_ = std::make_shared<Azure::Storage::Blobs::BlobClient>(blob_url.to_string());
+  }
+  else if (!account_key.empty())
+  {
+    auto credential = std::make_shared<Azure::Storage::StorageSharedKeyCredential>(blob_url.account_name, account_key);
+    client_ = std::make_shared<Azure::Storage::Blobs::BlobClient>(blob_url.to_string(), credential);
+  }
+  else
+  {
+    throw rosbaz::MissingCredentialsException("You must provide either a bearer token, a sas "
+                                              "token, or an account key.");
+  }
 }
 
 std::string AzReader::filepath()
 {
-  return client_->account()->get_url(azure::storage_lite::storage_account::service::blob).to_string() + "/" +
-         container_ + "/" + blob_;
+  return client_->GetUrl();
 }
 
 size_t AzReader::size()
 {
-  auto ret = client_->get_blob_properties(container_, blob_).get();
-
-  if (!ret.success())
-  {
-    std::stringstream msg;
-    msg << "Failed to fetch container properties, Error: " << ret.error().code << ", " << ret.error().code_name
-        << std::endl;
-    throw rosbaz::IoException(msg.str());
-  }
+  auto ret = client_->GetProperties();
 
   num_requests_ += 1;
 
-  return ret.response().size;
+  return ret.Value.BlobSize;
 }
 
 void AzReader::download(rosbaz::io::byte* buffer, size_t offset, size_t count)
 {
-  auto ret =
-      client_->download_blob_to_buffer(container_, blob_, offset, count, reinterpret_cast<char*>(buffer), 2).get();
+  Azure::Storage::Blobs::DownloadBlobToOptions options{};
+  options.Range = Azure::Core::Http::HttpRange{};
+  options.Range.Value().Offset = offset;
+  options.Range.Value().Length = count;
 
-  if (!ret.success())
-  {
-    std::stringstream msg;
-    msg << "Failed to download blob, Error: " << ret.error().code << ", " << ret.error().code_name << std::endl;
-    throw rosbaz::IoException(msg.str());
-  }
+  auto ret = client_->DownloadTo(buffer, count, options);
 
   num_bytes_ += count;
   num_requests_ += 1;
