@@ -15,13 +15,13 @@ namespace
 class BearerToken : public Azure::Core::Credentials::TokenCredential
 {
 public:
-  BearerToken(const std::string& token) : m_token{ token }
+  explicit BearerToken(const std::string& token) : m_token{ token }
   {
   }
 
   Azure::Core::Credentials::AccessToken
-  GetToken(Azure::Core::Credentials::TokenRequestContext const& tokenRequestContext,
-           Azure::Core::Context const& context) const override
+  GetToken(Azure::Core::Credentials::TokenRequestContext const& /* tokenRequestContext*/,
+           Azure::Core::Context const& /* context */) const override
   {
     Azure::Core::Credentials::AccessToken t;
     t.Token = m_token;
@@ -95,7 +95,7 @@ void AzReader::download(rosbaz::io::byte* buffer, size_t offset, size_t count)
   options.Range.Value().Offset = offset;
   options.Range.Value().Length = count;
 
-  auto ret = client_->DownloadTo(buffer, count, options);
+  client_->DownloadTo(buffer, count, options);
 
   num_bytes_ += count;
   num_requests_ += 1;
