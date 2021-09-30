@@ -44,6 +44,18 @@ AzBlobUrl AzBlobUrl::parse(const std::string& url)
   return result;
 }
 
+std::string AzBlobUrl::to_string() const
+{
+  std::string url = schema + "://" + blob_endpoint + "/" + container_name + "/" + blob_name;
+
+  if (!sas_token.empty())
+  {
+    url += sas_token;
+  }
+
+  return url;
+}
+
 bool is_url(const std::string& path)
 {
   std::smatch matches;

@@ -5,10 +5,20 @@
 #include <mutex>
 #include <vector>
 
-#include "blob/blob_client.h"
 #include "rosbaz/blob_url.h"
 #include "rosbaz/io/cache_strategy.h"
 #include "rosbaz/io/reader.h"
+
+namespace Azure
+{
+namespace Storage
+{
+namespace Blobs
+{
+class BlobClient;
+}
+}  // namespace Storage
+}  // namespace Azure
 
 namespace rosbaz
 {
@@ -44,7 +54,7 @@ private:
 
   std::string container_{};
   std::string blob_{};
-  std::shared_ptr<azure::storage_lite::blob_client> client_{};
+  std::shared_ptr<Azure::Storage::Blobs::BlobClient> client_{};
 
   std::int32_t num_requests_{ 0 };
   std::int64_t num_bytes_{ 0 };

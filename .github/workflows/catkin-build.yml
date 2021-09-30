@@ -18,28 +18,30 @@ jobs:
         compiler: ["/usr/bin/g++"]
 
     steps:
-    - name: 'checkout azure-storage-cpplite'
+    - name: 'checkout azure-sdk-for-cpp'
       uses: actions/checkout@v2
       with:
-        repository: 'Azure/azure-storage-cpplite.git'
-        ref: 'v0.3.0'
-        path: 'azure-storage-cpplite'
+        repository: 'Azure/azure-sdk-for-cpp.git'
+        ref: 'azure-storage-blobs_12.2.0'
+        path: 'azure-sdk-for-cpp'
 
-    - name: 'build azure-storage-cpplite'
+    - name: 'build azure-sdk-for-cpp'
       env:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       run: |
         set -ex
+
+        curl -s https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
+        sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
+
         sudo apt-get update -qq
-        sudo apt-get install -y libssl-dev libcurl4-openssl-dev cmake g++ uuid-dev
-        cd azure-storage-cpplite
+        sudo apt-get install -y libssl-dev libcurl4-openssl-dev cmake g++ uuid-dev cmake
+        cd azure-sdk-for-cpp
         mkdir build.release
         cd build.release
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local/azure-storage-cpplite -DBUILD_SHARED_LIBS=ON -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
-        cmake --build .
-        sudo cmake --build . --target install
-        echo "/usr/local/azure-storage-cpplite/lib" | sudo tee /etc/ld.so.conf.d/azure-storage-cpplite.conf
-        sudo ldconfig
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
+        cmake --build . --parallel
+        sudo cmake --install .
 
     - name: 'checkout rosbaz'
       uses: actions/checkout@v2

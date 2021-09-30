@@ -14,6 +14,8 @@ struct AzBlobUrl
   std::string sas_token{};
 
   static AzBlobUrl parse(const std::string& url);
+
+  std::string to_string() const;
 };
 
 bool is_url(const std::string& path);
