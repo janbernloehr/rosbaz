@@ -56,4 +56,4 @@ jobs:
       run: catkin build -sc --no-status --no-notify -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} -DCMAKE_BUILD_TYPE=RelWithDebInfo
 
     - name: 'test rosbaz'
-      run: catkin run_tests -DREGRESSION_TESTS=ON && catkin_test_results
+      run: catkin run_tests --no-status --no-notify -DREGRESSION_TESTS=ON && catkin_test_results
