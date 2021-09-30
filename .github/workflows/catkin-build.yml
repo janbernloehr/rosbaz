@@ -46,9 +46,10 @@ jobs:
       with:
         path: 'src'
 
-    - uses: janbernloehr/github-setup-catkin@master
+    - uses: betwo/github-setup-catkin@master
       with:
         ros-version: 'melodic'
+        build-tool: 'catkin_tools'
         workspace: '$GITHUB_WORKSPACE'
 
     - name: 'build rosbaz'
