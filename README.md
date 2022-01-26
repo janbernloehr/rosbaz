@@ -79,28 +79,35 @@ rosbaz info https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag
 
 ## Build (Linux)
 
-### Build azure-storage-cpplite dependency
+### Install dependencies
 
+1. Install prerequsites
 ```bash
-git clone --branch v0.3.0 https://github.com/Azure/azure-storage-cpplite.git
+sudo apt install -y libssl-dev libcurl4-openssl-dev cmake g++ uuid-dev libxml2-dev
+```
 
-cd azure-storage-cpplite
+2. Make sure you have a sufficiently recent cmake, you can install the latest version by
+```bash
+sudo apt install software-properties-common
+
+curl -s https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
+sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
+
+sudo apt install cmake
+```
+
+3. Install azure-storage-blobs
+```bash
+git clone --branch azure-storage-blobs_12.2.0 https://github.com/Azure/azure-sdk-for-cpp.git
+
+cd azure-sdk-for-cpp
 mkdir build.release
 cd build.release
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local/azure-storage-cpplite -DBUILD_SHARED_LIBS=ON
+cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON
 
-cmake --build .
-sudo cmake --build . --target install
+cmake --build . --parallel
+sudo cmake --install .
 ```
-
-Also add it to your `LD_LIBRARY_PATH`
-
-```bash
-echo "export LD_LIBRARY_PATH=/usr/local/azure-storage-cpplite/lib:$LD_LIBRARY_PATH" >> ~/.bashrc
-source ~/.bashrc
-```
-
-For more details, refer to https://github.com/Azure/azure-storage-cpplite/tree/v0.3.0#installation
 
 ### Build rosbaz
 
@@ -113,7 +120,7 @@ catkin build rosbaz
 
 ## Dependencies
 
--   [azure-storage-cpplite](https://github.com/Azure/azure-storage-cpplite)
+-   [azure-sdk-for-cpp](https://github.com/Azure/azure-sdk-for-cpp.git)
 -   [CLI11](https://github.com/CLIUtils/CLI11)
 -   [span-lite](https://github.com/martinmoene/span-lite)
 
