@@ -74,6 +74,8 @@ AzReader::AzReader(const AzBlobUrl& blob_url, const std::string& account_key, co
   }
 }
 
+AzReader::~AzReader() = default;
+
 std::string AzReader::filepath()
 {
   return client_->GetUrl();

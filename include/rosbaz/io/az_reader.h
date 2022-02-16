@@ -34,6 +34,8 @@ public:
   explicit AzReader(const AzBlobUrl& blob_url, const std::string& account_key, const std::string& token,
                     std::unique_ptr<ICacheStrategy> cache_strategy);
 
+  ~AzReader() override;
+
   size_t size() override;
 
   std::string filepath() override;
