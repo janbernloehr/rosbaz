@@ -285,6 +285,11 @@ template <class T>
 void Bag::doWrite(const std::string& topic, ros::Time const& time, T const& msg,
                   boost::shared_ptr<ros::M_string> const& connection_header)
 {
+  if (mode_ != BagMode::Write)
+  {
+    throw InvalidModeException{ "Bag must be opened in write mode to support writing." };
+  }
+
   if (time < ros::TIME_MIN)
   {
     throw Exception("Tried to insert a message with time less than ros::TIME_MIN");

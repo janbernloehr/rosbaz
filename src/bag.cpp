@@ -426,7 +426,7 @@ std::uint32_t Bag::getChunkCount() const
 
 uint32_t Bag::getChunkThreshold() const
 {
-  return 0;
+  return chunk_threshold_;
 }
 
 CompressionType Bag::getCompression() const
