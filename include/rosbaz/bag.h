@@ -183,7 +183,6 @@ private:
   void writeFileHeaderRecord(rosbaz::io::Block& block);
 
   void writeConnectionRecord(rosbag::ConnectionInfo const* connection_info);
-  void appendConnectionRecordToBuffer(Buffer& buf, rosbag::ConnectionInfo const* connection_info);
   template <class T>
   void writeMessageDataRecord(uint32_t conn_id, ros::Time const& time, T const& msg);
   void writeIndexRecords();
@@ -195,8 +194,6 @@ private:
 
   uint32_t writeHeader(ros::M_string const& fields, boost::optional<size_t> offset = boost::none);
   uint32_t writeDataLength(uint32_t data_len, boost::optional<size_t> offset = boost::none);
-  void appendHeaderToBuffer(Buffer& buf, ros::M_string const& fields);
-  void appendDataLengthToBuffer(Buffer& buf, uint32_t data_len);
 
   // This helper function actually does the write with an arbitrary serializable message
   template <class T>
