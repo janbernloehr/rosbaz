@@ -396,7 +396,7 @@ void Bag::doWrite(const std::string& topic, ros::Time const& time, T const& msg,
 
     // Check if we want to stop this chunk
     uint32_t chunk_size = getChunkOffset();
-    // CONSOLE_BRIDGE_logDebug("  curr_chunk_size=%d (threshold=%d)", chunk_size, chunk_threshold_);
+    ROS_DEBUG("  curr_chunk_size=%d (threshold=%d)", chunk_size, chunk_threshold_);
     if (chunk_size > chunk_threshold_)
     {
       // Empty the outgoing chunk
@@ -426,15 +426,9 @@ void Bag::writeMessageDataRecord(uint32_t conn_id, ros::Time const& time, T cons
   // todo: serialize into the outgoing_chunk_buffer & remove record_buffer_
   ros::serialization::serialize(s, msg);
 
-  // // We do an extra seek here since writing our data record may
-  // // have indirectly moved our file-pointer if it was a
-  // // MessageInstance for our own bag
-  // seek(0, std::ios::end);
-  // file_size_ = file_.getOffset();
-
-  // CONSOLE_BRIDGE_logDebug("Writing MSG_DATA [%llu:%d]: conn=%d sec=%d nsec=%d data_len=%d",
-  //                         (unsigned long long)file_.getOffset(), getChunkOffset(), conn_id, time.sec, time.nsec,
-  //                         msg_ser_len);
+  ROS_DEBUG("Writing MSG_DATA [%llu:%d]: conn=%d sec=%d nsec=%d data_len=%d",
+            static_cast<unsigned long long>(current_block_->block_offset() + current_block_->size()), getChunkOffset(),
+            conn_id, time.sec, time.nsec, msg_ser_len);
 
   bag_writing::writeHeader(*current_block_, header);
   bag_writing::writeDataLength(*current_block_, msg_ser_len);
