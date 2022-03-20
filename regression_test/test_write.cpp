@@ -1,9 +1,9 @@
-
 #include "gtest/gtest.h"
 
 #include "rosbaz/bag.h"
 #include "rosbaz/io/io_helpers.h"
 #include "rosbaz/io/stream_reader.h"
+#include "rosbaz/io/stream_writer.h"
 #include "rosbaz/view.h"
 
 #include <rosbag/bag.h>
@@ -13,30 +13,42 @@
 #include <boost/filesystem.hpp>
 #include <memory>
 
-class RegressionTests : public ::testing::TestWithParam<const char*>
+class WriteTests : public ::testing::TestWithParam<const char*>
 {
 public:
-  RegressionTests() : baz{ rosbaz::Bag::read(rosbaz::io::StreamReader::open(GetParam())) }, bag{ GetParam() }
+  WriteTests() : bag{ std::make_unique<rosbag::Bag>(GetParam()) }
   {
+    const std::string output_path = "/tmp/out.bag";
+    rosbaz::Bag output_bag = rosbaz::Bag::write(rosbaz::io::StreamWriter::open(output_path));
+
+    rosbag::View view_in(*bag);
+    for (const auto& m : view_in)
+    {
+      output_bag.write(m.getTopic(), m.getTime(), m);
+    }
+
+    output_bag.close();
+
+    baz = std::make_unique<rosbaz::Bag>(rosbaz::Bag::read(rosbaz::io::StreamReader::open(output_path)));
   }
 
-  rosbaz::Bag baz;
-  rosbag::Bag bag;
+  std::unique_ptr<rosbaz::Bag> baz;
+  std::unique_ptr<rosbag::Bag> bag;
 };
 
-TEST_P(RegressionTests, equal_properties)
+TEST_P(WriteTests, equal_properties)
 {
-  ASSERT_EQ(baz.getFilePath(), bag.getFileName());
-  ASSERT_EQ(baz.getSize(), bag.getSize());
-  ASSERT_EQ(baz.getMode(), bag.getMode());
-  ASSERT_EQ(baz.getMajorVersion(), bag.getMajorVersion());
-  ASSERT_EQ(baz.getMinorVersion(), bag.getMinorVersion());
+  ASSERT_EQ(baz->getFilePath(), bag->getFileName());
+  ASSERT_EQ(baz->getSize(), bag->getSize());
+  ASSERT_EQ(baz->getMode(), bag->getMode());
+  ASSERT_EQ(baz->getMajorVersion(), bag->getMajorVersion());
+  ASSERT_EQ(baz->getMinorVersion(), bag->getMinorVersion());
 }
 
-TEST_P(RegressionTests, equal_topics)
+TEST_P(WriteTests, equal_topics)
 {
-  rosbaz::View baz_view{ baz };
-  rosbag::View bag_view{ bag };
+  rosbaz::View baz_view{ *baz };
+  rosbag::View bag_view{ *bag };
 
   const auto& bag_connections = bag_view.getConnections();
   const auto& baz_connections = baz_view.getConnections();
@@ -61,12 +73,12 @@ TEST_P(RegressionTests, equal_topics)
   }
 }
 
-TEST_P(RegressionTests, equal_messages)
+TEST_P(WriteTests, equal_messages)
 {
   const std::string topic_name = "imu";
 
-  rosbaz::View baz_view{ baz, rosbag::TopicQuery(topic_name) };
-  rosbag::View bag_view{ bag, rosbag::TopicQuery(topic_name) };
+  rosbaz::View baz_view{ *baz, rosbag::TopicQuery(topic_name) };
+  rosbag::View bag_view{ *bag, rosbag::TopicQuery(topic_name) };
 
   ASSERT_EQ(baz_view.size(), bag_view.size());
 
@@ -90,11 +102,11 @@ TEST_P(RegressionTests, equal_messages)
   }
 }
 
-TEST_P(RegressionTests, instantiate_subset)
+TEST_P(WriteTests, instantiate_subset)
 {
   const std::string topic_name = "imu";
 
-  rosbaz::View baz_view{ baz, rosbag::TopicQuery(topic_name) };
+  rosbaz::View baz_view{ *baz, rosbag::TopicQuery(topic_name) };
 
   auto baz_m = baz_view.begin();
   auto baz_message = baz_m->instantiate<sensor_msgs::Imu>();
@@ -118,58 +130,4 @@ TEST_P(RegressionTests, instantiate_subset)
   ASSERT_EQ(baz_message->orientation.w, quaternion->w);
 }
 
-INSTANTIATE_TEST_CASE_P(RegressionTestSuite, RegressionTests,
-                        testing::Values("b0-2014-07-11-10-58-16-decompressed.bag"));
-
-class TwoFileRegressionTests : public ::testing::TestWithParam<std::tuple<const char*, const char*>>
-{
-public:
-  TwoFileRegressionTests()
-    : baz0{ rosbaz::Bag::read(rosbaz::io::StreamReader::open(std::get<0>(GetParam()))) }
-    , baz1{ rosbaz::Bag::read(rosbaz::io::StreamReader::open(std::get<1>(GetParam()))) }
-    , bag0{ std::get<0>(GetParam()) }
-    , bag1{ std::get<1>(GetParam()) }
-  {
-  }
-
-  rosbaz::Bag baz0;
-  rosbaz::Bag baz1;
-  rosbag::Bag bag0;
-  rosbag::Bag bag1;
-};
-
-TEST_P(TwoFileRegressionTests, two_bags)
-{
-  const std::string topic_name = "imu";
-
-  rosbaz::View baz_view{ baz0, rosbag::TopicQuery(topic_name) };
-  baz_view.addQuery(baz1, rosbag::TopicQuery(topic_name));
-  rosbag::View bag_view{ bag0, rosbag::TopicQuery(topic_name) };
-  bag_view.addQuery(bag1, rosbag::TopicQuery(topic_name));
-
-  ASSERT_EQ(baz_view.size(), bag_view.size());
-
-  for (size_t i = 0; i < baz_view.size(); ++i)
-  {
-    auto baz_m = baz_view.begin();
-    std::advance(baz_m, i);
-    auto baz_message = baz_m->instantiate<sensor_msgs::Imu>();
-
-    auto bag_m = bag_view.begin();
-    std::advance(bag_m, i);
-    auto bag_message = bag_m->instantiate<sensor_msgs::Imu>();
-
-    EXPECT_EQ(bag_m->getTime(), baz_m->getTime());
-    EXPECT_EQ(bag_m->getTopic(), baz_m->getTopic());
-    EXPECT_EQ(bag_m->getDataType(), baz_m->getDataType());
-    EXPECT_EQ(bag_m->getMD5Sum(), baz_m->getMD5Sum());
-    EXPECT_EQ(bag_m->getMessageDefinition(), baz_m->getMessageDefinition());
-
-    EXPECT_EQ(bag_message->header.seq, baz_message->header.seq);
-  }
-}
-
-INSTANTIATE_TEST_CASE_P(TwoFileRegressionTestSuite, TwoFileRegressionTests,
-                        testing::Values(std::make_tuple("b0-2014-07-11-10-58-16-decompressed.bag", "b0-2014-07-21-12-"
-                                                                                                   "42-53-decompressed."
-                                                                                                   "bag")));
+INSTANTIATE_TEST_CASE_P(WriteTestSuite, WriteTests, testing::Values("b0-2014-07-11-10-58-16-decompressed.bag"));

@@ -147,7 +147,7 @@ void View::updateQueries(BagQuery& q)
   const Bag& bag = *q.bag;
   for (const auto& connection_info : bag.connections_)
   {
-    const rosbag::ConnectionInfo& connection = connection_info.second;
+    const rosbag::ConnectionInfo& connection = *connection_info.second;
 
     if (!q.query.getQuery()(&connection))
     {

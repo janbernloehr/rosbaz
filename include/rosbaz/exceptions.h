@@ -68,4 +68,20 @@ public:
   }
 };
 
+class InvalidModeException : public Exception
+{
+public:
+  explicit InvalidModeException(std::string const& msg) : Exception(msg)
+  {
+  }
+};
+
+class UnstagedBlocksException : public Exception
+{
+public:
+  explicit UnstagedBlocksException(std::string const& msg) : Exception(msg)
+  {
+  }
+};
+
 }  // namespace rosbaz

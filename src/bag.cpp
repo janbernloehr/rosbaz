@@ -3,6 +3,7 @@
 #include <future>
 
 #include <ros/console.h>
+#include <ros/header.h>
 #include <rosbag/constants.h>
 #include <rosbag/structures.h>
 
@@ -18,9 +19,14 @@
 
 namespace rosbaz
 {
-Bag::Bag(std::shared_ptr<rosbaz::io::IReader> reader) : reader_(reader)
+Bag::Bag(std::shared_ptr<rosbaz::io::IReader> reader) : mode_{ BagMode::Read }, reader_(reader)
 {
   assert(reader != nullptr);
+}
+
+Bag::Bag(std::shared_ptr<rosbaz::io::IWriter> writer) : mode_{ BagMode::Write }, writer_(writer)
+{
+  assert(writer != nullptr);
 }
 
 Bag Bag::read(std::shared_ptr<rosbaz::io::IReader> reader, bool read_chunk_indices)
@@ -77,8 +83,28 @@ Bag Bag::read(std::shared_ptr<rosbaz::io::IReader> reader, bool read_chunk_indic
   return bag;
 }
 
+Bag Bag::write(std::shared_ptr<rosbaz::io::IWriter> writer)
+{
+  Bag bag{ writer };
+
+  bag.header_block_ = writer->create_block();
+
+  bag.writeVersion(*bag.header_block_);
+  bag.file_header_pos_ = bag.header_block_->size();
+  bag.writeFileHeaderRecord(*bag.header_block_);
+
+  bag.header_block_->stage();
+
+  return bag;
+}
+
 void Bag::parseFileHeaderRecord(const rosbaz::bag_parsing::Record& file_header_record)
 {
+  if (mode_ != BagMode::Read)
+  {
+    throw InvalidModeException{ "Bag must be opened in read mode to support parseFileHeaderRecord." };
+  }
+
   auto h = rosbaz::bag_parsing::Header::parse(file_header_record.header);
 
   if (h.op != rosbag::OP_FILE_HEADER)
@@ -110,6 +136,11 @@ void Bag::parseFileHeaderRecord(const rosbaz::bag_parsing::Record& file_header_r
 
 void Bag::parseFileTail(rosbaz::DataSpan bag_tail)
 {
+  if (mode_ != BagMode::Read)
+  {
+    throw InvalidModeException{ "Bag must be opened in read mode to support parseFileTail." };
+  }
+
   std::uint64_t offset = 0;
 
   while (offset < bag_tail.size())
@@ -123,7 +154,7 @@ void Bag::parseFileTail(rosbaz::DataSpan bag_tail)
     {
       case rosbag::OP_CONNECTION: {
         rosbag::ConnectionInfo info = as_connection_info(header, record.data);
-        connections_[info.id] = info;
+        connections_[info.id] = std::make_unique<rosbag::ConnectionInfo>(info);
       }
       break;
       case rosbag::OP_CHUNK_INFO: {
@@ -142,6 +173,11 @@ void Bag::parseFileTail(rosbaz::DataSpan bag_tail)
 void Bag::parseIndexSection(rosbaz::bag_parsing::ChunkExt& chunk_ext, rosbaz::DataSpan chunk_index,
                             const uint64_t index_offset)
 {
+  if (mode_ != BagMode::Read)
+  {
+    throw InvalidModeException{ "Bag must be opened in read mode to support parseIndexSection." };
+  }
+
   // There may be multiple records in the given data span
   uint32_t offset = 0;
   int idx = 0;
@@ -218,6 +254,10 @@ void Bag::parseIndexSection(rosbaz::bag_parsing::ChunkExt& chunk_ext, rosbaz::Da
 void Bag::parseChunkInfo(std::mutex& sync, rosbaz::io::IReader& reader, const rosbag::ChunkInfo& chunk_info,
                          const uint64_t next_chunk_pos)
 {
+  if (mode_ != BagMode::Read)
+  {
+    throw InvalidModeException{ "Bag must be opened in read mode to support parseChunkInfo." };
+  }
   const auto chunk_header_buffer_and_size = reader.read_header_buffer_and_size(chunk_info.pos);
   const auto chunk_header_raw = rosbaz::bag_parsing::Header::parse(chunk_header_buffer_and_size.header_buffer);
 
@@ -259,6 +299,10 @@ void Bag::parseChunkInfo(std::mutex& sync, rosbaz::io::IReader& reader, const ro
 
 void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
 {
+  if (mode_ != BagMode::Read)
+  {
+    throw InvalidModeException{ "Bag must be opened in read mode to support parseChunkIndices." };
+  }
   // We need to make sure that all inserts are in-place and do not need to re-allocate
   chunk_exts_.reserve(chunks_.size());
   chunk_exts_lookup_.reserve(chunks_.size());
@@ -309,11 +353,16 @@ void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
 
 std::vector<const rosbag::ConnectionInfo*> Bag::getConnections() const
 {
+  if (mode_ != BagMode::Read)
+  {
+    throw InvalidModeException{ "Bag must be opened in read mode." };
+  }
+
   std::vector<const rosbag::ConnectionInfo*> result;
 
   for (const auto& connection_info : connections_)
   {
-    result.push_back(&connection_info.second);
+    result.push_back(connection_info.second.get());
   }
 
   return result;
@@ -321,6 +370,10 @@ std::vector<const rosbag::ConnectionInfo*> Bag::getConnections() const
 
 ros::Time Bag::getBeginTime() const
 {
+  if (mode_ != BagMode::Read)
+  {
+    throw InvalidModeException{ "Bag must be opened in read mode." };
+  }
   ros::Time begin = ros::TIME_MAX;
 
   for (const auto& chunk_info : chunks_)
@@ -336,6 +389,10 @@ ros::Time Bag::getBeginTime() const
 
 ros::Time Bag::getEndTime() const
 {
+  if (mode_ != BagMode::Read)
+  {
+    throw InvalidModeException{ "Bag must be opened in read mode." };
+  }
   ros::Time end = ros::TIME_MIN;
 
   for (const auto& chunk_info : chunks_)
@@ -351,11 +408,19 @@ ros::Time Bag::getEndTime() const
 
 std::uint64_t Bag::getSize() const
 {
+  if (mode_ != BagMode::Read)
+  {
+    throw InvalidModeException{ "Bag must be opened in read mode." };
+  }
   return file_size_;
 }
 
 std::uint32_t Bag::getChunkCount() const
 {
+  if (mode_ != BagMode::Read)
+  {
+    throw InvalidModeException{ "Bag must be opened in read mode." };
+  }
   return chunk_count_;
 }
 
@@ -371,7 +436,18 @@ CompressionType Bag::getCompression() const
 
 std::string Bag::getFilePath() const
 {
-  return reader_->filepath();
+  if (reader_)
+  {
+    return reader_->filepath();
+  }
+  else if (writer_)
+  {
+    return writer_->filepath();
+  }
+  else
+  {
+    throw InvalidModeException("getFilePath requires read or write mode");
+  }
 }
 
 uint32_t Bag::getMajorVersion() const
@@ -386,7 +462,279 @@ uint32_t Bag::getMinorVersion() const
 
 BagMode Bag::getMode() const
 {
-  return BagMode::Read;
+  return mode_;
+}
+
+void Bag::writeVersion(rosbaz::io::Block& block)
+{
+  std::string version = std::string("#ROSBAG V") + rosbag::VERSION + std::string("\n");
+
+  ROS_DEBUG("Writing VERSION [%llu]: %s",
+            static_cast<unsigned long long>(current_block_->block_offset() + current_block_->size()), version.c_str());
+
+  block.write(version);
+}
+
+void Bag::writeFileHeaderRecord(rosbaz::io::Block& block)
+{
+  connection_count_ = rosbaz::io::narrow<uint32_t>(connections_.size());
+  chunk_count_ = rosbaz::io::narrow<uint32_t>(chunks_.size());
+
+  ROS_DEBUG("Writing FILE_HEADER [%llu]: index_pos=%llu connection_count=%d chunk_count=%d",
+            static_cast<unsigned long long>(block.block_offset() + block.size()), (unsigned long long)index_data_pos_,
+            connection_count_, chunk_count_);
+
+  // Write file header record
+  ros::M_string header;
+  header[rosbag::OP_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&rosbag::OP_FILE_HEADER);
+  header[rosbag::INDEX_POS_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&index_data_pos_);
+  header[rosbag::CONNECTION_COUNT_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&connection_count_);
+  header[rosbag::CHUNK_COUNT_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&chunk_count_);
+
+  boost::shared_array<uint8_t> header_buffer;
+  uint32_t header_len;
+  ros::Header::write(header, header_buffer, header_len);
+  uint32_t data_len = 0;
+  if (header_len < rosbag::FILE_HEADER_LENGTH)
+    data_len = rosbag::FILE_HEADER_LENGTH - header_len;
+  block.write(reinterpret_cast<const rosbaz::io::byte*>(&header_len), 4);
+  block.write(reinterpret_cast<const rosbaz::io::byte*>(header_buffer.get()), header_len);
+  block.write(reinterpret_cast<const rosbaz::io::byte*>(&data_len), 4);
+
+  // Pad the file header record out
+  if (data_len > 0)
+  {
+    std::string padding;
+    padding.resize(data_len, ' ');
+    block.write(padding);
+  }
+}
+
+void Bag::startWritingChunk(ros::Time time)
+{
+  current_block_ = writer_->create_block();
+  // Initialize chunk info
+  curr_chunk_info_.pos = current_block_->block_offset();
+  curr_chunk_info_.start_time = time;
+  curr_chunk_info_.end_time = time;
+
+  // Write the chunk header, with a place-holder for the data sizes (we'll fill in when the chunk is finished)
+  writeChunkHeader(getCompression(), 0, 0);
+
+  // // Record where the data section of this chunk started
+  curr_chunk_data_pos_ = current_block_->size();
+
+  // chunk_open_ = true;
+}
+
+void Bag::stopWritingChunk()
+{
+  // Add this chunk to the index
+  chunks_.push_back(curr_chunk_info_);
+
+  // Get the uncompressed and compressed sizes
+  uint32_t uncompressed_size = getChunkOffset();
+  uint32_t compressed_size = uncompressed_size;
+
+  // Rewrite the chunk header with the size of the chunk (remembering current offset)
+  uint64_t end_of_chunk_pos = current_block_->block_offset() + current_block_->size();
+
+  // Write out the indexes and clear them
+  writeIndexRecords();
+
+  writeChunkHeader(getCompression(), compressed_size, uncompressed_size);
+
+  curr_chunk_connection_indexes_.clear();
+
+  // Clear the connection counts
+  curr_chunk_info_.connection_counts.clear();
+
+  current_block_->stage();
+  current_block_.reset();
+}
+
+void Bag::writeChunkHeader(CompressionType compression, uint32_t compressed_size, uint32_t uncompressed_size)
+{
+  rosbag::ChunkHeader chunk_header;
+  switch (compression)
+  {
+    case compression::Uncompressed:
+      chunk_header.compression = rosbag::COMPRESSION_NONE;
+      break;
+    default:
+      throw UnsupportedRosBagException("Compression is not supported");
+  }
+  chunk_header.compressed_size = compressed_size;
+  chunk_header.uncompressed_size = uncompressed_size;
+
+  // ROS_DEBUG("Writing CHUNK [%llu]: compression=%s compressed=%d uncompressed=%d", (unsigned long
+  // long)file_.getOffset(),
+  //           chunk_header.compression.c_str(), chunk_header.compressed_size, chunk_header.uncompressed_size);
+
+  ros::M_string header;
+  header[rosbag::OP_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&rosbag::OP_CHUNK);
+  header[rosbag::COMPRESSION_FIELD_NAME] = chunk_header.compression;
+  header[rosbag::SIZE_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&chunk_header.uncompressed_size);
+  uint32_t header_size = writeHeader(header, 0);
+
+  writeDataLength(chunk_header.compressed_size, header_size);
+}
+
+uint32_t Bag::writeHeader(ros::M_string const& fields, boost::optional<size_t> offset)
+{
+  boost::shared_array<uint8_t> header_buffer;
+  uint32_t header_len;
+  ros::Header::write(fields, header_buffer, header_len);
+  current_block_->write(reinterpret_cast<const rosbaz::io::byte*>(&header_len), 4, offset);
+  current_block_->write(reinterpret_cast<const rosbaz::io::byte*>(header_buffer.get()), header_len,
+                        offset ? boost::optional<size_t>{ *offset + 4 } : boost::none);
+
+  return 4 + header_len;
+}
+
+uint32_t Bag::writeDataLength(uint32_t data_len, boost::optional<size_t> offset)
+{
+  current_block_->write(reinterpret_cast<const rosbaz::io::byte*>(&data_len), 4, offset);
+  return 4;
+}
+
+void Bag::writeIndexRecords()
+{
+  for (const auto& chunk_connection_index : curr_chunk_connection_indexes_)
+  {
+    uint32_t connection_id = chunk_connection_index.first;
+    const auto& index = chunk_connection_index.second;
+
+    // Write the index record header
+    uint32_t index_size = index.size();
+    ros::M_string header;
+    header[rosbag::OP_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&rosbag::OP_INDEX_DATA);
+    header[rosbag::CONNECTION_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&connection_id);
+    header[rosbag::VER_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&rosbag::INDEX_VERSION);
+    header[rosbag::COUNT_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&index_size);
+    writeHeader(header);
+
+    writeDataLength(index_size * 12);
+
+    ROS_DEBUG("Writing INDEX_DATA: connection=%d ver=%d count=%d", connection_id, rosbag::INDEX_VERSION, index_size);
+
+    // Write the index record data (pairs of timestamp and position in file)
+    for (const auto& e : index)
+    {
+      current_block_->write(reinterpret_cast<const rosbaz::io::byte*>(&e.time.sec), 4);
+      current_block_->write(reinterpret_cast<const rosbaz::io::byte*>(&e.time.nsec), 4);
+      current_block_->write(reinterpret_cast<const rosbaz::io::byte*>(&e.offset), 4);
+
+      ROS_DEBUG("  - %d.%d: %d", e.time.sec, e.time.nsec, e.offset);
+    }
+  }
+}
+
+uint32_t Bag::getChunkOffset() const
+{
+  return rosbaz::io::narrow<uint32_t>(current_block_->size() - curr_chunk_data_pos_);
+}
+
+void Bag::writeConnectionRecords()
+{
+  for (const auto& connection_info : connections_)
+  {
+    writeConnectionRecord(connection_info.second.get(), true);
+  }
+}
+
+void Bag::writeConnectionRecord(rosbag::ConnectionInfo const* connection_info, const bool encrypt)
+{
+  // ROS_DEBUG("Writing CONNECTION [%llu:%d]: topic=%s id=%d", (unsigned long long)file_.getOffset(),
+  //                         getChunkOffset(), connection_info->topic.c_str(), connection_info->id);
+
+  ros::M_string header;
+  header[rosbag::OP_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&rosbag::OP_CONNECTION);
+  header[rosbag::TOPIC_FIELD_NAME] = connection_info->topic;
+  header[rosbag::CONNECTION_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&connection_info->id);
+
+  writeHeader(header);
+  writeHeader(*connection_info->header);
+}
+
+void Bag::close()
+{
+  if (reader_)
+  {
+    return;
+  }
+
+  if (writer_)
+  {
+    closeWrite();
+    writer_.reset();
+  }
+}
+
+void Bag::closeWrite()
+{
+  stopWriting();
+}
+
+void Bag::stopWriting()
+{
+  if (current_block_)
+    stopWritingChunk();
+
+  current_block_ = writer_->create_block();
+
+  index_data_pos_ = current_block_->block_offset();
+  writeConnectionRecords();
+  writeChunkInfoRecords();
+  current_block_->stage();
+
+  current_block_ = writer_->replace_block(*header_block_);
+
+  std::cout << "writing index at " << current_block_->block_offset() << "\n";
+
+  writeVersion(*current_block_);
+  writeFileHeaderRecord(*current_block_);
+
+  current_block_->stage();
+
+  writer_->commit_blocks();
+}
+
+void Bag::writeChunkInfoRecords()
+{
+  for (const auto& chunk_info : chunks_)
+  {
+    // Write the chunk info header
+    ros::M_string header;
+    uint32_t chunk_connection_count = chunk_info.connection_counts.size();
+    header[rosbag::OP_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&rosbag::OP_CHUNK_INFO);
+    header[rosbag::VER_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&rosbag::CHUNK_INFO_VERSION);
+    header[rosbag::CHUNK_POS_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&chunk_info.pos);
+    header[rosbag::START_TIME_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&chunk_info.start_time);
+    header[rosbag::END_TIME_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&chunk_info.end_time);
+    header[rosbag::COUNT_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&chunk_connection_count);
+
+    ROS_DEBUG("Writing CHUNK_INFO [%llu]: ver=%d pos=%llu start=%d.%d end=%d.%d",
+              static_cast<unsigned long long>(current_block_->block_offset() + current_block_->size()),
+              rosbag::CHUNK_INFO_VERSION, (unsigned long long)chunk_info.pos, chunk_info.start_time.sec,
+              chunk_info.start_time.nsec, chunk_info.end_time.sec, chunk_info.end_time.nsec);
+
+    writeHeader(header);
+
+    writeDataLength(8 * chunk_connection_count);
+
+    // Write the topic names and counts
+    for (const auto& connection_count : chunk_info.connection_counts)
+    {
+      uint32_t connection_id = connection_count.first;
+      uint32_t count = connection_count.second;
+
+      current_block_->write(reinterpret_cast<const rosbaz::io::byte*>(&connection_id), 4);
+      current_block_->write(reinterpret_cast<const rosbaz::io::byte*>(&count), 4);
+
+      ROS_DEBUG("  - %d: %d", connection_id, count);
+    }
+  }
 }
 
 }  // namespace rosbaz
