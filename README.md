@@ -33,17 +33,26 @@ We tried to keep the API as close to the rosbag api as possible.
 #include <rosbaz/view.h>
 #include <std_msgs/Int32.h>
 
-auto url = rosbaz::AzBlobUrl::parse("https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag?SAS_TOKEN");
-auto az_reader = std::make_shared<rosbaz::io::AzReader>(url);
+auto in_url = rosbaz::AzBlobUrl::parse("https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag?SAS_TOKEN");
+auto az_reader = std::make_shared<rosbaz::io::AzReader>(in_url);
+auto in_bag = rosbaz::Bag::read(az_reader);
 
-auto bag = rosbaz::Bag::read(az_reader);
-
-for(const auto m : rosbaz::View(bag))
+for(const auto m : rosbaz::View(in_bag))
 {
   std_msgs::Int32::ConstPtr i = m.instantiate<std_msgs::Int32>();
   if (i != nullptr) {
     std::cout << i->data << std::endl;
   }
+}
+
+auto out_url = rosbaz::AzBlobUrl::parse("https://contosoaccount.blob.core.windows.net/contosocontainer/other.bag?SAS_TOKEN");
+
+auto az_writer = std::make_shared<rosbaz::io::AzWriter>(out_url);
+auto out_bag = rosbaz::Bag::read(az_writer);
+
+for(const auto m : rosbaz::View(in_bag))
+{
+  out_bag.write(m.getTopic(), m.getTime(), m);
 }
 ```
 
@@ -75,7 +84,6 @@ rosbaz info https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag
 -   rosbag format 2.0
 -   no support for encryption
 -   no support for compressed chunks
--   only reading (not writing bags) is supported
 
 ## Build (Linux)
 
