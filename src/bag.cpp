@@ -481,8 +481,8 @@ void Bag::writeFileHeaderRecord(rosbaz::io::Block& block)
   chunk_count_ = rosbaz::io::narrow<uint32_t>(chunks_.size());
 
   ROS_DEBUG("Writing FILE_HEADER [%llu]: index_pos=%llu connection_count=%d chunk_count=%d",
-            static_cast<unsigned long long>(block.block_offset() + block.size()), (unsigned long long)index_data_pos_,
-            connection_count_, chunk_count_);
+            static_cast<unsigned long long>(block.block_offset() + block.size()),
+            static_cast<unsigned long long>(index_data_pos_), connection_count_, chunk_count_);
 
   // Write file header record
   ros::M_string header;
@@ -535,9 +535,6 @@ void Bag::stopWritingChunk()
   // Get the uncompressed and compressed sizes
   uint32_t uncompressed_size = getChunkOffset();
   uint32_t compressed_size = uncompressed_size;
-
-  // Rewrite the chunk header with the size of the chunk (remembering current offset)
-  uint64_t end_of_chunk_pos = current_block_->block_offset() + current_block_->size();
 
   // Write out the indexes and clear them
   writeIndexRecords();
@@ -606,7 +603,7 @@ void Bag::writeIndexRecords()
     const auto& index = chunk_connection_index.second;
 
     // Write the index record header
-    uint32_t index_size = index.size();
+    const uint32_t index_size = rosbaz::io::narrow<uint32_t>(index.size());
     ros::M_string header;
     header[rosbag::OP_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&rosbag::OP_INDEX_DATA);
     header[rosbag::CONNECTION_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&connection_id);
@@ -639,14 +636,15 @@ void Bag::writeConnectionRecords()
 {
   for (const auto& connection_info : connections_)
   {
-    writeConnectionRecord(connection_info.second.get(), true);
+    writeConnectionRecord(connection_info.second.get());
   }
 }
 
-void Bag::writeConnectionRecord(rosbag::ConnectionInfo const* connection_info, const bool encrypt)
+void Bag::writeConnectionRecord(rosbag::ConnectionInfo const* connection_info)
 {
-  // ROS_DEBUG("Writing CONNECTION [%llu:%d]: topic=%s id=%d", (unsigned long long)file_.getOffset(),
-  //                         getChunkOffset(), connection_info->topic.c_str(), connection_info->id);
+  ROS_DEBUG("Writing CONNECTION [%llu:%d]: topic=%s id=%d",
+            static_cast<unsigned long long>(current_block_->block_offset() + current_block_->size()), getChunkOffset(),
+            connection_info->topic.c_str(), connection_info->id);
 
   ros::M_string header;
   header[rosbag::OP_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&rosbag::OP_CONNECTION);
@@ -678,8 +676,9 @@ void Bag::closeWrite()
 
 void Bag::stopWriting()
 {
-  if (current_block_)
+  if (current_block_) {
     stopWritingChunk();
+  }
 
   current_block_ = writer_->create_block();
 
@@ -689,8 +688,6 @@ void Bag::stopWriting()
   current_block_->stage();
 
   current_block_ = writer_->replace_block(*header_block_);
-
-  std::cout << "writing index at " << current_block_->block_offset() << "\n";
 
   writeVersion(*current_block_);
   writeFileHeaderRecord(*current_block_);
@@ -706,7 +703,7 @@ void Bag::writeChunkInfoRecords()
   {
     // Write the chunk info header
     ros::M_string header;
-    uint32_t chunk_connection_count = chunk_info.connection_counts.size();
+    const uint32_t chunk_connection_count = rosbaz::io::narrow<uint32_t>(chunk_info.connection_counts.size());
     header[rosbag::OP_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&rosbag::OP_CHUNK_INFO);
     header[rosbag::VER_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&rosbag::CHUNK_INFO_VERSION);
     header[rosbag::CHUNK_POS_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&chunk_info.pos);
@@ -716,7 +713,7 @@ void Bag::writeChunkInfoRecords()
 
     ROS_DEBUG("Writing CHUNK_INFO [%llu]: ver=%d pos=%llu start=%d.%d end=%d.%d",
               static_cast<unsigned long long>(current_block_->block_offset() + current_block_->size()),
-              rosbag::CHUNK_INFO_VERSION, (unsigned long long)chunk_info.pos, chunk_info.start_time.sec,
+              rosbag::CHUNK_INFO_VERSION, static_cast<unsigned long long>(chunk_info.pos), chunk_info.start_time.sec,
               chunk_info.start_time.nsec, chunk_info.end_time.sec, chunk_info.end_time.nsec);
 
     writeHeader(header);

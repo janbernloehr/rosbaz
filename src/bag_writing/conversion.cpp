@@ -7,7 +7,7 @@ namespace bag_writing
 
 std::string toHeaderString(ros::Time const* field)
 {
-  uint64_t packed_time = (((uint64_t)field->nsec) << 32) + field->sec;
+  uint64_t packed_time = ((static_cast<uint64_t>(field->nsec)) << 32) + field->sec;
   return toHeaderString(&packed_time);
 }
 

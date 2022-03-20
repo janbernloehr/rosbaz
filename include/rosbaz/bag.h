@@ -182,7 +182,7 @@ private:
   void writeVersion(rosbaz::io::Block& block);
   void writeFileHeaderRecord(rosbaz::io::Block& block);
 
-  void writeConnectionRecord(rosbag::ConnectionInfo const* connection_info, const bool encrypt);
+  void writeConnectionRecord(rosbag::ConnectionInfo const* connection_info);
   void appendConnectionRecordToBuffer(Buffer& buf, rosbag::ConnectionInfo const* connection_info);
   template <class T>
   void writeMessageDataRecord(uint32_t conn_id, ros::Time const& time, T const& msg);
@@ -373,8 +373,7 @@ void Bag::doWrite(const std::string& topic, ros::Time const& time, T const& msg,
       }
       connections_[conn_id] = std::make_unique<rosbag::ConnectionInfo>(info);
       connection_info = connections_[conn_id].get();
-      // No need to encrypt connection records in chunks
-      writeConnectionRecord(connection_info, false);
+      writeConnectionRecord(connection_info);
     }
 
     // Add to topic indexes
