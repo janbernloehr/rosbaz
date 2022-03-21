@@ -233,6 +233,7 @@ private:
 
   bool chunk_indices_parsed_ = false;
 
+  // rosbag uses a map. Since for reading there are as many indices as chunk infos, it is safe to reserve once.
   std::unordered_map<uint32_t, std::multiset<rosbag::IndexEntry>> connection_indexes_;
 
   // for writing
