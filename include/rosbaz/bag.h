@@ -209,7 +209,7 @@ private:
 
   BagMode mode_;
 
-  std::unordered_map<uint32_t, std::unique_ptr<rosbag::ConnectionInfo>> connections_{};
+  std::unordered_map<uint32_t, std::shared_ptr<rosbag::ConnectionInfo>> connections_{};
 
   std::uint32_t bag_revision_{ 0 };
 
