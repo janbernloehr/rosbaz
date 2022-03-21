@@ -69,6 +69,8 @@ TEST_P(RegressionTests, equal_messages)
   rosbag::View bag_view{ bag, rosbag::TopicQuery(topic_name) };
 
   ASSERT_EQ(baz_view.size(), bag_view.size());
+  ASSERT_EQ(baz_view.getBeginTime(), bag_view.getBeginTime());
+  ASSERT_EQ(baz_view.getEndTime(), bag_view.getEndTime());
 
   for (size_t i = 0; i < baz_view.size(); ++i)
   {

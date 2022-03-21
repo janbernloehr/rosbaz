@@ -18,8 +18,8 @@ class WriteTests : public ::testing::TestWithParam<const char*>
 public:
   WriteTests() : bag{ std::make_unique<rosbag::Bag>(GetParam()) }
   {
-    const std::string output_path = "/tmp/out.bag";
-    rosbaz::Bag output_bag = rosbaz::Bag::write(rosbaz::io::StreamWriter::open(output_path));
+    const boost::filesystem::path output_path = boost::filesystem::temp_directory_path() / (boost::filesystem::unique_path().string() + ".bag");
+    rosbaz::Bag output_bag = rosbaz::Bag::write(rosbaz::io::StreamWriter::open(output_path.native()));
 
     rosbag::View view_in(*bag);
     for (const auto& m : view_in)
@@ -29,7 +29,7 @@ public:
 
     output_bag.close();
 
-    baz = std::make_unique<rosbaz::Bag>(rosbaz::Bag::read(rosbaz::io::StreamReader::open(output_path)));
+    baz = std::make_unique<rosbaz::Bag>(rosbaz::Bag::read(rosbaz::io::StreamReader::open(output_path.native())));
   }
 
   std::unique_ptr<rosbaz::Bag> baz;
@@ -38,7 +38,6 @@ public:
 
 TEST_P(WriteTests, equal_properties)
 {
-  ASSERT_EQ(baz->getSize(), bag->getSize());
   ASSERT_EQ(baz->getMode(), bag->getMode());
   ASSERT_EQ(baz->getMajorVersion(), bag->getMajorVersion());
   ASSERT_EQ(baz->getMinorVersion(), bag->getMinorVersion());
@@ -80,6 +79,8 @@ TEST_P(WriteTests, equal_messages)
   rosbag::View bag_view{ *bag, rosbag::TopicQuery(topic_name) };
 
   ASSERT_EQ(baz_view.size(), bag_view.size());
+  ASSERT_EQ(baz_view.getBeginTime(), bag_view.getBeginTime());
+  ASSERT_EQ(baz_view.getEndTime(), bag_view.getEndTime());
 
   for (size_t i = 0; i < baz_view.size(); ++i)
   {
