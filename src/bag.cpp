@@ -429,6 +429,11 @@ uint32_t Bag::getChunkThreshold() const
   return chunk_threshold_;
 }
 
+void Bag::setChunkThreshold(const uint32_t chunk_threshold)
+{
+  chunk_threshold_ = chunk_threshold;
+}
+
 CompressionType Bag::getCompression() const
 {
   return CompressionType::Uncompressed;

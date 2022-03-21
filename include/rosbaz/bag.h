@@ -65,7 +65,7 @@ public:
 
   static Bag write(std::shared_ptr<rosbaz::io::IWriter> writer);
 
-  //! Close the bag file
+  /// Close the bag file
   void close();
 
   std::vector<const rosbag::ConnectionInfo*> getConnections() const;
@@ -91,57 +91,56 @@ public:
   /// Get the threshold for creating new chunks.
   uint32_t getChunkThreshold() const;
 
+  /// Set the threshold for creating new chunks
+  void setChunkThreshold(uint32_t chunk_threshold);
+
   /// Get the compression method to use for writing chunks.
   CompressionType getCompression() const;
 
   ros::Time getBeginTime() const;
   ros::Time getEndTime() const;
 
-  //! Write a message into the bag file
-  /*!
-   * \param topic The topic name
-   * \param event The message event to be added
-   *
-   * Can throw BagIOException
-   */
+  /// Write a message into the bag file
+  ///
+  /// \param topic The topic name
+  /// \param event The message event to be added
+  ///
+  /// Can throw BagIOException
   template <class T>
   void write(const std::string& topic, ros::MessageEvent<T> const& event);
 
-  //! Write a message into the bag file
-  /*!
-   * \param topic The topic name
-   * \param time  Timestamp of the message
-   * \param msg   The message to be added
-   * \param connection_header  A connection header.
-   *
-   * Can throw BagIOException
-   */
+  /// Write a message into the bag file
+  /// 
+  /// \param topic The topic name
+  /// \param time  Timestamp of the message
+  /// \param msg   The message to be added
+  /// \param connection_header  A connection header.
+  /// 
+  /// Can throw BagIOException
   template <class T>
   void write(const std::string& topic, ros::Time const& time, T const& msg,
              boost::shared_ptr<ros::M_string> connection_header = boost::shared_ptr<ros::M_string>());
 
-  //! Write a message into the bag file
-  /*!
-   * \param topic The topic name
-   * \param time  Timestamp of the message
-   * \param msg   The message to be added
-   * \param connection_header  A connection header.
-   *
-   * Can throw BagIOException
-   */
+  /// Write a message into the bag file
+  /// 
+  /// \param topic The topic name
+  /// \param time  Timestamp of the message
+  /// \param msg   The message to be added
+  /// \param connection_header  A connection header.
+  /// 
+  /// Can throw BagIOException
   template <class T>
   void write(const std::string& topic, ros::Time const& time, boost::shared_ptr<T const> const& msg,
              boost::shared_ptr<ros::M_string> connection_header = boost::shared_ptr<ros::M_string>());
 
-  //! Write a message into the bag file
-  /*!
-   * \param topic The topic name
-   * \param time  Timestamp of the message
-   * \param msg   The message to be added
-   * \param connection_header  A connection header.
-   *
-   * Can throw BagIOException
-   */
+  /// Write a message into the bag file
+  /// 
+  /// \param topic The topic name
+  /// \param time  Timestamp of the message
+  /// \param msg   The message to be added
+  /// \param connection_header  A connection header.
+  /// 
+  /// Can throw BagIOException
   template <class T>
   void write(const std::string& topic, ros::Time const& time, boost::shared_ptr<T> const& msg,
              boost::shared_ptr<ros::M_string> connection_header = boost::shared_ptr<ros::M_string>());
