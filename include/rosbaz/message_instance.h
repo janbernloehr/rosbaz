@@ -180,7 +180,7 @@ boost::shared_ptr<T> MessageInstance::instantiate() const
 
   ros::serialization::PreDeserializeParams<T> predes_params;
   predes_params.message = ptr;
-  predes_params.connection_header = found_connection->second.header;
+  predes_params.connection_header = found_connection->second->header;
   ros::serialization::PreDeserialize<T>::notify(predes_params);
 
   ros::serialization::IStream s(const_cast<uint8_t*>(&(*record.data.begin())),

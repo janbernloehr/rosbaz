@@ -1,5 +1,7 @@
 #include "rosbaz/io/az_reader.h"
 
+#include "az_bearer_token.h"
+
 #include <ros/console.h>
 
 #include <azure/core.hpp>
@@ -10,28 +12,6 @@
 #include "rosbaz/io/io_helpers.h"
 #include "rosbaz/io/small_element_cache.h"
 
-namespace
-{
-class BearerToken : public Azure::Core::Credentials::TokenCredential
-{
-public:
-  explicit BearerToken(const std::string& token) : m_token{ token }
-  {
-  }
-
-  Azure::Core::Credentials::AccessToken
-  GetToken(Azure::Core::Credentials::TokenRequestContext const& /* tokenRequestContext*/,
-           Azure::Core::Context const& /* context */) const override
-  {
-    Azure::Core::Credentials::AccessToken t;
-    t.Token = m_token;
-    return t;
-  }
-
-private:
-  std::string m_token;
-};
-}  // namespace
 
 namespace rosbaz
 {
@@ -73,6 +53,8 @@ AzReader::AzReader(const AzBlobUrl& blob_url, const std::string& account_key, co
                                               "token, or an account key.");
   }
 }
+
+AzReader::~AzReader() = default;
 
 std::string AzReader::filepath()
 {

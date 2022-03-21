@@ -69,6 +69,8 @@ TEST_P(RegressionTests, equal_messages)
   rosbag::View bag_view{ bag, rosbag::TopicQuery(topic_name) };
 
   ASSERT_EQ(baz_view.size(), bag_view.size());
+  ASSERT_EQ(baz_view.getBeginTime(), bag_view.getBeginTime());
+  ASSERT_EQ(baz_view.getEndTime(), bag_view.getEndTime());
 
   for (size_t i = 0; i < baz_view.size(); ++i)
   {
@@ -99,13 +101,21 @@ TEST_P(RegressionTests, instantiate_subset)
   auto baz_m = baz_view.begin();
   auto baz_message = baz_m->instantiate<sensor_msgs::Imu>();
 
-  auto header = baz_m->instantiate_subset<std_msgs::Header>(0, 4 + 4 + 4 + 4 + 8);
+  std_msgs::Header imu_header{};
+  imu_header.frame_id = "imu_link";
+
+  const uint32_t kStdMsgHeaderSize = ros::serialization::serializationLength(imu_header);
+
+  auto header = baz_m->instantiate_subset<std_msgs::Header>(0, kStdMsgHeaderSize);
 
   ASSERT_EQ(baz_message->header.frame_id, header->frame_id);
   ASSERT_EQ(baz_message->header.seq, header->seq);
   ASSERT_EQ(baz_message->header.stamp, header->stamp);
 
-  auto quaternion = baz_m->instantiate_subset<geometry_msgs::Quaternion>(4 + 4 + 4 + 4 + 8, 4 * 8);
+  const uint32_t kGeometryMsgsQuaternionSize = ros::serialization::serializationLength(geometry_msgs::Quaternion{});
+
+  auto quaternion =
+      baz_m->instantiate_subset<geometry_msgs::Quaternion>(kStdMsgHeaderSize, kGeometryMsgsQuaternionSize);
 
   ASSERT_EQ(baz_message->orientation.x, quaternion->x);
   ASSERT_EQ(baz_message->orientation.y, quaternion->y);
