@@ -180,7 +180,7 @@ void Bag::parseIndexSection(rosbaz::bag_parsing::ChunkExt& chunk_ext, rosbaz::Da
 
   // There may be multiple records in the given data span
   uint32_t offset = 0;
-  int idx = 0;
+  size_t idx = 0;
 
   std::vector<uint32_t> offsets;
 
