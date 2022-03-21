@@ -38,7 +38,6 @@ public:
 
 TEST_P(WriteTests, equal_properties)
 {
-  ASSERT_EQ(baz->getFilePath(), bag->getFileName());
   ASSERT_EQ(baz->getSize(), bag->getSize());
   ASSERT_EQ(baz->getMode(), bag->getMode());
   ASSERT_EQ(baz->getMajorVersion(), bag->getMajorVersion());
