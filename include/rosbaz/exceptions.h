@@ -84,4 +84,12 @@ public:
   }
 };
 
+class BlockStagedException : public Exception
+{
+public:
+  explicit BlockStagedException(std::string const& msg) : Exception(msg)
+  {
+  }
+};
+
 }  // namespace rosbaz

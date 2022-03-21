@@ -17,15 +17,22 @@ StreamBlock::StreamBlock(StreamWriter& writer)
 
 void StreamBlock::write(rosbaz::io::byte const* data, size_t n, boost::optional<size_t> offset)
 {
+  if (is_staged())
+  {
+    throw BlockStagedException("Cannot write to staged block");
+  }
   if (offset)
   {
     writer_.m_target.seekp(rosbaz::io::narrow<std::streampos>(block_offset_ + *offset));
   }
   writer_.m_target.write(reinterpret_cast<const char*>(data), n);
 
-  if (offset) {
+  if (offset)
+  {
     size_ = std::max(size_, *offset + n);
-  } else {
+  }
+  else
+  {
     size_ += n;
   }
 }

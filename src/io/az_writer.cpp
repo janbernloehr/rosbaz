@@ -26,6 +26,10 @@ AzBlock::AzBlock(AzWriter& writer, size_t block_offset) : Block{ block_offset },
 
 void AzBlock::write(rosbaz::io::byte const* data, size_t n, boost::optional<size_t> offset)
 {
+  if (is_staged())
+  {
+    throw BlockStagedException("Cannot write to staged block");
+  }
   size_t new_size = buffer_.size();
 
   if (offset)
@@ -52,7 +56,7 @@ size_t AzBlock::size() const
 
 void AzBlock::stage()
 {
-  Azure::Core::IO::MemoryBodyStream memory_stream{buffer_};
+  Azure::Core::IO::MemoryBodyStream memory_stream{ buffer_ };
   writer_.client_->StageBlock(id_, memory_stream);
   is_staged_ = true;
 }
