@@ -102,32 +102,4 @@ TEST_P(WriteTests, equal_messages)
   }
 }
 
-TEST_P(WriteTests, instantiate_subset)
-{
-  const std::string topic_name = "imu";
-
-  rosbaz::View baz_view{ *baz, rosbag::TopicQuery(topic_name) };
-
-  auto baz_m = baz_view.begin();
-  auto baz_message = baz_m->instantiate<sensor_msgs::Imu>();
-
-  const uint32_t kStdMsgHeaderSize = ros::serialization::serializationLength(std_msgs::Header{});
-
-  auto header = baz_m->instantiate_subset<std_msgs::Header>(0, kStdMsgHeaderSize);
-
-  ASSERT_EQ(baz_message->header.frame_id, header->frame_id);
-  ASSERT_EQ(baz_message->header.seq, header->seq);
-  ASSERT_EQ(baz_message->header.stamp, header->stamp);
-
-  const uint32_t kGeometryMsgsQuaternionSize = ros::serialization::serializationLength(geometry_msgs::Quaternion{});
-
-  auto quaternion =
-      baz_m->instantiate_subset<geometry_msgs::Quaternion>(kStdMsgHeaderSize, kGeometryMsgsQuaternionSize);
-
-  ASSERT_EQ(baz_message->orientation.x, quaternion->x);
-  ASSERT_EQ(baz_message->orientation.y, quaternion->y);
-  ASSERT_EQ(baz_message->orientation.z, quaternion->z);
-  ASSERT_EQ(baz_message->orientation.w, quaternion->w);
-}
-
 INSTANTIATE_TEST_CASE_P(WriteTestSuite, WriteTests, testing::Values("b0-2014-07-11-10-58-16-decompressed.bag"));
