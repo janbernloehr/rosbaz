@@ -467,7 +467,7 @@ BagMode Bag::getMode() const
 
 void Bag::writeVersion(rosbaz::io::Block& block)
 {
-  std::string version = std::string("#ROSBAG V") + rosbag::VERSION + std::string("\n");
+  const std::string version = std::string("#ROSBAG V") + rosbag::VERSION + std::string("\n");
 
   ROS_DEBUG("Writing VERSION [%llu]: %s",
             static_cast<unsigned long long>(current_block_->block_offset() + current_block_->size()), version.c_str());
@@ -523,8 +523,6 @@ void Bag::startWritingChunk(ros::Time time)
 
   // // Record where the data section of this chunk started
   curr_chunk_data_pos_ = current_block_->size();
-
-  // chunk_open_ = true;
 }
 
 void Bag::stopWritingChunk()
@@ -533,8 +531,8 @@ void Bag::stopWritingChunk()
   chunks_.push_back(curr_chunk_info_);
 
   // Get the uncompressed and compressed sizes
-  uint32_t uncompressed_size = getChunkOffset();
-  uint32_t compressed_size = uncompressed_size;
+  const uint32_t uncompressed_size = getChunkOffset();
+  const uint32_t compressed_size = uncompressed_size;
 
   // Write out the indexes and clear them
   writeIndexRecords();
@@ -564,15 +562,15 @@ void Bag::writeChunkHeader(CompressionType compression, uint32_t compressed_size
   chunk_header.compressed_size = compressed_size;
   chunk_header.uncompressed_size = uncompressed_size;
 
-  // ROS_DEBUG("Writing CHUNK [%llu]: compression=%s compressed=%d uncompressed=%d", (unsigned long
-  // long)file_.getOffset(),
-  //           chunk_header.compression.c_str(), chunk_header.compressed_size, chunk_header.uncompressed_size);
+  ROS_DEBUG("Writing CHUNK [%llu]: compression=%s compressed=%d uncompressed=%d",
+            static_cast<unsigned long long>(current_block_->block_offset() + current_block_->size()),
+            chunk_header.compression.c_str(), chunk_header.compressed_size, chunk_header.uncompressed_size);
 
   ros::M_string header;
   header[rosbag::OP_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&rosbag::OP_CHUNK);
   header[rosbag::COMPRESSION_FIELD_NAME] = chunk_header.compression;
   header[rosbag::SIZE_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&chunk_header.uncompressed_size);
-  uint32_t header_size = writeHeader(header, 0);
+  const uint32_t header_size = writeHeader(header, 0);
 
   writeDataLength(chunk_header.compressed_size, header_size);
 }
@@ -676,7 +674,8 @@ void Bag::closeWrite()
 
 void Bag::stopWriting()
 {
-  if (current_block_) {
+  if (current_block_)
+  {
     stopWritingChunk();
   }
 
@@ -723,8 +722,8 @@ void Bag::writeChunkInfoRecords()
     // Write the topic names and counts
     for (const auto& connection_count : chunk_info.connection_counts)
     {
-      uint32_t connection_id = connection_count.first;
-      uint32_t count = connection_count.second;
+      const uint32_t connection_id = connection_count.first;
+      const uint32_t count = connection_count.second;
 
       current_block_->write(reinterpret_cast<const rosbaz::io::byte*>(&connection_id), 4);
       current_block_->write(reinterpret_cast<const rosbaz::io::byte*>(&count), 4);
