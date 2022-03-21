@@ -343,10 +343,6 @@ void Bag::doWrite(const std::string& topic, ros::Time const& time, T const& msg,
   }
 
   {
-    // // Seek to the end of the file (needed in case previous operation was a read)
-    // seek(0, std::ios::end);
-    // file_size_ = file_.getOffset();
-
     // Write the chunk header if we're starting a new chunk
     if (!current_block_)
     {

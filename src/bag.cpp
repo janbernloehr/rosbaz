@@ -526,7 +526,7 @@ void Bag::startWritingChunk(ros::Time time)
   // Write the chunk header, with a place-holder for the data sizes (we'll fill in when the chunk is finished)
   writeChunkHeader(getCompression(), 0, 0);
 
-  // // Record where the data section of this chunk started
+  // Record where the data section of this chunk started
   curr_chunk_data_pos_ = current_block_->size();
 }
 
