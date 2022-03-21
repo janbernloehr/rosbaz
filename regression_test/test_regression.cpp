@@ -99,7 +99,10 @@ TEST_P(RegressionTests, instantiate_subset)
   auto baz_m = baz_view.begin();
   auto baz_message = baz_m->instantiate<sensor_msgs::Imu>();
 
-  const uint32_t kStdMsgHeaderSize = ros::serialization::serializationLength(std_msgs::Header{});
+  std_msgs::Header imu_header{};
+  imu_header.frame_id = "imu_link";
+
+  const uint32_t kStdMsgHeaderSize = ros::serialization::serializationLength(imu_header);
 
   auto header = baz_m->instantiate_subset<std_msgs::Header>(0, kStdMsgHeaderSize);
 
