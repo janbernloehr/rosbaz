@@ -13,5 +13,4 @@ using byte = uint8_t;
 
 using DataSpan = nonstd::span<const rosbaz::io::byte>;
 
-using Buffer = std::vector<rosbaz::io::byte>;
 }  // namespace rosbaz

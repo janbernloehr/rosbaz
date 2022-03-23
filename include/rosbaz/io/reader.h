@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "rosbaz/common.h"
+#include "rosbaz/io/buffer.h"
 #include "rosbaz/io/io_helpers.h"
 
 namespace rosbaz
@@ -13,7 +14,7 @@ namespace io
 {
 struct HeaderBufferAndSize
 {
-  std::vector<rosbaz::io::byte> header_buffer;
+  rosbaz::io::Buffer header_buffer;
   uint32_t header_size;
   uint32_t data_size;
 
@@ -32,7 +33,7 @@ public:
 
   virtual std::string filepath() = 0;
 
-  std::vector<rosbaz::io::byte> read(size_t offset, size_t count);
+  rosbaz::io::Buffer read(size_t offset, size_t count);
 
   template <size_t N>
   std::array<rosbaz::io::byte, N> read(size_t offset)

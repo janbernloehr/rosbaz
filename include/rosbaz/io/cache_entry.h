@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "rosbaz/common.h"
+#include "rosbaz/io/buffer.h"
 
 namespace rosbaz
 {
@@ -11,7 +12,7 @@ namespace io
 {
 struct CacheEntry
 {
-  std::vector<byte> data{};
+  rosbaz::io::Buffer data{};
   std::uint64_t offset{ 0 };
 };
 

@@ -19,12 +19,10 @@ HeaderBufferAndSize IReader::read_header_buffer_and_size(size_t offset)
   return result;
 }
 
-std::vector<rosbaz::io::byte> IReader::read(size_t offset, size_t count)
+rosbaz::io::Buffer IReader::read(size_t offset, size_t count)
 {
-  std::vector<rosbaz::io::byte> buffer;
-  buffer.resize(count);
-  read_fixed(&(*buffer.begin()), offset, count);
-
+  rosbaz::io::Buffer buffer(count);
+  read_fixed(buffer.data(), offset, count);
   return buffer;
 }
 

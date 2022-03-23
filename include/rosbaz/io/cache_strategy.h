@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "rosbaz/common.h"
+#include "rosbaz/io/buffer.h"
 
 namespace rosbaz
 {
@@ -20,7 +21,7 @@ public:
   virtual bool retrieve(rosbaz::io::byte* buffer, size_t offset, size_t count) = 0;
 
   /// Update the cache with the specified range of bytes.
-  virtual void update(std::vector<rosbaz::io::byte> data, size_t offset) = 0;
+  virtual void update(rosbaz::io::Buffer&& data, size_t offset) = 0;
 
   /// \return The number of bytes to load (returns at least \p count but the cache strategy can decide to request more
   /// data to load).

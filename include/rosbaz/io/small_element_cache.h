@@ -24,7 +24,7 @@ public:
 
   bool retrieve(rosbaz::io::byte* buffer, size_t offset, size_t count) override;
 
-  void update(std::vector<rosbaz::io::byte> data, size_t offset) override;
+  void update(rosbaz::io::Buffer&& data, size_t offset) override;
 
   size_t cache_element_size(size_t count) override;
 
