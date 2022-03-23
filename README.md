@@ -29,6 +29,9 @@ Note that only those topics with connected subscribers will actually be download
 We tried to keep the API as close to the rosbag api as possible.
 
 ```c++
+#include "rosbaz/io/az_reader.h"
+#include "rosbaz/io/az_writer.h
+
 #include <rosbaz/bag.h>
 #include <rosbaz/view.h>
 #include <std_msgs/Int32.h>
@@ -48,12 +51,14 @@ for(const auto m : rosbaz::View(in_bag))
 auto out_url = rosbaz::AzBlobUrl::parse("https://contosoaccount.blob.core.windows.net/contosocontainer/other.bag?SAS_TOKEN");
 
 auto az_writer = std::make_shared<rosbaz::io::AzWriter>(out_url);
-auto out_bag = rosbaz::Bag::read(az_writer);
+auto out_bag = rosbaz::Bag::write(az_writer);
 
 for(const auto m : rosbaz::View(in_bag))
 {
   out_bag.write(m.getTopic(), m.getTime(), m);
 }
+
+out_bag.close();
 ```
 
 ### Authentication
