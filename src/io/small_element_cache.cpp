@@ -37,7 +37,7 @@ size_t SmallElementCacheStrategy::cache_element_size(size_t count)
   return std::max(max_element_size_, count);
 }
 
-void SmallElementCacheStrategy::update(std::vector<rosbaz::io::byte> data, size_t offset)
+void SmallElementCacheStrategy::update(rosbaz::io::Buffer&& data, size_t offset)
 {
   if (data.size() > max_element_size_)
   {

@@ -65,7 +65,7 @@ void MessageInstance::getOffsetAndSize(uint64_t& record_offset, uint32_t& record
   record_size = found_size.data_size;
 }
 
-std::vector<rosbaz::io::byte> MessageInstance::read_subset(uint32_t offset, uint32_t size) const
+rosbaz::io::Buffer MessageInstance::read_subset(uint32_t offset, uint32_t size) const
 {
   uint64_t record_offset;
   uint32_t record_size;

@@ -1,5 +1,7 @@
 #include "rosbaz/io/az_reader.h"
 
+#ifndef NO_AZ_BINDINGS
+
 #include "az_bearer_token.h"
 
 #include <ros/console.h>
@@ -102,8 +104,7 @@ void AzReader::read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t count)
 
   const size_t download_size = cache_strategy_->cache_element_size(count);
 
-  std::vector<rosbaz::io::byte> download_buffer;
-  download_buffer.resize(download_size);
+  rosbaz::io::Buffer download_buffer{download_size};
 
   download(&(*download_buffer.begin()), offset, download_size);
   std::copy_n(download_buffer.begin(), count, buffer);
@@ -114,3 +115,4 @@ void AzReader::read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t count)
 
 }  // namespace io
 }  // namespace rosbaz
+#endif

@@ -18,7 +18,7 @@ std::unique_ptr<IReader> StreamReader::open(const std::string& file_path)
     throw rosbaz::IoException("Error opening file: " + file_path);
   }
 
-  return std::unique_ptr<rosbaz::io::IReader>{ new rosbaz::io::StreamReader{ std::move(ifs), file_path } };
+  return std::make_unique<rosbaz::io::StreamReader>(std::move(ifs), file_path);
 }
 
 StreamReader::StreamReader(rosbaz::io::RosStream source, const std::string& filepath)

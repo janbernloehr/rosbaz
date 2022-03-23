@@ -60,7 +60,7 @@ public:
   template <class T>
   boost::shared_ptr<T> instantiate_subset(uint32_t offset, uint32_t size) const;
 
-  std::vector<rosbaz::io::byte> read_subset(uint32_t offset, uint32_t size) const;
+  rosbaz::io::Buffer read_subset(uint32_t offset, uint32_t size) const;
 
   //! Write serialized message contents out to a stream
   template <typename Stream>

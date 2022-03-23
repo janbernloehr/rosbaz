@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "rosbaz/blob_url.h"
+#include "rosbaz/io/buffer.h"
 #include "rosbaz/io/writer.h"
 
 namespace Azure
@@ -43,7 +44,7 @@ public:
 private:
   AzWriter& writer_;
 
-  std::vector<rosbaz::io::byte> buffer_{};
+  rosbaz::io::Buffer buffer_{};
 
   std::string id_;
 };

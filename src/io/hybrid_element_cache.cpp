@@ -57,7 +57,7 @@ size_t HybridElementCacheStrategy::cache_element_size(size_t count)
   return std::max(max_small_element_size_, count);
 }
 
-void HybridElementCacheStrategy::update(std::vector<rosbaz::io::byte> data, size_t offset)
+void HybridElementCacheStrategy::update(rosbaz::io::Buffer&& data, size_t offset)
 {
   CacheEntry entry;
   entry.offset = offset;

@@ -1,5 +1,7 @@
 #include "rosbaz/io/az_writer.h"
 
+#ifndef NO_AZ_BINDINGS
+
 #include "az_bearer_token.h"
 
 #include <azure/core.hpp>
@@ -56,7 +58,7 @@ size_t AzBlock::size() const
 
 void AzBlock::stage()
 {
-  Azure::Core::IO::MemoryBodyStream memory_stream{ buffer_ };
+  Azure::Core::IO::MemoryBodyStream memory_stream{ buffer_.data(), buffer_.size() };
   writer_.client_->StageBlock(id_, memory_stream);
   is_staged_ = true;
 }
@@ -155,3 +157,4 @@ bool AzWriter::has_unstaged_blocks() const
 
 }  // namespace io
 }  // namespace rosbaz
+#endif

@@ -16,6 +16,7 @@
 #include "rosbaz/bag_parsing/record.h"
 #include "rosbaz/bag_writing/block_ext.h"
 #include "rosbaz/bag_writing/conversion.h"
+#include "rosbaz/io/buffer.h"
 #include "rosbaz/io/util.h"
 
 namespace rosbaz
@@ -249,7 +250,7 @@ private:
 
   std::shared_ptr<rosbaz::io::Block> header_block_;
   std::shared_ptr<rosbaz::io::Block> current_block_;
-  Buffer record_buffer_;
+  rosbaz::io::Buffer record_buffer_;
 };
 
 // Templated method definitions

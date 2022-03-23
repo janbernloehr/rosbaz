@@ -46,27 +46,33 @@ void print_bag_yaml(const rosbaz::Bag& bag)
 
 void print_transfer_stats(const rosbaz::io::IReader& reader)
 {
+#ifndef NO_AZ_BINDINGS
   if (auto az_reader = dynamic_cast<const rosbaz::io::AzReader*>(&reader))
   {
     std::cout << "---\n";
     std::cout << "requests:          " << az_reader->num_requests() << "\n";
     std::cout << "bytes transferred: " << az_reader->num_bytes() << "\n";
   }
+#endif
 }
 
 std::shared_ptr<rosbaz::io::IReader> create_reader(const std::string& path_or_url, const std::string& account_key,
                                                    const std::string& token)
 {
+  // Azure
   if (rosbaz::is_url(path_or_url))
   {
+#ifndef NO_AZ_BINDINGS
     auto url = rosbaz::AzBlobUrl::parse(path_or_url);
 
     return std::make_shared<rosbaz::io::AzReader>(url, account_key, token);
+#else
+    throw std::runtime_error("rosbaz was compiled with NO_AZ_BINDINGS. Reading from azure is not supported.");
+#endif
   }
-  else
-  {
-    return rosbaz::io::StreamReader::open(path_or_url);
-  }
+
+  // Filesystem stream
+  return rosbaz::io::StreamReader::open(path_or_url);
 }
 
 void info_command(const rosbaz::app::CommonOptions& common_options, const rosbaz::app::InfoOptions& info_options)
@@ -218,7 +224,7 @@ int main(int argc, char** argv)
   CLI::App* info = app.add_subcommand("info", "Summarize the contents of one bag file.")->fallthrough();
 
   info->add_option("file_or_blob_url", info_options.file_or_blob_url,
-                   "Either a path to a file or a blob url (may including SAS token)")
+                   "Either a path to a file or a blob url (may include SAS token)")
       ->required();
   info->add_flag("--freq", info_options.topic_message_frequency_statistics,
                  "display topic message frequency statistics");
