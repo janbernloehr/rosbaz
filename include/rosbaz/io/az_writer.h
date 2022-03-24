@@ -39,7 +39,10 @@ public:
 
   void stage() override;
 
-  const std::string& id() const { return id_; }
+  const std::string& id() const
+  {
+    return id_;
+  }
 
 private:
   AzWriter& writer_;
@@ -48,7 +51,6 @@ private:
 
   std::string id_;
 };
-
 
 class AzWriter : public IWriter
 {
