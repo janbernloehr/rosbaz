@@ -1,6 +1,6 @@
 #include "rosbaz/io/buffer.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 
 namespace rosbaz
 {
@@ -15,7 +15,7 @@ Buffer::Buffer(size_t size)
 
 Buffer::Buffer(const_pointer begin, const_pointer end)
 {
-  resize(end - begin);
+  resize(std::distance(begin, end));
   std::copy(begin, end, buffer_);
 }
 
@@ -32,22 +32,18 @@ Buffer& Buffer::operator=(const Buffer& other)
   return *this;
 }
 
-Buffer::Buffer(Buffer&& other) : buffer_{ other.buffer_ }, capacity_{ other.capacity_ }, size_{ other.size_ }
+Buffer::Buffer(Buffer&& other)
+  : buffer_{ std::exchange(other.buffer_, nullptr) }
+  , capacity_{ std::exchange(other.capacity_, 0) }
+  , size_{ std::exchange(other.size_, 0) }
 {
-  other.buffer_ = nullptr;
-  other.capacity_ = 0;
-  other.size_ = 0;
 }
 
 Buffer& Buffer::operator=(Buffer&& other)
 {
-  buffer_ = other.buffer_;
-  capacity_ = other.capacity_;
-  size_ = other.size_;
-
-  other.buffer_ = nullptr;
-  other.capacity_ = 0;
-  other.size_ = 0;
+  buffer_ = std::exchange(other.buffer_, nullptr);
+  capacity_ = std::exchange(other.capacity_, 0);
+  size_ = std::exchange(other.size_, 0);
   return *this;
 }
 
@@ -55,7 +51,7 @@ Buffer::~Buffer()
 {
   if (buffer_)
   {
-    free(buffer_);
+    std::free(buffer_);
     buffer_ = nullptr;
   }
 }
@@ -115,7 +111,7 @@ void Buffer::ensureCapacity(size_t capacity)
       capacity_ *= 2;
   }
 
-  buffer_ = reinterpret_cast<rosbaz::io::byte*>(realloc(buffer_, capacity_));
+  buffer_ = reinterpret_cast<rosbaz::io::byte*>(std::realloc(buffer_, capacity_));
 }
 
 }  // namespace io
