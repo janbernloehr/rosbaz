@@ -1,5 +1,6 @@
 #include "rosbaz/io/buffer.h"
 
+#include <cassert>
 #include <cstdlib>
 
 namespace rosbaz
@@ -112,6 +113,7 @@ void Buffer::ensureCapacity(size_t capacity)
   }
 
   buffer_ = reinterpret_cast<rosbaz::io::byte*>(std::realloc(buffer_, capacity_));
+  assert(buffer_ != nullptr);
 }
 
 }  // namespace io

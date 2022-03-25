@@ -14,7 +14,6 @@
 #include "rosbaz/io/io_helpers.h"
 #include "rosbaz/io/small_element_cache.h"
 
-
 namespace rosbaz
 {
 namespace io
@@ -104,7 +103,7 @@ void AzReader::read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t count)
 
   const size_t download_size = cache_strategy_->cache_element_size(count);
 
-  rosbaz::io::Buffer download_buffer{download_size};
+  rosbaz::io::Buffer download_buffer{ download_size };
 
   download(&(*download_buffer.begin()), offset, download_size);
   std::copy_n(download_buffer.begin(), count, buffer);

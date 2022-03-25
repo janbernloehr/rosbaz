@@ -67,6 +67,7 @@ void View::iterator::populateSeek(std::multiset<rosbag::IndexEntry>::const_itera
     }
   }
 
+  assert(!iters_.empty());
   std::sort(iters_.begin(), iters_.end(), ViewIterHelperCompare());
   while (iter != iters_.back().iter)
   {
@@ -97,6 +98,8 @@ void View::iterator::increment()
   message_instance_.reset();
 
   view_->update();
+
+  assert(!iters_.empty());
 
   // Note, updating may have blown away our message-ranges and
   // replaced them in general the ViewIterHelpers are no longer
