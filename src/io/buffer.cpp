@@ -1,5 +1,6 @@
 #include "rosbaz/io/buffer.h"
 
+#include <cassert>
 #include <cstdlib>
 
 namespace rosbaz
