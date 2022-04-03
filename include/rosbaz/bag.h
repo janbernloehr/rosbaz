@@ -111,36 +111,36 @@ public:
   void write(const std::string& topic, ros::MessageEvent<T> const& event);
 
   /// Write a message into the bag file
-  /// 
+  ///
   /// \param topic The topic name
   /// \param time  Timestamp of the message
   /// \param msg   The message to be added
   /// \param connection_header  A connection header.
-  /// 
+  ///
   /// Can throw BagIOException
   template <class T>
   void write(const std::string& topic, ros::Time const& time, T const& msg,
              boost::shared_ptr<ros::M_string> connection_header = boost::shared_ptr<ros::M_string>());
 
   /// Write a message into the bag file
-  /// 
+  ///
   /// \param topic The topic name
   /// \param time  Timestamp of the message
   /// \param msg   The message to be added
   /// \param connection_header  A connection header.
-  /// 
+  ///
   /// Can throw BagIOException
   template <class T>
   void write(const std::string& topic, ros::Time const& time, boost::shared_ptr<T const> const& msg,
              boost::shared_ptr<ros::M_string> connection_header = boost::shared_ptr<ros::M_string>());
 
   /// Write a message into the bag file
-  /// 
+  ///
   /// \param topic The topic name
   /// \param time  Timestamp of the message
   /// \param msg   The message to be added
   /// \param connection_header  A connection header.
-  /// 
+  ///
   /// Can throw BagIOException
   template <class T>
   void write(const std::string& topic, ros::Time const& time, boost::shared_ptr<T> const& msg,
@@ -167,8 +167,8 @@ private:
   /// subsequently is analyzed by \p parseIndexSection.
   ///
   /// The implementation has to be thread safe since it may be invoked simultaneously for multiple chunks.
-  void parseChunkInfo(std::mutex& sync, rosbaz::io::IReader& reader, const rosbag::ChunkInfo& chunk_info,
-                      uint64_t next_chunk_pos);
+  void parseChunkInfo(rosbaz::io::IReader& reader, const rosbag::ChunkInfo& chunk_info,
+                      rosbaz::bag_parsing::ChunkExt& chunk_ext, uint64_t next_chunk_pos);
 
   /// Fills \p connection_indexes_ and \p chunk_exts_.
   ///

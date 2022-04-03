@@ -58,9 +58,6 @@ void MessageInstance::getOffsetAndSize(uint64_t& record_offset, uint32_t& record
   const auto& found_chunk = m_bag->chunk_exts_lookup_.at(m_index_entry->chunk_pos);
   const auto& found_size = found_chunk->message_records.at(m_index_entry->offset);
 
-  ROS_DEBUG_STREAM("chunk_pos: " << m_index_entry->chunk_pos << " offset: " << found_size.offset
-                                 << " size: " << found_size.data_size);
-
   record_offset = found_chunk->data_offset + m_index_entry->offset;
   record_size = found_size.data_size;
 }
@@ -74,6 +71,7 @@ rosbaz::io::Buffer MessageInstance::read_subset(uint32_t offset, uint32_t size) 
 
   if (!m_header_buffer_and_size)
   {
+    ROS_DEBUG_STREAM("Reading record header at offset " << record_offset);
     m_header_buffer_and_size = m_bag->reader_->read_header_buffer_and_size(record_offset);
   }
 
@@ -95,6 +93,9 @@ rosbaz::io::Buffer MessageInstance::read_subset(uint32_t offset, uint32_t size) 
     throw rosbaz::RosBagFormatException(msg.str());
   }
 
+  ROS_DEBUG_STREAM("Reading record to instantiate message. record_offset: "
+                   << record_offset << " data_offset: " << m_header_buffer_and_size->data_offset()
+                   << " offset: " << offset << " size: " << size);
   return m_bag->reader_->read(record_offset + m_header_buffer_and_size->data_offset() + offset, size);
 }
 
@@ -108,6 +109,7 @@ uint32_t MessageInstance::size() const
 
     getOffsetAndSize(record_offset, record_size);
 
+    ROS_DEBUG_STREAM("Reading record header at offset " << record_offset);
     m_header_buffer_and_size = m_bag->reader_->read_header_buffer_and_size(record_offset);
   }
 

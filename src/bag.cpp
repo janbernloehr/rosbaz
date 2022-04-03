@@ -220,8 +220,8 @@ void Bag::parseIndexSection(rosbaz::bag_parsing::ChunkExt& chunk_ext, rosbaz::Da
       index_entry.offset = rosbaz::io::read_little_endian<uint32_t>(index_record.data, i * 12 + 8);
       index_entry.chunk_pos = chunk_ext.chunk_info.pos;
 
-      ROS_DEBUG_STREAM("chunk_pos: " << chunk_ext.chunk_info.pos << " conn: " << connection_id
-                                     << " offset: " << index_entry.offset);
+      ROS_DEBUG_STREAM("Found IndexEntry: chunk_pos: " << chunk_ext.chunk_info.pos << " conn: " << connection_id
+                                                       << " offset: " << index_entry.offset);
 
       // adding index entries to the global connection_indexes_ is delicate since the latter is sorted on every
       // modification using the index entry's time as a key. Moreover, there may be multiple index entries with the
@@ -251,8 +251,8 @@ void Bag::parseIndexSection(rosbaz::bag_parsing::ChunkExt& chunk_ext, rosbaz::Da
                                                                                  chunk_ext.chunk_info.pos) });
 }
 
-void Bag::parseChunkInfo(std::mutex& sync, rosbaz::io::IReader& reader, const rosbag::ChunkInfo& chunk_info,
-                         const uint64_t next_chunk_pos)
+void Bag::parseChunkInfo(rosbaz::io::IReader& reader, const rosbag::ChunkInfo& chunk_info,
+                         rosbaz::bag_parsing::ChunkExt& chunk_ext, const uint64_t next_chunk_pos)
 {
   if (mode_ != BagMode::Read)
   {
@@ -261,40 +261,28 @@ void Bag::parseChunkInfo(std::mutex& sync, rosbaz::io::IReader& reader, const ro
   const auto chunk_header_buffer_and_size = reader.read_header_buffer_and_size(chunk_info.pos);
   const auto chunk_header_raw = rosbaz::bag_parsing::Header::parse(chunk_header_buffer_and_size.header_buffer);
 
-  const auto chunk_header = as_chunk_header(chunk_header_raw, chunk_header_buffer_and_size.data_size);
+  chunk_ext.chunk_header = as_chunk_header(chunk_header_raw, chunk_header_buffer_and_size.data_size);
 
-  if (chunk_header.compression != rosbag::COMPRESSION_NONE)
+  if (chunk_ext.chunk_header.compression != rosbag::COMPRESSION_NONE)
   {
     std::stringstream msg;
-    msg << "Unsupported compression '" << chunk_header.compression << "'. Only compression '"
+    msg << "Unsupported compression '" << chunk_ext.chunk_header.compression << "'. Only compression '"
         << rosbag::COMPRESSION_NONE << "' is supported.";
     throw rosbaz::UnsupportedRosBagException(msg.str());
   }
 
-  const uint64_t data_offset =
+  chunk_ext.data_offset =
       chunk_info.pos + sizeof(uint32_t) + chunk_header_buffer_and_size.header_size + sizeof(uint32_t);
+  chunk_ext.index_offset = chunk_ext.data_offset + chunk_header_buffer_and_size.data_size;
+  chunk_ext.index_size = static_cast<uint32_t>(next_chunk_pos - chunk_ext.index_offset);
 
-  const uint64_t index_offset = data_offset + chunk_header_buffer_and_size.data_size;
+  ROS_DEBUG_STREAM("Parsed ChunkInfo: chunk pos: " << chunk_ext.chunk_info.pos << " data pos: " << chunk_ext.data_offset
+                                                   << " index pos: " << chunk_ext.index_offset
+                                                   << " index size: " << chunk_ext.index_size);
 
-  rosbaz::bag_parsing::ChunkExt* chunk_ext = nullptr;
+  const auto index_buffer = reader.read(chunk_ext.index_offset, chunk_ext.index_size);
 
-  {
-    std::lock_guard<std::mutex> guard(sync);
-    chunk_exts_.emplace_back(chunk_info, chunk_header, data_offset, chunk_header_buffer_and_size.data_size,
-                             index_offset, static_cast<uint32_t>(next_chunk_pos - index_offset));
-
-    // this only works since we reserved chunk_exts_ to the correct size so that no reallocation occurs
-    chunk_ext = &chunk_exts_.back();
-    chunk_exts_lookup_[chunk_info.pos] = chunk_ext;
-  }
-
-  ROS_DEBUG_STREAM("chunk pos: " << chunk_ext->chunk_info.pos << " data pos: " << chunk_ext->data_offset
-                                 << " index pos: " << chunk_ext->index_offset
-                                 << " index size: " << chunk_ext->index_size);
-
-  const auto index_buffer = reader.read(chunk_ext->index_offset, chunk_ext->index_size);
-
-  parseIndexSection(*chunk_ext, index_buffer, index_offset);
+  parseIndexSection(chunk_ext, index_buffer, chunk_ext.index_offset);
 }
 
 void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
@@ -303,9 +291,6 @@ void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
   {
     throw InvalidModeException{ "Bag must be opened in read mode to support parseChunkIndices." };
   }
-  // We need to make sure that all inserts are in-place and do not need to re-allocate
-  chunk_exts_.reserve(chunks_.size());
-  chunk_exts_lookup_.reserve(chunks_.size());
 
   // keep the position of the next chunk to determine the size of the index
   // record section.
@@ -316,19 +301,29 @@ void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
   }
   index_end.push_back(index_data_pos_);
 
-  auto next_chunk_pos = index_end.begin();
+  // We need to make sure that all inserts are in-place and do not need to re-allocate
+  chunk_exts_.reserve(chunks_.size());
+  chunk_exts_lookup_.reserve(chunks_.size());
+
+  for (const auto& chunk_info : chunks_)
+  {
+    chunk_exts_.emplace_back(chunk_info);
+    chunk_exts_lookup_[chunk_info.pos] = &chunk_exts_.back();
+  }
 
   {
     std::mutex sync;
     std::vector<std::function<void(void)>> work;
 
-    for (const auto& chunk_info : chunks_)
+    for (size_t i = 0; i < chunks_.size(); ++i)
     {
-      const uint64_t next_chunk_pos_value = *next_chunk_pos;
-      work.emplace_back([this, &sync, &reader, &chunk_info, next_chunk_pos_value]() {
-        parseChunkInfo(sync, reader, chunk_info, next_chunk_pos_value);
+      work.emplace_back([this, &reader, &index_end, i]() {
+        const auto& chunk_info = chunks_[i];
+        auto& chunk_ext = chunk_exts_[i];
+        const uint64_t next_chunk_pos_value = index_end[i];
+
+        parseChunkInfo(reader, chunk_info, chunk_ext, next_chunk_pos_value);
       });
-      ++next_chunk_pos;
     }
 
     io::process_async(sync, work);
