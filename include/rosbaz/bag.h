@@ -163,12 +163,11 @@ private:
   void parseIndexSection(rosbaz::bag_parsing::ChunkExt& chunk_ext, rosbaz::DataSpan chunk_index,
                          const uint64_t index_offset);
 
-  /// Reads the chunk header for the given \p chunk_info, extracts the position of and reads the index sections which
-  /// subsequently is analyzed by \p parseIndexSection.
+  /// Reads the chunk header for the given \p chunk_ext.chunk_info, extracts the position of and reads the index
+  /// sections which subsequently is analyzed by \p parseIndexSection.
   ///
   /// The implementation has to be thread safe since it may be invoked simultaneously for multiple chunks.
-  void parseChunkInfo(rosbaz::io::IReader& reader, const rosbag::ChunkInfo& chunk_info,
-                      rosbaz::bag_parsing::ChunkExt& chunk_ext, uint64_t next_chunk_pos);
+  void parseChunkInfo(rosbaz::io::IReader& reader, rosbaz::bag_parsing::ChunkExt& chunk_ext, uint64_t next_chunk_pos);
 
   /// Fills \p connection_indexes_ and \p chunk_exts_.
   ///

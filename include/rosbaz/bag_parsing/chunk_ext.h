@@ -42,9 +42,6 @@ struct ChunkExt
   std::uint64_t data_offset{ 0 };  // absolute
   std::uint32_t data_size{ 0 };
 
-  std::uint64_t index_offset{ 0 };  // absolute
-  std::uint32_t index_size{ 0 };
-
   std::unordered_map<uint64_t, MessageRecordInfo> message_records{};
 
   std::vector<IndexEntryExt> index_entries{};
