@@ -117,9 +117,6 @@ rosbag::ChunkInfo as_chunk_info(const Header& header, rosbaz::DataSpan data)
   info.start_time = unpack_time(header.read_field_little_endian<uint64_t>(rosbag::START_TIME_FIELD_NAME));
   info.end_time = unpack_time(header.read_field_little_endian<uint64_t>(rosbag::END_TIME_FIELD_NAME));
 
-  ROS_DEBUG_STREAM(" pos: " << info.pos << " start: " << info.start_time.toNSec()
-                            << " end: " << info.end_time.toNSec());
-
   auto count = header.read_field_little_endian<uint32_t>(rosbag::COUNT_FIELD_NAME);
 
   for (uint32_t i = 0; i < count; ++i)
@@ -128,8 +125,11 @@ rosbag::ChunkInfo as_chunk_info(const Header& header, rosbaz::DataSpan data)
     const auto conn_count = rosbaz::io::read_little_endian<uint32_t>(data.subspan(8u * i + 4u, 4));
 
     info.connection_counts[conn_id] = conn_count;
-    ROS_DEBUG_STREAM(" id: " << conn_id << " count: " << conn_count);
   }
+
+  ROS_DEBUG_STREAM("Parsed ChunkInfo: pos: " << info.pos << " start: " << info.start_time.toNSec()
+                                             << " end: " << info.end_time.toNSec()
+                                             << " connections: " << info.connection_counts.size());
 
   return info;
 }
