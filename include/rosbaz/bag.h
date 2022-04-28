@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <unordered_map>
@@ -208,7 +209,7 @@ private:
 
   BagMode mode_;
 
-  std::unordered_map<uint32_t, std::shared_ptr<rosbag::ConnectionInfo>> connections_{};
+  std::map<uint32_t, std::shared_ptr<rosbag::ConnectionInfo>> connections_{};
 
   std::uint32_t bag_revision_{ 0 };
 
