@@ -29,6 +29,12 @@ Bag::Bag(std::shared_ptr<rosbaz::io::IWriter> writer) : mode_{ BagMode::Write },
   assert(writer != nullptr);
 }
 
+
+Bag::~Bag() {
+  close();
+}
+
+
 Bag Bag::read(std::shared_ptr<rosbaz::io::IReader> reader, bool read_chunk_indices)
 {
   Bag bag{ reader };
