@@ -29,11 +29,10 @@ Bag::Bag(std::shared_ptr<rosbaz::io::IWriter> writer) : mode_{ BagMode::Write },
   assert(writer != nullptr);
 }
 
-
-Bag::~Bag() {
+Bag::~Bag()
+{
   close();
 }
-
 
 Bag Bag::read(std::shared_ptr<rosbaz::io::IReader> reader, bool read_chunk_indices)
 {
@@ -245,7 +244,6 @@ void Bag::parseIndexSection(rosbaz::bag_parsing::ChunkExt& chunk_ext, rosbaz::Da
   std::sort(offsets.begin(), offsets.end());
 
   auto& record_sizes = chunk_ext.message_records;
-  record_sizes.reserve(offsets.size());
 
   for (size_t i = 0; i < offsets.size() - 1; ++i)
   {
@@ -344,6 +342,27 @@ void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
       connection_index.insert(connection_index.end(), index_entry_ext.index_entry);
     }
   }
+
+  std::vector<uint64_t> offsets;
+  offsets.push_back(0);
+
+  for (const auto& chunk_ext : chunk_exts_)
+  {
+    offsets.push_back(chunk_ext.data_offset);
+
+    for (const auto& message_record_entry : chunk_ext.message_records)
+    {
+      const auto& message_record = message_record_entry.second;
+
+      const uint64_t end = chunk_ext.data_offset + message_record.offset + message_record.data_size;
+
+      offsets.push_back(end);
+    }
+  }
+
+  offsets.push_back(file_size_);
+
+  reader_->use_cache_hints(offsets);
 
   chunk_indices_parsed_ = true;
 }
@@ -471,8 +490,8 @@ void Bag::writeVersion(rosbaz::io::Block& block)
 {
   const std::string version = std::string("#ROSBAG V") + rosbag::VERSION + std::string("\n");
 
-  ROS_DEBUG("Writing VERSION [%llu]: %s",
-            static_cast<unsigned long long>(current_block_->block_offset() + current_block_->size()), version.c_str());
+  ROS_DEBUG("Writing VERSION [%llu]: %s", static_cast<unsigned long long>(block.block_offset() + block.size()),
+            version.c_str());
 
   block.write(version);
 }

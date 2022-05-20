@@ -62,6 +62,37 @@ void MessageInstance::getOffsetAndSize(uint64_t& record_offset, uint32_t& record
   record_size = found_size.data_size;
 }
 
+rosbaz::io::Buffer MessageInstance::read() const
+{
+  uint64_t record_offset;
+  uint32_t record_size;
+
+  getOffsetAndSize(record_offset, record_size);
+
+  ROS_DEBUG_STREAM("Reading full record to instantiate message. record_offset: " << record_offset
+                                                                                 << " record_size: " << record_size);
+
+  rosbaz::io::Buffer record_buffer = m_bag->reader_->read(record_offset, record_size);
+
+  if (!m_header_buffer_and_size)
+  {
+    m_header_buffer_and_size = rosbaz::io::parseHeaderBufferAndSize(rosbaz::DataSpan{ record_buffer });
+  }
+
+  const auto header = rosbaz::bag_parsing::Header::parse(m_header_buffer_and_size->header_buffer);
+
+  if (header.op != rosbag::OP_MSG_DATA)
+  {
+    std::stringstream msg;
+    msg << "Encountered op=" << static_cast<int>(header.op) << " while deserializing message instead of "
+        << static_cast<int>(rosbag::OP_MSG_DATA);
+    throw rosbaz::RosBagFormatException(msg.str());
+  }
+
+  rosbaz::io::Buffer msg_buffer{ record_buffer.begin() + m_header_buffer_and_size->data_offset(), record_buffer.end() };
+  return msg_buffer;
+}
+
 rosbaz::io::Buffer MessageInstance::read_subset(uint32_t offset, uint32_t size) const
 {
   uint64_t record_offset;

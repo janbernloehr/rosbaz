@@ -32,9 +32,14 @@ bool SmallElementCacheStrategy::retrieve(rosbaz::io::byte* buffer, size_t offset
   return true;
 }
 
-size_t SmallElementCacheStrategy::cache_element_size(size_t count)
+OffsetAndSize SmallElementCacheStrategy::cache_element_offset_and_size(size_t offset, size_t count) const
 {
-  return std::max(max_element_size_, count);
+  return OffsetAndSize{ offset, std::max(max_element_size_, count) };
+}
+
+bool SmallElementCacheStrategy::accepts(size_t /* offset */, size_t count) const
+{
+  return count <= max_element_size_;
 }
 
 void SmallElementCacheStrategy::update(rosbaz::io::Buffer&& data, size_t offset)

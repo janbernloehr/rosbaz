@@ -62,6 +62,8 @@ public:
 
   rosbaz::io::Buffer read_subset(uint32_t offset, uint32_t size) const;
 
+  rosbaz::io::Buffer read() const;
+
   //! Write serialized message contents out to a stream
   template <typename Stream>
   void write(Stream& stream) const;

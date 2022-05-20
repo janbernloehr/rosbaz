@@ -12,7 +12,6 @@ namespace rosbaz
 {
 namespace io
 {
-
 struct BlockId
 {
 };

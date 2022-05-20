@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include <unordered_map>
+#include <map>
 #include <vector>
 
 #include <rosbag/structures.h>
@@ -42,7 +42,7 @@ struct ChunkExt
   std::uint64_t data_offset{ 0 };  // absolute
   std::uint32_t data_size{ 0 };
 
-  std::unordered_map<uint64_t, MessageRecordInfo> message_records{};
+  std::map<uint64_t, MessageRecordInfo> message_records{};
 
   std::vector<IndexEntryExt> index_entries{};
 };

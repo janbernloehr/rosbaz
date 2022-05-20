@@ -6,7 +6,6 @@ namespace rosbaz
 {
 namespace io
 {
-
 Block::Block(size_t block_offset) : block_offset_{ block_offset }
 {
 }

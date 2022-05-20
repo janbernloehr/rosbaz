@@ -24,6 +24,8 @@ struct HeaderBufferAndSize
   }
 };
 
+HeaderBufferAndSize parseHeaderBufferAndSize(const rosbaz::DataSpan buffer_span);
+
 class IReader
 {
 public:
@@ -51,6 +53,8 @@ public:
   }
 
   HeaderBufferAndSize read_header_buffer_and_size(size_t offset);
+
+  virtual void use_cache_hints(const std::vector<uint64_t>& cache_hints);
 
 private:
   virtual void read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t count) = 0;

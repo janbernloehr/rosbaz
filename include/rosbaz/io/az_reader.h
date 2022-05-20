@@ -1,5 +1,6 @@
 #pragma once
 
+#include <condition_variable>
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -49,6 +50,8 @@ public:
     return num_bytes_;
   }
 
+  void use_cache_hints(const std::vector<uint64_t>& cache_hints) override;
+
 private:
   void read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t count) override;
 
@@ -63,6 +66,9 @@ private:
 
   std::unique_ptr<ICacheStrategy> cache_strategy_{ nullptr };
   std::mutex cache_mutex_{};
+
+  std::vector<OffsetAndSize> pending_reads_{};
+  std::condition_variable read_available_;
 };
 
 }  // namespace io
