@@ -26,7 +26,9 @@ public:
 
   void update(rosbaz::io::Buffer&& data, size_t offset) override;
 
-  size_t cache_element_size(size_t count) override;
+  OffsetAndSize cache_element_offset_and_size(size_t offset, size_t count) const override;
+
+  bool accepts(size_t offset, size_t count) const override;
 
 private:
   const size_t max_small_element_size_;

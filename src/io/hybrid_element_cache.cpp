@@ -52,9 +52,14 @@ bool HybridElementCacheStrategy::retrieve(rosbaz::io::byte* buffer, size_t offse
   }
 }
 
-size_t HybridElementCacheStrategy::cache_element_size(size_t count)
+OffsetAndSize HybridElementCacheStrategy::cache_element_offset_and_size(size_t offset, size_t count) const
 {
-  return std::max(max_small_element_size_, count);
+  return OffsetAndSize{ offset, std::max(max_small_element_size_, count) };
+}
+
+bool HybridElementCacheStrategy::accepts(size_t, size_t) const
+{
+  return true;
 }
 
 void HybridElementCacheStrategy::update(rosbaz::io::Buffer&& data, size_t offset)

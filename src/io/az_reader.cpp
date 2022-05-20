@@ -12,14 +12,14 @@
 
 #include "rosbaz/exceptions.h"
 #include "rosbaz/io/io_helpers.h"
-#include "rosbaz/io/small_element_cache.h"
+#include "rosbaz/io/chunk_informed_cache.h"
 
 namespace rosbaz
 {
 namespace io
 {
 AzReader::AzReader(const AzBlobUrl& blob_url, const std::string& account_key, const std::string& token)
-  : AzReader(blob_url, account_key, token, boost::make_unique<rosbaz::io::SmallElementCacheStrategy>())
+  : AzReader(blob_url, account_key, token, boost::make_unique<rosbaz::io::ChunkInformedCacheStrategy>())
 {
 }
 
@@ -71,6 +71,16 @@ size_t AzReader::size()
   return ret.Value.BlobSize;
 }
 
+void AzReader::use_cache_hints(const std::vector<uint64_t>& cache_hints)
+{
+  if (cache_strategy_ == nullptr)
+  {
+    return;
+  }
+
+  cache_strategy_->use_cache_hints(cache_hints);
+}
+
 void AzReader::download(rosbaz::io::byte* buffer, size_t offset, size_t count)
 {
   Azure::Storage::Blobs::DownloadBlobToOptions options{};
@@ -86,31 +96,57 @@ void AzReader::download(rosbaz::io::byte* buffer, size_t offset, size_t count)
 
 void AzReader::read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t count)
 {
-  if (cache_strategy_ == nullptr)
+  if ((cache_strategy_ == nullptr) || (!cache_strategy_->accepts(offset, count)))
   {
     download(buffer, offset, count);
     return;
   }
 
+  OffsetAndSize download_offset_and_size;
   {
-    std::lock_guard<std::mutex> lock_guard(cache_mutex_);
+    std::unique_lock<std::mutex> lock(cache_mutex_);
 
     if (cache_strategy_->retrieve(buffer, offset, count))
     {
       return;
     }
+
+    read_available_.wait(lock, [this, offset, count]() {
+      auto found_pending_read =
+          std::find_if(pending_reads_.begin(), pending_reads_.end(),
+                       [offset, count](const auto& pending_read) { return pending_read.contains(offset, count); });
+
+      return found_pending_read == pending_reads_.end();
+    });
+
+    if (cache_strategy_->retrieve(buffer, offset, count))
+    {
+      return;
+    }
+
+    download_offset_and_size = cache_strategy_->cache_element_offset_and_size(offset, count);
+    pending_reads_.push_back(download_offset_and_size);
   }
 
-  const size_t download_size = cache_strategy_->cache_element_size(count);
+  rosbaz::io::Buffer download_buffer{ download_offset_and_size.size };
 
-  rosbaz::io::Buffer download_buffer{ download_size };
+  download(download_buffer.data(), download_offset_and_size.offset, download_offset_and_size.size);
+  std::copy_n(download_buffer.begin() + offset - download_offset_and_size.offset, count, buffer);
 
-  download(&(*download_buffer.begin()), offset, download_size);
-  std::copy_n(download_buffer.begin(), count, buffer);
+  {
+    std::lock_guard<std::mutex> lock_guard(cache_mutex_);
 
-  std::lock_guard<std::mutex> lock_guard(cache_mutex_);
-  cache_strategy_->update(std::move(download_buffer), offset);
-}  // namespace io
+    cache_strategy_->update(std::move(download_buffer), download_offset_and_size.offset);
+
+    pending_reads_.erase(std::remove_if(pending_reads_.begin(), pending_reads_.end(),
+                                        [&download_offset_and_size](const auto& pending_read) {
+                                          return pending_read == download_offset_and_size;
+                                        }),
+                         pending_reads_.end());
+  }
+
+  read_available_.notify_all();
+}
 
 }  // namespace io
 }  // namespace rosbaz

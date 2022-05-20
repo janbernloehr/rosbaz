@@ -10,6 +10,25 @@ namespace rosbaz
 {
 namespace io
 {
+struct OffsetAndSize
+{
+  size_t offset;
+  size_t size;
+
+  size_t begin() const
+  {
+    return offset;
+  }
+  size_t end() const
+  {
+    return offset + size;
+  }
+
+  bool contains(size_t offset, size_t size) const;
+};
+
+bool operator==(const OffsetAndSize& lhs, const OffsetAndSize& rhs);
+
 class ICacheStrategy
 {
 public:
@@ -25,7 +44,13 @@ public:
 
   /// \return The number of bytes to load (returns at least \p count but the cache strategy can decide to request more
   /// data to load).
-  virtual size_t cache_element_size(size_t count) = 0;
+  virtual OffsetAndSize cache_element_offset_and_size(size_t offset, size_t count) const = 0;
+
+  /// \return true if the caching strategy is valid for the given data; otherwise false.
+  virtual bool accepts(size_t offset, size_t count) const = 0;
+
+  /// Use the given offsets as boundary for caching elements.
+  virtual void use_cache_hints(const std::vector<uint64_t>& cache_hints);
 };
 
 }  // namespace io
