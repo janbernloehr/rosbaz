@@ -12,13 +12,13 @@ HybridElementCacheStrategy::HybridElementCacheStrategy(const size_t max_small_el
 {
 }
 
-bool HybridElementCacheStrategy::retrieve(rosbaz::io::byte* buffer, size_t offset, size_t count)
+bool HybridElementCacheStrategy::retrieve(rosbaz::io::byte* buffer, size_t offset, size_t size) const
 {
-  if (count > max_small_element_size_)
+  if (size > max_small_element_size_)
   {
-    auto large_cache_found = std::find_if(
-        large_element_cache_.begin(), large_element_cache_.end(), [offset, count](const CacheEntry& entry) {
-          return ((entry.offset <= offset) && (offset + count <= entry.offset + entry.data.size()));
+    auto large_cache_found =
+        std::find_if(large_element_cache_.begin(), large_element_cache_.end(), [offset, size](const CacheEntry& entry) {
+          return ((entry.offset <= offset) && (offset + size <= entry.offset + entry.data.size()));
         });
 
     if (large_cache_found == large_element_cache_.end())
@@ -28,15 +28,15 @@ bool HybridElementCacheStrategy::retrieve(rosbaz::io::byte* buffer, size_t offse
 
     assert(offset >= large_cache_found->offset);
 
-    std::copy_n(large_cache_found->data.begin() + (offset - large_cache_found->offset), count, buffer);
+    std::copy_n(large_cache_found->data.begin() + (offset - large_cache_found->offset), size, buffer);
 
     return true;
   }
   else
   {
-    auto small_cache_found = std::find_if(
-        small_element_cache_.begin(), small_element_cache_.end(), [offset, count](const CacheEntry& entry) {
-          return ((entry.offset <= offset) && (offset + count <= entry.offset + entry.data.size()));
+    auto small_cache_found =
+        std::find_if(small_element_cache_.begin(), small_element_cache_.end(), [offset, size](const CacheEntry& entry) {
+          return ((entry.offset <= offset) && (offset + size <= entry.offset + entry.data.size()));
         });
 
     if (small_cache_found == small_element_cache_.end())
@@ -46,15 +46,15 @@ bool HybridElementCacheStrategy::retrieve(rosbaz::io::byte* buffer, size_t offse
 
     assert(offset >= small_cache_found->offset);
 
-    std::copy_n(small_cache_found->data.begin() + (offset - small_cache_found->offset), count, buffer);
+    std::copy_n(small_cache_found->data.begin() + (offset - small_cache_found->offset), size, buffer);
 
     return true;
   }
 }
 
-OffsetAndSize HybridElementCacheStrategy::cache_element_offset_and_size(size_t offset, size_t count) const
+OffsetAndSize HybridElementCacheStrategy::cache_element_offset_and_size(size_t offset, size_t size) const
 {
-  return OffsetAndSize{ offset, std::max(max_small_element_size_, count) };
+  return OffsetAndSize{ offset, std::max(max_small_element_size_, size) };
 }
 
 bool HybridElementCacheStrategy::accepts(size_t, size_t) const

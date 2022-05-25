@@ -13,8 +13,8 @@ namespace io
 {
 using RosStream = std::ifstream;
 
-/// Read \p count many bytes from \p ifs into \p target.
-void read_from(RosStream& ifs, byte* target, const size_t count);
+/// Read \p size many bytes from \p ifs into \p target.
+void read_from(RosStream& ifs, byte* target, const size_t size);
 
 /// Convert the given byte span into a string assuming the span is not null
 /// terminated.

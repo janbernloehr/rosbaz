@@ -343,26 +343,32 @@ void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
     }
   }
 
-  std::vector<uint64_t> offsets;
-  offsets.push_back(0);
+  // We build a vector of all message record offsets within the bag file which
+  // allows cache strategies to extend all reads to the entire message record
+  // to reduce additional round trips.
 
+  std::set<uint64_t> cache_hints;
+  cache_hints.emplace(0);
   for (const auto& chunk_ext : chunk_exts_)
   {
-    offsets.push_back(chunk_ext.data_offset);
+    cache_hints.emplace(chunk_ext.data_offset);
 
     for (const auto& message_record_entry : chunk_ext.message_records)
     {
       const auto& message_record = message_record_entry.second;
 
-      const uint64_t end = chunk_ext.data_offset + message_record.offset + message_record.data_size;
+      const uint64_t begin = chunk_ext.data_offset + message_record.offset;
+      cache_hints.emplace(begin);
 
-      offsets.push_back(end);
+      const uint64_t end = begin + message_record.data_size;
+      cache_hints.emplace(end);
     }
   }
+  cache_hints.emplace(file_size_);
 
-  offsets.push_back(file_size_);
+  std::vector<uint64_t> cache_hints_v(cache_hints.begin(), cache_hints.end());
 
-  reader_->use_cache_hints(offsets);
+  reader_->set_cache_hints(cache_hints_v);
 
   chunk_indices_parsed_ = true;
 }

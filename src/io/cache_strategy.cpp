@@ -14,7 +14,12 @@ bool operator==(const OffsetAndSize& lhs, const OffsetAndSize& rhs)
   return (lhs.offset == rhs.offset) && (lhs.size == rhs.size);
 }
 
-void ICacheStrategy::use_cache_hints(const std::vector<uint64_t>&)
+bool operator!=(const OffsetAndSize& lhs, const OffsetAndSize& rhs)
+{
+  return !(lhs == rhs);
+}
+
+void ICacheStrategy::set_cache_hints(const nonstd::span<uint64_t>)
 {
 }
 

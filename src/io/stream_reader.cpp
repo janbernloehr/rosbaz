@@ -38,11 +38,16 @@ std::string StreamReader::filepath()
   return m_filepath;
 }
 
-void StreamReader::read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t count)
+void StreamReader::read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t size)
 {
   std::lock_guard<std::mutex> lock_guard(m_mutex);
   m_source.seekg(rosbaz::io::narrow<std::streampos>(offset));
-  read_from(m_source, buffer, count);
+  read_from(m_source, buffer, size);
+}
+
+const ReaderStatistics& StreamReader::stats() const
+{
+  return stats_;
 }
 
 }  // namespace io

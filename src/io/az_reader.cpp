@@ -66,39 +66,39 @@ size_t AzReader::size()
 {
   auto ret = client_->GetProperties();
 
-  num_requests_ += 1;
+  stats_.num_reads += 1;
 
   return ret.Value.BlobSize;
 }
 
-void AzReader::use_cache_hints(const std::vector<uint64_t>& cache_hints)
+void AzReader::set_cache_hints(const nonstd::span<uint64_t> cache_hints)
 {
   if (cache_strategy_ == nullptr)
   {
     return;
   }
 
-  cache_strategy_->use_cache_hints(cache_hints);
+  cache_strategy_->set_cache_hints(cache_hints);
 }
 
-void AzReader::download(rosbaz::io::byte* buffer, size_t offset, size_t count)
+void AzReader::download(rosbaz::io::byte* buffer, size_t offset, size_t size)
 {
   Azure::Storage::Blobs::DownloadBlobToOptions options{};
   options.Range = Azure::Core::Http::HttpRange{};
   options.Range.Value().Offset = offset;
-  options.Range.Value().Length = count;
+  options.Range.Value().Length = size;
 
-  client_->DownloadTo(buffer, count, options);
+  client_->DownloadTo(buffer, size, options);
 
-  num_bytes_ += count;
-  num_requests_ += 1;
+  stats_.num_reads += 1;
+  stats_.num_bytes_read += size;
 }
 
-void AzReader::read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t count)
+void AzReader::read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t size)
 {
-  if ((cache_strategy_ == nullptr) || (!cache_strategy_->accepts(offset, count)))
+  if ((cache_strategy_ == nullptr) || (!cache_strategy_->accepts(offset, size)))
   {
-    download(buffer, offset, count);
+    download(buffer, offset, size);
     return;
   }
 
@@ -106,32 +106,37 @@ void AzReader::read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t count)
   {
     std::unique_lock<std::mutex> lock(cache_mutex_);
 
-    if (cache_strategy_->retrieve(buffer, offset, count))
+    if (cache_strategy_->retrieve(buffer, offset, size))
     {
       return;
     }
 
-    read_available_.wait(lock, [this, offset, count]() {
+    read_available_.wait(lock, [this, offset, size]() {
       auto found_pending_read =
           std::find_if(pending_reads_.begin(), pending_reads_.end(),
-                       [offset, count](const auto& pending_read) { return pending_read.contains(offset, count); });
+                       [offset, size](const auto& pending_read) { return pending_read.contains(offset, size); });
 
       return found_pending_read == pending_reads_.end();
     });
 
-    if (cache_strategy_->retrieve(buffer, offset, count))
+    if (cache_strategy_->retrieve(buffer, offset, size))
     {
       return;
     }
 
-    download_offset_and_size = cache_strategy_->cache_element_offset_and_size(offset, count);
+    download_offset_and_size = cache_strategy_->cache_element_offset_and_size(offset, size);
+    assert(download_offset_and_size.offset <= offset);
+    assert(download_offset_and_size.offset + download_offset_and_size.size >= offset + size);
     pending_reads_.push_back(download_offset_and_size);
   }
 
   rosbaz::io::Buffer download_buffer{ download_offset_and_size.size };
 
   download(download_buffer.data(), download_offset_and_size.offset, download_offset_and_size.size);
-  std::copy_n(download_buffer.begin() + offset - download_offset_and_size.offset, count, buffer);
+  assert(offset >= download_offset_and_size.offset);
+  const size_t buffer_offset = offset - download_offset_and_size.offset;
+  assert(buffer_offset + size <= download_buffer.size());
+  std::copy_n(download_buffer.begin() + buffer_offset, size, buffer);
 
   {
     std::lock_guard<std::mutex> lock_guard(cache_mutex_);
@@ -146,6 +151,11 @@ void AzReader::read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t count)
   }
 
   read_available_.notify_all();
+}
+
+const ReaderStatistics& AzReader::stats() const
+{
+  return stats_;
 }
 
 }  // namespace io

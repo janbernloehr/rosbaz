@@ -4,20 +4,20 @@ namespace rosbaz
 {
 namespace io
 {
-SmallElementCacheStrategy::SmallElementCacheStrategy(const size_t max_element_size, const size_t max_elements)
-  : max_element_size_(max_element_size), max_elements_(max_elements)
+SmallElementCacheStrategy::SmallElementCacheStrategy(const size_t element_size, const size_t max_elements)
+  : element_size_(element_size), max_elements_(max_elements)
 {
 }
 
-bool SmallElementCacheStrategy::retrieve(rosbaz::io::byte* buffer, size_t offset, size_t count)
+bool SmallElementCacheStrategy::retrieve(rosbaz::io::byte* buffer, size_t offset, size_t size) const
 {
-  if (count > max_element_size_)
+  if (size > element_size_)
   {
     return false;
   }
 
-  auto cache_found = std::find_if(cache_.begin(), cache_.end(), [offset, count](const CacheEntry& entry) {
-    return ((entry.offset <= offset) && (offset + count <= entry.offset + entry.data.size()));
+  auto cache_found = std::find_if(cache_.begin(), cache_.end(), [offset, size](const CacheEntry& entry) {
+    return ((entry.offset <= offset) && (offset + size <= entry.offset + entry.data.size()));
   });
 
   if (cache_found == cache_.end())
@@ -27,24 +27,24 @@ bool SmallElementCacheStrategy::retrieve(rosbaz::io::byte* buffer, size_t offset
 
   assert(offset >= cache_found->offset);
 
-  std::copy_n(cache_found->data.begin() + (offset - cache_found->offset), count, buffer);
+  std::copy_n(cache_found->data.begin() + (offset - cache_found->offset), size, buffer);
 
   return true;
 }
 
-OffsetAndSize SmallElementCacheStrategy::cache_element_offset_and_size(size_t offset, size_t count) const
+OffsetAndSize SmallElementCacheStrategy::cache_element_offset_and_size(size_t offset, size_t size) const
 {
-  return OffsetAndSize{ offset, std::max(max_element_size_, count) };
+  return OffsetAndSize{ offset, std::max(element_size_, size) };
 }
 
-bool SmallElementCacheStrategy::accepts(size_t /* offset */, size_t count) const
+bool SmallElementCacheStrategy::accepts(size_t /* offset */, size_t size) const
 {
-  return count <= max_element_size_;
+  return size <= element_size_;
 }
 
 void SmallElementCacheStrategy::update(rosbaz::io::Buffer&& data, size_t offset)
 {
-  if (data.size() > max_element_size_)
+  if (data.size() > element_size_)
   {
     return;
   }

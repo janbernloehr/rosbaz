@@ -22,13 +22,13 @@ public:
   HybridElementCacheStrategy(size_t max_small_element_size = 1024, size_t max_small_elements = 10000,
                              size_t max_large_elements = 100);
 
-  bool retrieve(rosbaz::io::byte* buffer, size_t offset, size_t count) override;
+  bool retrieve(rosbaz::io::byte* buffer, size_t offset, size_t size) const override;
 
   void update(rosbaz::io::Buffer&& data, size_t offset) override;
 
-  OffsetAndSize cache_element_offset_and_size(size_t offset, size_t count) const override;
+  OffsetAndSize cache_element_offset_and_size(size_t offset, size_t size) const override;
 
-  bool accepts(size_t offset, size_t count) const override;
+  bool accepts(size_t offset, size_t size) const override;
 
 private:
   const size_t max_small_element_size_;

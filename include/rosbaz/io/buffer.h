@@ -44,12 +44,18 @@ public:
 
   void resize(size_type size);
 
+  /// Set internal offset and size without any data movement so that
+  /// the buffer's begin points to \p offset and the buffer's size is
+  /// \p size.
+  void shrinkTo(size_type offset, size_type size);
+
 private:
   void ensureCapacity(size_type capacity);
 
 private:
   rosbaz::io::byte* buffer_{ nullptr };
   size_type capacity_{ 0 };
+  size_type offset_{ 0 };
   size_type size_{ 0 };
 };
 

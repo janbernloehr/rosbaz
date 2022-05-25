@@ -22,12 +22,16 @@ public:
 
   static std::unique_ptr<IReader> open(const std::string& file_path);
 
+  const ReaderStatistics& stats() const override;
+
 private:
-  void read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t count) override;
+  void read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t size) override;
 
   rosbaz::io::RosStream m_source;
   std::string m_filepath;
   std::mutex m_mutex{};
+
+  ReaderStatistics stats_{};
 };
 
 }  // namespace io

@@ -26,6 +26,12 @@ struct HeaderBufferAndSize
 
 HeaderBufferAndSize parseHeaderBufferAndSize(const rosbaz::DataSpan buffer_span);
 
+struct ReaderStatistics
+{
+  size_t num_reads;
+  size_t num_bytes_read;
+};
+
 class IReader
 {
 public:
@@ -35,7 +41,7 @@ public:
 
   virtual std::string filepath() = 0;
 
-  rosbaz::io::Buffer read(size_t offset, size_t count);
+  rosbaz::io::Buffer read(size_t offset, size_t size);
 
   template <size_t N>
   std::array<rosbaz::io::byte, N> read(size_t offset)
@@ -54,10 +60,12 @@ public:
 
   HeaderBufferAndSize read_header_buffer_and_size(size_t offset);
 
-  virtual void use_cache_hints(const std::vector<uint64_t>& cache_hints);
+  virtual void set_cache_hints(const nonstd::span<uint64_t> cache_hints);
+
+  virtual const ReaderStatistics& stats() const = 0;
 
 private:
-  virtual void read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t count) = 0;
+  virtual void read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t size) = 0;
 };
 
 }  // namespace io

@@ -36,14 +36,14 @@ HeaderBufferAndSize parseHeaderBufferAndSize(const rosbaz::DataSpan buffer_span)
   return result;
 }
 
-void IReader::use_cache_hints(const std::vector<uint64_t>&)
+void IReader::set_cache_hints(const nonstd::span<uint64_t>)
 {
 }
 
-rosbaz::io::Buffer IReader::read(size_t offset, size_t count)
+rosbaz::io::Buffer IReader::read(size_t offset, size_t size)
 {
-  rosbaz::io::Buffer buffer(count);
-  read_fixed(buffer.data(), offset, count);
+  rosbaz::io::Buffer buffer(size);
+  read_fixed(buffer.data(), offset, size);
   return buffer;
 }
 
