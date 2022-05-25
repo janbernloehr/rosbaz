@@ -30,7 +30,7 @@ template <class T>
 T read_little_endian(DataSpan buffer, size_t offset = 0)
 {
   static_assert(std::is_standard_layout<T>::value == true, "T must have standard layout.");
-  assert(static_cast<size_t>(buffer.size()) >= offset + sizeof(T));
+  assert(buffer.size() >= offset + sizeof(T));
   return *reinterpret_cast<const T*>(buffer.begin() + offset);
 }
 
