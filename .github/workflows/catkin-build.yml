@@ -22,7 +22,7 @@ jobs:
       uses: actions/checkout@v2
       with:
         repository: 'Azure/azure-sdk-for-cpp.git'
-        ref: 'azure-storage-blobs_12.2.0'
+        ref: 'azure-storage-blobs_12.4.0'
         path: 'azure-sdk-for-cpp'
 
     - name: 'build azure-sdk-for-cpp'
@@ -32,7 +32,7 @@ jobs:
         set -ex
 
         curl -s https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
-        sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ bionic main'
+        sudo apt-add-repository 'deb https://apt.kitware.com/ubuntu/ $(lsb_release -sc) main'
 
         sudo apt-get update -qq
         sudo apt-get install -y libssl-dev libcurl4-openssl-dev cmake g++ uuid-dev cmake
@@ -58,4 +58,4 @@ jobs:
       run: catkin build -sc --no-status --no-notify -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} -DCMAKE_BUILD_TYPE=RelWithDebInfo
 
     - name: 'test rosbaz'
-      run: catkin run_tests --no-status --no-notify -DREGRESSION_TESTS=ON && catkin_test_results
+      run: catkin run_tests --no-status --no-notify --cmake-args -DREGRESSION_TESTS=ON && catkin_test_results
