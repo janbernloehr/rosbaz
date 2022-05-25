@@ -3,7 +3,7 @@
 // Based on http://wg21.link/p0122r7
 // For more information see https://github.com/martinmoene/span-lite
 //
-// Copyright 2018-2020 Martin Moene
+// Copyright 2018-2021 Martin Moene
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -13,7 +13,7 @@
 
 #define span_lite_MAJOR  0
 #define span_lite_MINOR  10
-#define span_lite_PATCH  0
+#define span_lite_PATCH  3
 
 #define span_lite_VERSION  span_STRINGIFY(span_lite_MAJOR) "." span_STRINGIFY(span_lite_MINOR) "." span_STRINGIFY(span_lite_PATCH)
 
@@ -59,6 +59,10 @@
 #endif
 
 // span configuration (features):
+
+#ifndef  span_FEATURE_WITH_INITIALIZER_LIST_P2447
+# define span_FEATURE_WITH_INITIALIZER_LIST_P2447  0
+#endif
 
 #ifndef  span_FEATURE_WITH_CONTAINER
 #ifdef   span_FEATURE_WITH_CONTAINER_TO_STD
@@ -132,7 +136,7 @@
 // Control presence of exception handling (try and auto discover):
 
 #ifndef span_CONFIG_NO_EXCEPTIONS
-# if _MSC_VER
+# if defined(_MSC_VER)
 #  include <cstddef>    // for _HAS_EXCEPTIONS
 # endif
 # if defined(__cpp_exceptions) || defined(__EXCEPTIONS) || (_HAS_EXCEPTIONS)
@@ -707,7 +711,7 @@ namespace detail {
 /*enum*/ struct enabler{};
 
 template< typename T >
-bool is_positive( T x )
+span_constexpr bool is_positive( T x )
 {
     return std11::is_signed<T>::value ? x >= 0 : true;
 }
@@ -816,7 +820,7 @@ struct is_compatible_container : std::true_type{};
 # pragma GCC   diagnostic ignored "-Wlong-long"
 #endif
 
-inline void throw_out_of_range( size_t idx, size_t size )
+span_noreturn inline void throw_out_of_range( size_t idx, size_t size )
 {
     const char fmt[] = "span::at(): index '%lli' is out of range [0..%lli)";
     char buffer[ 2 * 20 + sizeof fmt ];
@@ -827,7 +831,7 @@ inline void throw_out_of_range( size_t idx, size_t size )
 
 #else // MEMBER_AT
 
-inline void throw_out_of_range( size_t /*idx*/, size_t /*size*/ )
+span_noreturn inline void throw_out_of_range( size_t /*idx*/, size_t /*size*/ )
 {
     throw std::out_of_range( "span::at(): index outside span" );
 }
@@ -953,7 +957,7 @@ public:
 #if span_HAVE( ITERATOR_CTOR )
     template< typename It, typename End
         span_REQUIRES_T((
-            std::is_convertible<decltype(*std::declval<It&>()), element_type &>::value
+            std::is_convertible<decltype(&*std::declval<It&>()), element_type *>::value
             && ! std::is_convertible<End, std::size_t>::value
         ))
      >
@@ -1058,6 +1062,52 @@ public:
     {}
 #endif
 
+#if span_FEATURE( WITH_INITIALIZER_LIST_P2447 ) && span_HAVE( INITIALIZER_LIST )
+
+    // constexpr explicit(extent != dynamic_extent) span(std::initializer_list<value_type> il) noexcept;
+
+#if !span_BETWEEN( span_COMPILER_MSVC_VERSION, 120, 130 )
+
+    template< extent_t U = Extent
+        span_REQUIRES_T((
+            U != dynamic_extent
+        ))
+    >
+#if span_COMPILER_GNUC_VERSION >= 900   // prevent GCC's "-Winit-list-lifetime"
+    span_constexpr14 explicit span( std::initializer_list<value_type> il ) span_noexcept
+    {
+        data_ = il.begin();
+        size_ = il.size();
+    }
+#else
+    span_constexpr explicit span( std::initializer_list<value_type> il ) span_noexcept
+        : data_( il.begin() )
+        , size_( il.size()  )
+    {}
+#endif
+
+#endif // MSVC 120 (VS2013)
+
+    template< extent_t U = Extent
+        span_REQUIRES_T((
+            U == dynamic_extent
+        ))
+    >
+#if span_COMPILER_GNUC_VERSION >= 900   // prevent GCC's "-Winit-list-lifetime"
+    span_constexpr14 /*explicit*/ span( std::initializer_list<value_type> il ) span_noexcept
+    {
+        data_ = il.begin();
+        size_ = il.size();
+    }
+#else
+    span_constexpr /*explicit*/ span( std::initializer_list<value_type> il ) span_noexcept
+        : data_( il.begin() )
+        , size_( il.size()  )
+    {}
+#endif
+
+#endif // P2447
+
 #if span_HAVE( IS_DEFAULT )
     span_constexpr span( span const & other ) span_noexcept = default;
 
@@ -1084,12 +1134,12 @@ public:
 
     template< class OtherElementType, extent_type OtherExtent
         span_REQUIRES_T((
-            (Extent == dynamic_extent || Extent == OtherExtent)
+            (Extent == dynamic_extent || OtherExtent == dynamic_extent || Extent == OtherExtent)
             && std::is_convertible<OtherElementType(*)[], element_type(*)[]>::value
         ))
     >
     span_constexpr_exp span( span<OtherElementType, OtherExtent> const & other ) span_noexcept
-        : data_( reinterpret_cast<pointer>( other.data() ) )
+        : data_( other.data() )
         , size_( other.size() )
     {
         span_EXPECTS( OtherExtent == dynamic_extent || other.size() == to_size(OtherExtent) );
@@ -1586,6 +1636,17 @@ make_span( std::array< T, N > const & arr ) span_noexcept
 }
 
 #endif // span_HAVE( ARRAY )
+
+#if span_USES_STD_SPAN || span_HAVE( INITIALIZER_LIST )
+
+template< class T >
+inline span_constexpr span< const T >
+make_span( std::initializer_list<T> il ) span_noexcept
+{
+    return span<const T>( il.begin(), il.size() );
+}
+
+#endif // span_HAVE( INITIALIZER_LIST )
 
 #if span_USES_STD_SPAN
 
