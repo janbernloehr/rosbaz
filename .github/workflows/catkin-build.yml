@@ -22,7 +22,7 @@ jobs:
       uses: actions/checkout@v2
       with:
         repository: 'Azure/azure-sdk-for-cpp.git'
-        ref: 'azure-storage-blobs_12.4.0'
+        ref: 'azure-storage-blobs_12.2.0'
         path: 'azure-sdk-for-cpp'
 
     - name: 'build azure-sdk-for-cpp'
