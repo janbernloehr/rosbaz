@@ -15,8 +15,8 @@ namespace io
 struct HeaderBufferAndSize
 {
   rosbaz::io::Buffer header_buffer;
-  uint32_t header_size;
-  uint32_t data_size;
+  uint32_t header_size{ 0 };
+  uint32_t data_size{ 0 };
 
   uint32_t data_offset() const
   {
@@ -28,8 +28,8 @@ HeaderBufferAndSize parseHeaderBufferAndSize(const rosbaz::DataSpan buffer_span)
 
 struct ReaderStatistics
 {
-  size_t num_reads;
-  size_t num_bytes_read;
+  size_t num_reads{ 0 };
+  size_t num_bytes_read{ 0 };
 };
 
 class IReader
