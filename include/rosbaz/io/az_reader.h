@@ -60,7 +60,7 @@ private:
   std::mutex cache_mutex_{};
 
   std::vector<OffsetAndSize> pending_reads_{};
-  std::condition_variable read_available_;
+  std::condition_variable read_completed_;
 };
 
 }  // namespace io

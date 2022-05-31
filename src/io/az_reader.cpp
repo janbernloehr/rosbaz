@@ -111,7 +111,7 @@ void AzReader::read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t size)
       return;
     }
 
-    read_available_.wait(lock, [this, offset, size]() {
+    read_completed_.wait(lock, [this, offset, size]() {
       auto found_pending_read =
           std::find_if(pending_reads_.begin(), pending_reads_.end(),
                        [offset, size](const auto& pending_read) { return pending_read.contains(offset, size); });
@@ -150,7 +150,7 @@ void AzReader::read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t size)
                          pending_reads_.end());
   }
 
-  read_available_.notify_all();
+  read_completed_.notify_all();
 }
 
 const ReaderStatistics& AzReader::stats() const
