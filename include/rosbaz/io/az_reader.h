@@ -41,28 +41,20 @@ public:
 
   std::string filepath() override;
 
-  std::int32_t num_requests() const
-  {
-    return num_requests_;
-  }
-  std::int64_t num_bytes() const
-  {
-    return num_bytes_;
-  }
+  void set_cache_hints(const nonstd::span<uint64_t> cache_hints) override;
 
-  void use_cache_hints(const std::vector<uint64_t>& cache_hints) override;
+  const ReaderStatistics& stats() const override;
 
 private:
-  void read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t count) override;
+  void read_fixed(rosbaz::io::byte* buffer, size_t offset, size_t size) override;
 
-  void download(rosbaz::io::byte* buffer, size_t offset, size_t count);
+  void download(rosbaz::io::byte* buffer, size_t offset, size_t size);
 
   std::string container_{};
   std::string blob_{};
   std::shared_ptr<Azure::Storage::Blobs::BlobClient> client_{};
 
-  std::int32_t num_requests_{ 0 };
-  std::int64_t num_bytes_{ 0 };
+  ReaderStatistics stats_{};
 
   std::unique_ptr<ICacheStrategy> cache_strategy_{ nullptr };
   std::mutex cache_mutex_{};

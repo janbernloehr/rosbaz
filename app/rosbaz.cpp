@@ -46,18 +46,14 @@ void print_bag_yaml(const rosbaz::Bag& bag)
 
 void print_transfer_stats(const rosbaz::io::IReader& reader)
 {
-#ifndef NO_AZ_BINDINGS
-  if (auto az_reader = dynamic_cast<const rosbaz::io::AzReader*>(&reader))
-  {
-    std::cout << "---\n";
-    std::cout << "requests:          " << az_reader->num_requests() << "\n";
-    std::cout << "bytes transferred: " << az_reader->num_bytes() << "\n";
-  }
-#endif
+  const auto& stats = reader.stats();
+  std::cout << "---\n";
+  std::cout << "num reads:  " << stats.num_reads << "\n";
+  std::cout << "bytes read: " << stats.num_bytes_read << "\n";
 }
 
-std::shared_ptr<rosbaz::io::IReader> create_reader(const std::string& path_or_url, const std::string& account_key,
-                                                   const std::string& token)
+std::shared_ptr<rosbaz::io::IReader> create_reader(const std::string& path_or_url,
+                                                   const rosbaz::app::CommonOptions& common_options)
 {
   // Azure
   if (rosbaz::is_url(path_or_url))
@@ -65,7 +61,7 @@ std::shared_ptr<rosbaz::io::IReader> create_reader(const std::string& path_or_ur
 #ifndef NO_AZ_BINDINGS
     auto url = rosbaz::AzBlobUrl::parse(path_or_url);
 
-    return std::make_shared<rosbaz::io::AzReader>(url, account_key, token);
+    return std::make_shared<rosbaz::io::AzReader>(url, common_options.account_key, common_options.token);
 #else
     throw std::runtime_error("rosbaz was compiled with NO_AZ_BINDINGS. Reading from azure is not supported.");
 #endif
@@ -77,7 +73,7 @@ std::shared_ptr<rosbaz::io::IReader> create_reader(const std::string& path_or_ur
 
 void info_command(const rosbaz::app::CommonOptions& common_options, const rosbaz::app::InfoOptions& info_options)
 {
-  auto az_reader = create_reader(info_options.file_or_blob_url, common_options.account_key, common_options.token);
+  auto az_reader = create_reader(info_options.file_or_blob_url, common_options);
   auto az_bag = rosbaz::Bag::read(az_reader, info_options.topic_message_frequency_statistics);
 
   if (info_options.yaml_output)
@@ -102,7 +98,7 @@ void play_command(const rosbaz::app::CommonOptions& common_options, const rosbaz
   ros::init(mapping, "rosbaz");
   ros::NodeHandle node_handle{};
 
-  auto az_reader = create_reader(play_options.file_or_blob_url, common_options.account_key, common_options.token);
+  auto az_reader = create_reader(play_options.file_or_blob_url, common_options);
   auto az_bag = rosbaz::Bag::read(az_reader);
 
   // we first create a full blown view to obtain the time range of the messages

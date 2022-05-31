@@ -89,8 +89,9 @@ rosbaz::io::Buffer MessageInstance::read() const
     throw rosbaz::RosBagFormatException(msg.str());
   }
 
-  rosbaz::io::Buffer msg_buffer{ record_buffer.begin() + m_header_buffer_and_size->data_offset(), record_buffer.end() };
-  return msg_buffer;
+  record_buffer.shrinkTo(m_header_buffer_and_size->data_offset(), m_header_buffer_and_size->data_size);
+
+  return record_buffer;
 }
 
 rosbaz::io::Buffer MessageInstance::read_subset(uint32_t offset, uint32_t size) const

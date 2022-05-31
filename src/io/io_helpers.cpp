@@ -13,19 +13,19 @@ namespace rosbaz
 {
 namespace io
 {
-void read_from(RosStream& ifs, byte* target, const size_t count)
+void read_from(RosStream& ifs, byte* target, const size_t size)
 {
-  assert(count <= static_cast<size_t>(std::numeric_limits<std::streamsize>::max()));
-  const auto scount = static_cast<std::streamsize>(count);
+  assert(size <= static_cast<size_t>(std::numeric_limits<std::streamsize>::max()));
+  const auto ssize = static_cast<std::streamsize>(size);
 
-  ifs.read(reinterpret_cast<char*>(target), scount);
+  ifs.read(reinterpret_cast<char*>(target), ssize);
 
-  const auto actual_count = ifs.gcount();
+  const auto actual_size = ifs.gcount();
 
-  if (actual_count != scount)
+  if (actual_size != ssize)
   {
     std::stringstream msg;
-    msg << "Requested " << scount << " from stream but " << actual_count << " were read";
+    msg << "Requested " << ssize << " from stream but " << actual_size << " were read";
     throw rosbaz::IoException(msg.str());
   }
 }

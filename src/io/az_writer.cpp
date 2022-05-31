@@ -144,7 +144,6 @@ void AzWriter::commit_blocks()
   for (const auto& block : blocks_)
   {
     block_ids.push_back(block->id());
-    std::cout << " " << block->id() << "\n";
   }
 
   client_->CommitBlockList(block_ids);
