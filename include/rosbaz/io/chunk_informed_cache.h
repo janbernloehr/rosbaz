@@ -20,11 +20,11 @@ namespace io
 /// (2) if cache hints are not present, requests are just rounded up to \p element_size
 /// (4) the actual stored data might be less than \p element_size for the block at the end of the file
 ///
-/// With default parameters, ChunkInformedCacheStrategy requires approximately 2GB of memory.
+/// With default parameters, ChunkInformedCacheStrategy requires approximately 64MB of memory.
 class ChunkInformedCacheStrategy : public ICacheStrategy
 {
 public:
-  ChunkInformedCacheStrategy(size_t element_size = 4 * 1024 * 1024, size_t max_elements = 500,
+  ChunkInformedCacheStrategy(size_t element_size = 64 * 1024, size_t max_elements = 1000,
                              size_t index_element_size = 2 * 1024);
 
   bool retrieve(rosbaz::io::byte* buffer, size_t offset, size_t size) const override;
