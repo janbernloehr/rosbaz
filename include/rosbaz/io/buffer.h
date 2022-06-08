@@ -20,7 +20,7 @@ public:
   using const_iterator = const rosbaz::io::byte*;
 
   Buffer();
-  Buffer(size_type size);
+  explicit Buffer(size_type size);
   Buffer(const_pointer begin, const_pointer end);
 
   Buffer(const Buffer&);

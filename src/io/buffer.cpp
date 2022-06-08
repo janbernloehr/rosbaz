@@ -43,6 +43,10 @@ Buffer::Buffer(Buffer&& other)
 
 Buffer& Buffer::operator=(Buffer&& other)
 {
+  if (buffer_)
+  {
+    std::free(buffer_);
+  }
   buffer_ = std::exchange(other.buffer_, nullptr);
   capacity_ = std::exchange(other.capacity_, 0);
   offset_ = std::exchange(other.offset_, 0);
