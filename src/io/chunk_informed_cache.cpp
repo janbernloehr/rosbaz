@@ -6,8 +6,9 @@ namespace rosbaz
 {
 namespace io
 {
-ChunkInformedCacheStrategy::ChunkInformedCacheStrategy(const size_t element_size, const size_t max_elements)
-  : element_size_(element_size), max_elements_(max_elements)
+ChunkInformedCacheStrategy::ChunkInformedCacheStrategy(const size_t element_size, const size_t max_elements,
+                                                       const size_t index_element_size)
+  : element_size_(element_size), max_elements_(max_elements), index_element_size_(index_element_size)
 {
 }
 
@@ -39,7 +40,7 @@ OffsetAndSize ChunkInformedCacheStrategy::cache_element_offset_and_size(size_t o
 {
   if (cache_hints_.empty())
   {
-    return OffsetAndSize{ offset, std::max(element_size_, size) };
+    return OffsetAndSize{ offset, std::max(index_element_size_, size) };
   }
   else
   {

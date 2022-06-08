@@ -24,7 +24,8 @@ namespace io
 class ChunkInformedCacheStrategy : public ICacheStrategy
 {
 public:
-  ChunkInformedCacheStrategy(size_t element_size = 4 * 1024 * 1024, size_t max_elements = 500);
+  ChunkInformedCacheStrategy(size_t element_size = 4 * 1024 * 1024, size_t max_elements = 500,
+                             size_t index_element_size = 2 * 1024);
 
   bool retrieve(rosbaz::io::byte* buffer, size_t offset, size_t size) const override;
 
@@ -39,6 +40,7 @@ public:
 private:
   const size_t element_size_;
   const size_t max_elements_;
+  const size_t index_element_size_;
 
   boost::circular_buffer<CacheEntry> cache_{ max_elements_ };
 
