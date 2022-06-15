@@ -310,8 +310,8 @@ void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
 
   for (const auto& chunk_info : chunks_)
   {
-    chunk_exts_.emplace_back(chunk_info);
-    chunk_exts_lookup_[chunk_info.pos] = &chunk_exts_.back();
+    chunk_exts_.emplace_back(std::make_shared<rosbaz::bag_parsing::ChunkExt>(chunk_info));
+    chunk_exts_lookup_[chunk_info.pos] = chunk_exts_.back().get();
   }
 
   {
@@ -321,7 +321,7 @@ void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
     for (size_t i = 0; i < chunks_.size(); ++i)
     {
       work.emplace_back([this, &reader, &index_end, i]() {
-        auto& chunk_ext = chunk_exts_[i];
+        auto& chunk_ext = *chunk_exts_[i];
         const uint64_t next_chunk_pos_value = index_end[i];
 
         parseChunkInfo(reader, chunk_ext, next_chunk_pos_value);
@@ -336,7 +336,7 @@ void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
   connection_indexes_.reserve(chunks_.size());
   for (const auto& chunk_ext : chunk_exts_)
   {
-    for (const auto& index_entry_ext : chunk_ext.index_entries)
+    for (const auto& index_entry_ext : chunk_ext->index_entries)
     {
       auto& connection_index = connection_indexes_[index_entry_ext.connection_id];
       connection_index.insert(connection_index.end(), index_entry_ext.index_entry);
@@ -351,13 +351,13 @@ void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
   cache_hints.emplace(0);
   for (const auto& chunk_ext : chunk_exts_)
   {
-    cache_hints.emplace(chunk_ext.data_offset);
+    cache_hints.emplace(chunk_ext->data_offset);
 
-    for (const auto& message_record_entry : chunk_ext.message_records)
+    for (const auto& message_record_entry : chunk_ext->message_records)
     {
       const auto& message_record = message_record_entry.second;
 
-      const uint64_t begin = chunk_ext.data_offset + message_record.offset;
+      const uint64_t begin = chunk_ext->data_offset + message_record.offset;
       cache_hints.emplace(begin);
 
       const uint64_t end = begin + message_record.data_size;
