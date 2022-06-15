@@ -29,9 +29,23 @@ Bag::Bag(std::shared_ptr<rosbaz::io::IWriter> writer) : mode_{ BagMode::Write },
   assert(writer != nullptr);
 }
 
-Bag::~Bag()
+Bag::~Bag() noexcept(false)
 {
-  close();
+  try
+  {
+    close();
+  }
+  catch (const std::exception& err)
+  {
+    if (std::uncaught_exception())
+    {
+      ROS_ERROR("Could not close bag file: %s (exception suppressed, as stack unwinding is in progress)", err.what());
+    }
+    else
+    {
+      throw;
+    }
+  }
 }
 
 Bag Bag::read(std::shared_ptr<rosbaz::io::IReader> reader, bool read_chunk_indices)

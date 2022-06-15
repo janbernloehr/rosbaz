@@ -67,7 +67,7 @@ public:
   Bag& operator=(const Bag&) = default;
   Bag& operator=(Bag&&) = default;
 
-  ~Bag();
+  ~Bag() noexcept(false);
 
   /// Create a bag instance using the given reader.
   static Bag read(std::shared_ptr<rosbaz::io::IReader> reader, bool read_chunk_indices = true);
