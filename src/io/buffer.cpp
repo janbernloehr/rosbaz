@@ -101,7 +101,8 @@ size_t Buffer::size() const
 
 void Buffer::resize(size_t size)
 {
-  if (offset_ != 0) {
+  if (offset_ != 0)
+  {
     std::copy_n(begin(), size_, buffer_);
     offset_ = 0;
   }
