@@ -79,7 +79,7 @@ bool ChunkInformedCacheStrategy::accepts(size_t /* offset */, size_t /* size */)
 
 void ChunkInformedCacheStrategy::update(rosbaz::io::Buffer&& data, size_t offset)
 {
-  cache_.push_back(CacheEntry{std::move(data), offset});
+  cache_.push_back(CacheEntry{ std::move(data), offset });
 }
 
 }  // namespace io

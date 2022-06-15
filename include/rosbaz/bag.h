@@ -72,6 +72,7 @@ public:
   /// Create a bag instance using the given reader.
   static Bag read(std::shared_ptr<rosbaz::io::IReader> reader, bool read_chunk_indices = true);
 
+  /// Create a bag instance using the given writer.
   static Bag write(std::shared_ptr<rosbaz::io::IWriter> writer);
 
   /// Close the bag file
@@ -104,10 +105,24 @@ public:
   void setChunkThreshold(uint32_t chunk_threshold);
 
   /// Get the compression method to use for writing chunks.
+  ///
+  /// This is not part of the official rosbag API.
   CompressionType getCompression() const;
 
+  /// Get the earliest stat time of all chunks of the bag file.
+  ///
+  /// This is not part of the official rosbag API.
   ros::Time getBeginTime() const;
+
+  /// Get the latest end time of all chunks of the bag file.
+  ///
+  /// This is not part of the official rosbag API.
   ros::Time getEndTime() const;
+
+  /// \return true if the bag does not have a valid index; otherwise false.
+  ///
+  /// This is not part of the official rosbag API.
+  bool isUnindexed() const;
 
   /// Write a message into the bag file
   ///

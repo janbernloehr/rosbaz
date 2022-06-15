@@ -14,6 +14,8 @@
 #include "rosbaz/io/io_helpers.h"
 #include "rosbaz/io/chunk_informed_cache.h"
 
+#include <regex>
+
 namespace rosbaz
 {
 namespace io
@@ -59,7 +61,8 @@ AzReader::~AzReader() = default;
 
 std::string AzReader::filepath()
 {
-  return client_->GetUrl();
+  std::regex signature_pattern("sig=([^&]+)");
+  return std::regex_replace(client_->GetUrl(), signature_pattern, "sig=REDACTED");
 }
 
 size_t AzReader::size()

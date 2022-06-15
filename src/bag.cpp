@@ -428,6 +428,11 @@ ros::Time Bag::getEndTime() const
   return end;
 }
 
+bool Bag::isUnindexed() const
+{
+  return chunk_exts_.empty() && connection_indexes_.empty();
+}
+
 std::uint64_t Bag::getSize() const
 {
   if (mode_ != BagMode::Read)

@@ -49,7 +49,7 @@ void SmallElementCacheStrategy::update(rosbaz::io::Buffer&& data, size_t offset)
     return;
   }
 
-  cache_.push_back(CacheEntry{std::move(data), offset});
+  cache_.push_back(CacheEntry{ std::move(data), offset });
 }
 
 }  // namespace io
