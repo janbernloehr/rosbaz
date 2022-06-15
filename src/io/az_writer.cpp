@@ -13,6 +13,7 @@
 
 #include <numeric>
 #include <iostream>
+#include <regex>
 
 namespace rosbaz
 {
@@ -93,7 +94,8 @@ AzWriter::~AzWriter() = default;
 
 std::string AzWriter::filepath()
 {
-  return client_->GetUrl();
+  std::regex signature_pattern("sig=([^&]+)");
+  return std::regex_replace(client_->GetUrl(), signature_pattern, "sig=REDACTED");
 }
 
 size_t AzWriter::size()
