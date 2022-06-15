@@ -34,6 +34,11 @@ const std::string& MessageInstance::getMessageDefinition() const
   return m_connection_info->msg_def;
 }
 
+uint32_t MessageInstance::getConnectionId() const
+{
+  return m_connection_info->id;
+}
+
 boost::shared_ptr<ros::M_string> MessageInstance::getConnectionHeader() const
 {
   return m_connection_info->header;

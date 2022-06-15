@@ -31,6 +31,12 @@ public:
   const std::string& getMD5Sum() const;
   const std::string& getMessageDefinition() const;
 
+  //! Return the id of the connection via which this message was published.
+  /*!
+   * \note This is not part of the official rosbag API.
+   */
+  uint32_t getConnectionId() const;
+
   boost::shared_ptr<ros::M_string> getConnectionHeader() const;
 
   std::string getCallerId() const;
