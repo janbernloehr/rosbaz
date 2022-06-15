@@ -109,6 +109,8 @@ public:
   ros::Time getBeginTime() const;
   ros::Time getEndTime() const;
 
+  bool isUnindexed() const;
+
   /// Write a message into the bag file
   ///
   /// \param topic The topic name
