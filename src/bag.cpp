@@ -430,7 +430,7 @@ ros::Time Bag::getEndTime() const
 
 bool Bag::isUnindexed() const
 {
-  return chunk_exts_.empty() && connection_indexes_.empty();
+  return (chunk_count_ == 0) && (connection_count_ == 0);
 }
 
 std::uint64_t Bag::getSize() const
