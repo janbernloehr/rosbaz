@@ -109,7 +109,7 @@ public:
   /// This is not part of the official rosbag API.
   CompressionType getCompression() const;
 
-  /// Get the earliest stat time of all chunks of the bag file.
+  /// Get the earliest start time of all chunks of the bag file.
   ///
   /// This is not part of the official rosbag API.
   ros::Time getBeginTime() const;
