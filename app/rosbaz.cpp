@@ -127,7 +127,7 @@ void play_command(const rosbaz::app::CommonOptions& common_options, const rosbaz
   auto evaluate_tick = [&pausable_context]() { return pausable_context.tick(); };
 
   // Progress bar has a minimum size of 1. Don't crash if view is empty.
-  const int32_t progress_bar_size = std::min(static_cast<int32_t>(filtered_view.size()), 1);
+  const int32_t progress_bar_size = std::max(static_cast<int32_t>(filtered_view.size()), 1);
   terminal::ProgressBar progress_bar(progress_bar_size);
 
   rosbag::TimeTranslator time_translator;
