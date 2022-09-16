@@ -361,28 +361,28 @@ void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
   // allows cache strategies to extend all reads to the entire message record
   // to reduce additional round trips.
 
-  std::set<uint64_t> cache_hints;
-  cache_hints.emplace(0);
+  std::vector<uint64_t> cache_hints;
   for (const auto& chunk_ext : chunk_exts_)
   {
-    cache_hints.emplace(chunk_ext->data_offset);
+    cache_hints.push_back(chunk_ext->data_offset);
 
     for (const auto& message_record_entry : chunk_ext->message_records)
     {
       const auto& message_record = message_record_entry.second;
 
       const uint64_t begin = chunk_ext->data_offset + message_record.offset;
-      cache_hints.emplace(begin);
+      cache_hints.push_back(begin);
 
       const uint64_t end = begin + message_record.data_size;
-      cache_hints.emplace(end);
+      cache_hints.push_back(end);
     }
   }
-  cache_hints.emplace(file_size_);
+  cache_hints.push_back(file_size_);
 
-  std::vector<uint64_t> cache_hints_v(cache_hints.begin(), cache_hints.end());
+  std::sort(cache_hints.begin(), cache_hints.end());
+  cache_hints.erase(std::unique(cache_hints.begin(), cache_hints.end()), cache_hints.end());
 
-  reader_->set_cache_hints(cache_hints_v);
+  reader_->set_cache_hints(cache_hints);
 
   chunk_indices_parsed_ = true;
 }
