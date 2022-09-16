@@ -47,9 +47,11 @@ public:
 private:
   AzWriter& writer_;
 
-  rosbaz::io::Buffer buffer_{};
+  std::shared_ptr<rosbaz::io::Buffer> buffer_{};
 
   std::string id_;
+
+  size_t block_size{0};
 };
 
 class AzWriter : public IWriter
