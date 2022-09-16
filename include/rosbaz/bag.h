@@ -67,7 +67,7 @@ public:
   Bag& operator=(const Bag&) = default;
   Bag& operator=(Bag&&) = default;
 
-  ~Bag();
+  ~Bag() noexcept(false);
 
   /// Create a bag instance using the given reader.
   static Bag read(std::shared_ptr<rosbaz::io::IReader> reader, bool read_chunk_indices = true);
@@ -109,7 +109,7 @@ public:
   /// This is not part of the official rosbag API.
   CompressionType getCompression() const;
 
-  /// Get the earliest stat time of all chunks of the bag file.
+  /// Get the earliest start time of all chunks of the bag file.
   ///
   /// This is not part of the official rosbag API.
   ros::Time getBeginTime() const;
@@ -199,6 +199,10 @@ private:
 
   // Writing
 
+  /// Returns the current offset in the chunk, relative to the start of the chunk record data.
+  ///
+  /// Should only be called after startWritingChunk() and before writing to this
+  /// chunk concludes via stopWritingChunk() or indirectly via stopWriting() etc.
   uint32_t getChunkOffset() const;
 
   void writeVersion(rosbaz::io::Block& block);

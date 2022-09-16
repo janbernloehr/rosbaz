@@ -1,5 +1,6 @@
 #include "rosbaz/bag.h"
 
+#include <algorithm>
 #include <future>
 
 #include <ros/console.h>
@@ -29,9 +30,23 @@ Bag::Bag(std::shared_ptr<rosbaz::io::IWriter> writer) : mode_{ BagMode::Write },
   assert(writer != nullptr);
 }
 
-Bag::~Bag()
+Bag::~Bag() noexcept(false)
 {
-  close();
+  try
+  {
+    close();
+  }
+  catch (const std::exception& err)
+  {
+    if (std::uncaught_exception())
+    {
+      ROS_ERROR("Could not close bag file: %s (exception suppressed, as stack unwinding is in progress)", err.what());
+    }
+    else
+    {
+      throw;
+    }
+  }
 }
 
 Bag Bag::read(std::shared_ptr<rosbaz::io::IReader> reader, bool read_chunk_indices)
@@ -347,28 +362,28 @@ void Bag::parseChunkIndices(rosbaz::io::IReader& reader)
   // allows cache strategies to extend all reads to the entire message record
   // to reduce additional round trips.
 
-  std::set<uint64_t> cache_hints;
-  cache_hints.emplace(0);
+  std::vector<uint64_t> cache_hints;
   for (const auto& chunk_ext : chunk_exts_)
   {
-    cache_hints.emplace(chunk_ext->data_offset);
+    cache_hints.push_back(chunk_ext->data_offset);
 
     for (const auto& message_record_entry : chunk_ext->message_records)
     {
       const auto& message_record = message_record_entry.second;
 
       const uint64_t begin = chunk_ext->data_offset + message_record.offset;
-      cache_hints.emplace(begin);
+      cache_hints.push_back(begin);
 
       const uint64_t end = begin + message_record.data_size;
-      cache_hints.emplace(end);
+      cache_hints.push_back(end);
     }
   }
-  cache_hints.emplace(file_size_);
+  cache_hints.push_back(file_size_);
 
-  std::vector<uint64_t> cache_hints_v(cache_hints.begin(), cache_hints.end());
+  std::sort(cache_hints.begin(), cache_hints.end());
+  cache_hints.erase(std::unique(cache_hints.begin(), cache_hints.end()), cache_hints.end());
 
-  reader_->set_cache_hints(cache_hints_v);
+  reader_->set_cache_hints(cache_hints);
 
   chunk_indices_parsed_ = true;
 }
@@ -578,6 +593,7 @@ void Bag::stopWritingChunk()
 
   current_block_->stage();
   current_block_.reset();
+  curr_chunk_data_pos_ = 0;
 }
 
 void Bag::writeChunkHeader(CompressionType compression, uint32_t compressed_size, uint32_t uncompressed_size)
@@ -594,9 +610,10 @@ void Bag::writeChunkHeader(CompressionType compression, uint32_t compressed_size
   chunk_header.compressed_size = compressed_size;
   chunk_header.uncompressed_size = uncompressed_size;
 
-  ROS_DEBUG("Writing CHUNK [%llu]: compression=%s compressed=%d uncompressed=%d",
-            static_cast<unsigned long long>(current_block_->block_offset() + current_block_->size()),
-            chunk_header.compression.c_str(), chunk_header.compressed_size, chunk_header.uncompressed_size);
+  ROS_DEBUG("Writing CHUNK [%llu@%llu]: compression=%s compressed=%d uncompressed=%d",
+            static_cast<unsigned long long>(current_block_->block_offset()),
+            static_cast<unsigned long long>(current_block_->size()), chunk_header.compression.c_str(),
+            chunk_header.compressed_size, chunk_header.uncompressed_size);
 
   ros::M_string header;
   header[rosbag::OP_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&rosbag::OP_CHUNK);
@@ -659,6 +676,7 @@ void Bag::writeIndexRecords()
 
 uint32_t Bag::getChunkOffset() const
 {
+  assert(current_block_->size() >= curr_chunk_data_pos_);
   return rosbaz::io::narrow<uint32_t>(current_block_->size() - curr_chunk_data_pos_);
 }
 
@@ -672,8 +690,8 @@ void Bag::writeConnectionRecords()
 
 void Bag::writeConnectionRecord(rosbag::ConnectionInfo const* connection_info)
 {
-  ROS_DEBUG("Writing CONNECTION [%llu:%d]: topic=%s id=%d",
-            static_cast<unsigned long long>(current_block_->block_offset() + current_block_->size()), getChunkOffset(),
+  ROS_DEBUG("Writing CONNECTION [%llu]: topic=%s id=%d",
+            static_cast<unsigned long long>(current_block_->block_offset() + current_block_->size()),
             connection_info->topic.c_str(), connection_info->id);
 
   ros::M_string header;
