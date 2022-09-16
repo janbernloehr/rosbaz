@@ -199,6 +199,10 @@ private:
 
   // Writing
 
+  /// Returns the current offset in the chunk, relative to the start of the chunk record data.
+  ///
+  /// Should only be called after startWritingChunk() and before writing to this
+  /// chunk concludes via stopWritingChunk() or indirectly via stopWriting() etc.
   uint32_t getChunkOffset() const;
 
   void writeVersion(rosbaz::io::Block& block);
