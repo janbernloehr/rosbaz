@@ -1,5 +1,6 @@
 #include "rosbaz/bag.h"
 
+#include <algorithm>
 #include <future>
 
 #include <ros/console.h>
@@ -592,6 +593,7 @@ void Bag::stopWritingChunk()
 
   current_block_->stage();
   current_block_.reset();
+  curr_chunk_data_pos_ = 0;
 }
 
 void Bag::writeChunkHeader(CompressionType compression, uint32_t compressed_size, uint32_t uncompressed_size)
@@ -608,9 +610,10 @@ void Bag::writeChunkHeader(CompressionType compression, uint32_t compressed_size
   chunk_header.compressed_size = compressed_size;
   chunk_header.uncompressed_size = uncompressed_size;
 
-  ROS_DEBUG("Writing CHUNK [%llu]: compression=%s compressed=%d uncompressed=%d",
-            static_cast<unsigned long long>(current_block_->block_offset() + current_block_->size()),
-            chunk_header.compression.c_str(), chunk_header.compressed_size, chunk_header.uncompressed_size);
+  ROS_DEBUG("Writing CHUNK [%llu@%llu]: compression=%s compressed=%d uncompressed=%d",
+            static_cast<unsigned long long>(current_block_->block_offset()),
+            static_cast<unsigned long long>(current_block_->size()), chunk_header.compression.c_str(),
+            chunk_header.compressed_size, chunk_header.uncompressed_size);
 
   ros::M_string header;
   header[rosbag::OP_FIELD_NAME] = rosbaz::bag_writing::toHeaderString(&rosbag::OP_CHUNK);
@@ -673,6 +676,7 @@ void Bag::writeIndexRecords()
 
 uint32_t Bag::getChunkOffset() const
 {
+  assert(current_block_->size() >= curr_chunk_data_pos_);
   return rosbaz::io::narrow<uint32_t>(current_block_->size() - curr_chunk_data_pos_);
 }
 
@@ -686,8 +690,8 @@ void Bag::writeConnectionRecords()
 
 void Bag::writeConnectionRecord(rosbag::ConnectionInfo const* connection_info)
 {
-  ROS_DEBUG("Writing CONNECTION [%llu:%d]: topic=%s id=%d",
-            static_cast<unsigned long long>(current_block_->block_offset() + current_block_->size()), getChunkOffset(),
+  ROS_DEBUG("Writing CONNECTION [%llu]: topic=%s id=%d",
+            static_cast<unsigned long long>(current_block_->block_offset() + current_block_->size()),
             connection_info->topic.c_str(), connection_info->id);
 
   ros::M_string header;
