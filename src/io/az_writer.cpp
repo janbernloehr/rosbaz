@@ -33,34 +33,50 @@ void AzBlock::write(rosbaz::io::byte const* data, size_t n, boost::optional<size
   {
     throw BlockStagedException("Cannot write to staged block");
   }
-  size_t new_size = buffer_.size();
-
-  if (offset)
+  size_t original_size = 0;
+  if (!buffer_)
   {
-    new_size = std::max(new_size, *offset + n);
+    buffer_ = std::make_shared<rosbaz::io::Buffer>(offset.value_or(0) + n);
   }
   else
   {
-    new_size += n;
+    size_t new_size = buffer_->size();
+
+    if (offset)
+    {
+      new_size = std::max(new_size, *offset + n);
+    }
+    else
+    {
+      new_size += n;
+    }
+
+    original_size = buffer_->size();
+    buffer_->resize(new_size);
   }
-
-  const size_t original_size = buffer_.size();
-
-  buffer_.resize(new_size);
-  rosbaz::io::byte* output = buffer_.data() + offset.value_or(original_size);
+  block_size = buffer_->size();
+  rosbaz::io::byte* output = buffer_->data() + offset.value_or(original_size);
 
   std::copy_n(data, n, output);
 }
 
 size_t AzBlock::size() const
 {
-  return buffer_.size();
+  return block_size;
 }
 
 void AzBlock::stage()
 {
-  Azure::Core::IO::MemoryBodyStream memory_stream{ buffer_.data(), buffer_.size() };
-  writer_.client_->StageBlock(id_, memory_stream);
+  if (is_staged())
+  {
+    throw BlockStagedException("Cannot stage an already staged block");
+  }
+  if (buffer_)
+  {
+    Azure::Core::IO::MemoryBodyStream memory_stream{ buffer_->data(), buffer_->size() };
+    writer_.client_->StageBlock(id_, memory_stream);
+    buffer_.reset();
+  }
   is_staged_ = true;
 }
 
@@ -102,7 +118,7 @@ size_t AzWriter::size()
 {
   std::lock_guard<std::mutex> lock_guard(mutex_);
 
-  return std::accumulate(blocks_.begin(), blocks_.end(), 0,
+  return std::accumulate(blocks_.begin(), blocks_.end(), size_t{ 0 },
                          [](size_t a, const auto& block) { return block->is_staged() ? a + block->size() : a; });
 }
 

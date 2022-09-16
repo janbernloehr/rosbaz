@@ -113,79 +113,85 @@ void play_command(const rosbaz::app::CommonOptions& common_options, const rosbaz
   }
 
   rosbaz::View filtered_view{ az_bag, initial_time, finish_time };
-
-  std::unordered_map<std::string, ros::Publisher> publishers;
-  for (const auto* connection_info : filtered_view.getConnections())
+  if (filtered_view.size() > 0)
   {
-    ros::AdvertiseOptions options(connection_info->topic, 50, connection_info->md5sum, connection_info->datatype,
-                                  connection_info->msg_def);
-    publishers[connection_info->topic] = node_handle.advertise(options);
-  }
-
-  terminal::PausableContext pausable_context{ play_options.start_paused };
-
-  auto evaluate_tick = [&pausable_context]() { return pausable_context.tick(); };
-
-  terminal::ProgressBar progress_bar(static_cast<int32_t>(filtered_view.size()));
-
-  rosbag::TimeTranslator time_translator;
-
-  do
-  {
-    time_translator.setRealStartTime(initial_time);
-    const ros::WallTime now_wt = ros::WallTime::now();
-    time_translator.setTranslatedStartTime(ros::Time(now_wt.sec, now_wt.nsec));
-
-    for (const auto& m : filtered_view)
+    std::unordered_map<std::string, ros::Publisher> publishers;
+    for (const auto* connection_info : filtered_view.getConnections())
     {
-      const ros::Time translated = time_translator.translate(m.getTime());
-      ros::WallTime horizon = ros::WallTime(translated.sec, translated.nsec);
-
-      bool can_tick = evaluate_tick();
-
-      if (!play_options.is_quiet)
-      {
-        std::stringstream prefixs;
-        if (can_tick)
-        {
-          prefixs << "[Playing] ";
-        }
-        else
-        {
-          prefixs << "[Paused]  ";
-        }
-        progress_bar.display(prefixs.str());
-      }
-
-      boost::optional<ros::WallTime> paused_time;
-
-      while (!can_tick)
-      {
-        if (!paused_time)
-        {
-          paused_time.emplace(ros::WallTime::now());
-        }
-
-        can_tick = evaluate_tick();
-      }
-
-      if (paused_time)
-      {
-        ros::WallDuration shift = ros::WallTime::now() - *paused_time;
-        time_translator.shift(ros::Duration(shift.sec, shift.nsec));
-        horizon += shift;
-      }
-
-      ros::WallTime::sleepUntil(horizon);
-
-      publishers[m.getTopic()].publish(m);
-
-      ros::spinOnce();
-      ++progress_bar;
+      ros::AdvertiseOptions options(connection_info->topic, 50, connection_info->md5sum, connection_info->datatype,
+                                    connection_info->msg_def);
+      publishers[connection_info->topic] = node_handle.advertise(options);
     }
 
-    progress_bar.reset();
-  } while (play_options.loop);
+    terminal::PausableContext pausable_context{ play_options.start_paused };
+
+    auto evaluate_tick = [&pausable_context]() { return pausable_context.tick(); };
+
+    terminal::ProgressBar progress_bar(static_cast<int32_t>(filtered_view.size()));
+
+    rosbag::TimeTranslator time_translator;
+
+    do
+    {
+      time_translator.setRealStartTime(initial_time);
+      const ros::WallTime now_wt = ros::WallTime::now();
+      time_translator.setTranslatedStartTime(ros::Time(now_wt.sec, now_wt.nsec));
+
+      for (const auto& m : filtered_view)
+      {
+        const ros::Time translated = time_translator.translate(m.getTime());
+        ros::WallTime horizon = ros::WallTime(translated.sec, translated.nsec);
+
+        bool can_tick = evaluate_tick();
+
+        if (!play_options.is_quiet)
+        {
+          std::stringstream prefixs;
+          if (can_tick)
+          {
+            prefixs << "[Playing] ";
+          }
+          else
+          {
+            prefixs << "[Paused]  ";
+          }
+          progress_bar.display(prefixs.str());
+        }
+
+        boost::optional<ros::WallTime> paused_time;
+
+        while (!can_tick)
+        {
+          if (!paused_time)
+          {
+            paused_time.emplace(ros::WallTime::now());
+          }
+
+          can_tick = evaluate_tick();
+        }
+
+        if (paused_time)
+        {
+          ros::WallDuration shift = ros::WallTime::now() - *paused_time;
+          time_translator.shift(ros::Duration(shift.sec, shift.nsec));
+          horizon += shift;
+        }
+
+        ros::WallTime::sleepUntil(horizon);
+
+        publishers[m.getTopic()].publish(m);
+
+        ros::spinOnce();
+        ++progress_bar;
+      }
+
+      progress_bar.reset();
+    } while (play_options.loop);
+  }
+  else
+  {
+    std::cout << std::endl << "No messages in selected time range." << std::endl;
+  }
 
   std::cout << std::endl << "Done." << std::endl;
 
