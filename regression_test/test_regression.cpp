@@ -1,17 +1,15 @@
 
 #include "gtest/gtest.h"
-
 #include "rosbaz/bag.h"
 #include "rosbaz/io/io_helpers.h"
 #include "rosbaz/io/stream_reader.h"
 #include "rosbaz/view.h"
 
+#include <boost/filesystem.hpp>
+#include <memory>
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
 #include <sensor_msgs/Imu.h>
-
-#include <boost/filesystem.hpp>
-#include <memory>
 
 class RegressionTests : public ::testing::TestWithParam<const char*>
 {

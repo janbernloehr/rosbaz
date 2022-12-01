@@ -1,11 +1,16 @@
 #pragma once
 
-#include <cstdint>
-#include <memory>
-#include <vector>
-#include <mutex>
-
+#include "rosbaz/common.h"
 #include "rosbaz/io/writer.h"
+
+#include <boost/optional.hpp>
+#include <cstddef>
+#include <fstream>
+#include <iosfwd>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <vector>
 
 namespace rosbaz
 {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <iosfwd>
 #include <mutex>
 #include <thread>
 #include <vector>

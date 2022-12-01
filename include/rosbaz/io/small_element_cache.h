@@ -1,16 +1,18 @@
 #pragma once
 
-#include <cstdint>
-
-#include <boost/circular_buffer.hpp>
-
+#include "rosbaz/common.h"
 #include "rosbaz/io/cache_entry.h"
 #include "rosbaz/io/cache_strategy.h"
+
+#include <boost/circular_buffer.hpp>
+#include <cstddef>
 
 namespace rosbaz
 {
 namespace io
 {
+class Buffer;
+
 /// This cache strategy aims at reducing the number of reads towards the storage for small queries.
 ///
 /// (1) in the common case, the cache holds blocks of \p element_size

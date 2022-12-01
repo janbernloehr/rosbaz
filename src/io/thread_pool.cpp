@@ -1,7 +1,14 @@
 #include "rosbaz/io/thread_pool.h"
 
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <cxxabi.h>
 #include <future>
+#include <ostream>
 #include <ros/console.h>
+#include <system_error>
+#include <utility>
 
 namespace rosbaz
 {

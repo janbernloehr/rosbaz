@@ -1,12 +1,13 @@
 #pragma once
 
-#include <cstdint>
-#include <memory>
-#include <vector>
-
 #include "rosbaz/common.h"
+#include "rosbaz/internal/nonstd/span.hpp"
 #include "rosbaz/io/buffer.h"
-#include "rosbaz/io/io_helpers.h"
+
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <string>
 
 namespace rosbaz
 {

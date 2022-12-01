@@ -1,11 +1,18 @@
 #include "rosbaz/bag_parsing/conversion.h"
 
-#include <ros/console.h>
-#include <rosbag/constants.h>
-#include <boost/make_shared.hpp>
-
+#include "rosbaz/bag_parsing/header.h"
 #include "rosbaz/exceptions.h"
 #include "rosbaz/io/io_helpers.h"
+
+#include <boost/smart_ptr/make_shared_object.hpp>
+#include <boost/smart_ptr/shared_ptr.hpp>
+#include <map>
+#include <ostream>
+#include <ros/console.h>
+#include <ros/datatypes.h>
+#include <rosbag/constants.h>
+#include <string>
+#include <utility>
 
 namespace rosbaz
 {

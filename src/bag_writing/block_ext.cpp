@@ -1,5 +1,9 @@
 #include "rosbaz/bag_writing/block_ext.h"
 
+#include "rosbaz/common.h"
+#include "rosbaz/io/writer.h"
+
+#include <boost/smart_ptr/shared_array.hpp>
 #include <ros/header.h>
 
 namespace rosbaz

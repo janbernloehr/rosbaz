@@ -1,14 +1,17 @@
 #pragma once
 
+#include "rosbaz/common.h"
+#include "rosbaz/internal/nonstd/span.hpp"
+#include "rosbaz/io/cache_strategy.h"
+#include "rosbaz/io/reader.h"
+
 #include <condition_variable>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <vector>
-
-#include "rosbaz/blob_url.h"
-#include "rosbaz/io/cache_strategy.h"
-#include "rosbaz/io/reader.h"
 
 namespace Azure
 {
@@ -23,6 +26,8 @@ class BlobClient;
 
 namespace rosbaz
 {
+struct AzBlobUrl;
+
 namespace io
 {
 class AzReader : public IReader

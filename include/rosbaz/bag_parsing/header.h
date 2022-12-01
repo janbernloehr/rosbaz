@@ -1,13 +1,13 @@
 #pragma once
 
-#include <cstdint>
-#include <string>
-#include <sstream>
-#include <map>
-
 #include "rosbaz/common.h"
 #include "rosbaz/exceptions.h"
 #include "rosbaz/io/io_helpers.h"
+
+#include <cstdint>
+#include <map>
+#include <sstream>
+#include <string>
 
 namespace rosbaz
 {

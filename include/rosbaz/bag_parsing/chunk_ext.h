@@ -1,12 +1,11 @@
 #pragma once
 
+#include "rosbaz/bag_parsing/message_record_info.h"
+
 #include <cstdint>
 #include <map>
-#include <vector>
-
 #include <rosbag/structures.h>
-
-#include "rosbaz/bag_parsing/message_record_info.h"
+#include <vector>
 
 namespace rosbaz
 {

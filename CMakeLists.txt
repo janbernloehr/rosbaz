@@ -30,13 +30,13 @@ set(ROSBAZ_CXX_FLAGS
   -Wpedantic
   -Wconversion
   -Wdouble-promotion
-  -Wlogical-op
+  $<$<CXX_COMPILER_ID:GNU>:-Wlogical-op>
   -Wformat=2
-  -Wuseless-cast
+  $<$<CXX_COMPILER_ID:GNU>:-Wuseless-cast>
   -Wnull-dereference
-  -Wduplicated-cond
+  $<$<CXX_COMPILER_ID:GNU>:-Wduplicated-cond>
   -Wno-noexcept-type
-  -Wno-misleading-indentation
+  $<$<CXX_COMPILER_ID:GNU>:-Wno-misleading-indentation>
   -Werror=return-type
   # Google style does not use unsigned integers though STL containers
   # have unsigned types.

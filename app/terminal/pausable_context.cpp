@@ -1,13 +1,14 @@
 #include "pausable_context.h"
 
-#include <chrono>
 #include <csignal>
 #include <cstdint>
-#include <termios.h>
-#include <thread>
-
+#include <ostream>
 #include <ros/console.h>
-#include <ros/ros.h>
+#include <ros/init.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/time.h>
+#include <termios.h>
 
 namespace
 {

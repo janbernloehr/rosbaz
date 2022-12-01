@@ -1,7 +1,5 @@
 #include "rosbaz/io/writer.h"
 
-#include "rosbaz/io/io_helpers.h"
-
 namespace rosbaz
 {
 namespace io

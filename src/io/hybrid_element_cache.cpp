@@ -1,5 +1,12 @@
 #include "rosbaz/io/hybrid_element_cache.h"
 
+#include "rosbaz/io/buffer.h"
+
+#include <algorithm>
+#include <assert.h>
+#include <boost/move/utility_core.hpp>
+#include <utility>
+
 namespace rosbaz
 {
 namespace io

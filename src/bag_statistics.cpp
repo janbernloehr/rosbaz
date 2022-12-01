@@ -1,7 +1,19 @@
 #include "rosbaz/bag_statistics.h"
 
-#include <boost/accumulators/accumulators.hpp>
-#include <boost/accumulators/statistics.hpp>
+#include "rosbaz/bag.h"
+
+#include <algorithm>
+#include <boost/accumulators/framework/accumulator_set.hpp>
+#include <boost/accumulators/framework/extractor.hpp>
+#include <boost/accumulators/framework/features.hpp>
+#include <boost/accumulators/statistics/median.hpp>
+#include <boost/fusion/iterator/deref.hpp>
+#include <numeric>
+#include <ros/duration.h>
+#include <ros/time.h>
+#include <rosbag/structures.h>
+#include <set>
+#include <unordered_map>
 
 namespace rosbaz
 {
@@ -131,7 +143,8 @@ std::uint32_t BagStatistics::getTotalMessageCount()
 {
   const auto& cache = getCacheConnectionIdToCount();
 
-  return std::accumulate(cache.begin(), cache.end(), 0, [](uint32_t a, const auto& b) { return a + b.second; });
+  return std::accumulate(cache.begin(), cache.end(), uint32_t{ 0 },
+                         [](uint32_t a, const auto& b) { return a + b.second; });
 }
 
 }  // namespace rosbaz

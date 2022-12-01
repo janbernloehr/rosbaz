@@ -1,10 +1,10 @@
 #pragma once
 
-#include <cstdint>
-#include <vector>
-
 #include "rosbaz/common.h"
 #include "rosbaz/io/buffer.h"
+
+#include <cstdint>
+#include <vector>
 
 namespace rosbaz
 {

@@ -1,7 +1,11 @@
-
-#include "gtest/gtest.h"
-
+#include "rosbaz/common.h"
 #include "rosbaz/io/io_helpers.h"
+
+#include <algorithm>
+#include <array>
+#include <cstdint>
+#include <gtest/gtest.h>
+#include <string>
 
 TEST(AzBlobUrl, to_string)
 {

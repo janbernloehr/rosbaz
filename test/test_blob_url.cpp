@@ -1,7 +1,7 @@
-
-#include "gtest/gtest.h"
-
 #include "rosbaz/blob_url.h"
+
+#include <gtest/gtest.h>
+#include <string>
 
 TEST(AzBlobUrl, can_parse_without_sas)
 {

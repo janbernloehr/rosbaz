@@ -1,7 +1,22 @@
 #include "rosbaz/app/bag_printer.h"
 
+#include "rosbaz/bag.h"
 #include "rosbaz/bag_statistics.h"
+
+#include <algorithm>
 #include <boost/format.hpp>
+#include <boost/optional/optional.hpp>
+#include <cstddef>
+#include <iomanip>
+#include <ros/duration.h>
+#include <ros/time.h>
+#include <string>
+#include <vector>
+
+namespace rosbag
+{
+struct ConnectionInfo;
+}  // namespace rosbag
 
 namespace
 {

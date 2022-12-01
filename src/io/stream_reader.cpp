@@ -4,6 +4,9 @@
 #include "rosbaz/io/io_helpers.h"
 #include "rosbaz/io/util.h"
 
+#include <istream>
+#include <utility>
+
 namespace rosbaz
 {
 namespace io
