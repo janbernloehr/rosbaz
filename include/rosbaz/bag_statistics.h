@@ -1,15 +1,22 @@
 #pragma once
 
-#include "rosbaz/bag.h"
+#include "rosbaz/internal/nonstd/span.hpp"
 
 #include <boost/optional.hpp>
-#include <rosbaz/internal/nonstd/span.hpp>
-
 #include <cstdint>
+#include <map>
+#include <string>
 #include <vector>
+
+namespace rosbag
+{
+struct ConnectionInfo;
+}  // namespace rosbag
 
 namespace rosbaz
 {
+class Bag;
+
 struct BagMessageTypeInfo
 {
   std::string datatype;

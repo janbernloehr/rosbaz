@@ -1,9 +1,10 @@
 #include "rosbaz/blob_url.h"
 
-#include <regex>
-#include <ros/console.h>
-
 #include "rosbaz/exceptions.h"
+
+#include <ostream>
+#include <regex>
+#include <vector>
 
 namespace
 {

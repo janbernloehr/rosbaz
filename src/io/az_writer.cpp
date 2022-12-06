@@ -3,17 +3,17 @@
 #ifndef NO_AZ_BINDINGS
 
 #include "az_bearer_token.h"
+#include "rosbaz/blob_url.h"
+#include "rosbaz/exceptions.h"
+#include "rosbaz/io/buffer.h"
 
 #include <azure/core.hpp>
 #include <azure/storage/blobs.hpp>
 
-#include "rosbaz/exceptions.h"
-#include "rosbaz/io/io_helpers.h"
-#include "rosbaz/io/util.h"
-
+#include <algorithm>
 #include <numeric>
-#include <iostream>
 #include <regex>
+#include <sstream>
 
 namespace rosbaz
 {

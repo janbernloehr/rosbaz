@@ -1,25 +1,37 @@
 #pragma once
 
-#include <ros/console.h>
+#include "rosbaz/bag.h"
+#include "rosbaz/bag_parsing/header.h"
+#include "rosbaz/bag_parsing/record.h"
+#include "rosbaz/common.h"
+#include "rosbaz/exceptions.h"
+#include "rosbaz/io/buffer.h"
+#include "rosbaz/io/reader.h"
+
+#include <boost/format.hpp>
+#include <boost/make_shared.hpp>
+#include <boost/optional.hpp>
+#include <boost/smart_ptr/shared_ptr.hpp>
+#include <cstdint>
+#include <map>
+#include <memory>
+#include <ostream>
+#include <ros/datatypes.h>
 #include <ros/message_traits.h>
 #include <ros/serialization.h>
 #include <rosbag/constants.h>
 #include <rosbag/exceptions.h>
 #include <rosbag/structures.h>
-
-#include <boost/format.hpp>
-#include <boost/make_shared.hpp>
-#include <boost/optional.hpp>
-#include <cstdint>
 #include <string>
+#include <utility>
 
-#include "rosbaz/bag.h"
-#include "rosbaz/exceptions.h"
-#include "rosbaz/io/reader.h"
+namespace ros
+{
+class Time;
+}  // namespace ros
 
 namespace rosbaz
 {
-class Bag;
 struct View;
 
 struct MessageInstance

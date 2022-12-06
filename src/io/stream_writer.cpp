@@ -1,10 +1,12 @@
 #include "rosbaz/io/stream_writer.h"
 
 #include "rosbaz/exceptions.h"
-#include "rosbaz/io/io_helpers.h"
 #include "rosbaz/io/util.h"
 
+#include <algorithm>
 #include <numeric>
+#include <ostream>
+#include <utility>
 
 namespace rosbaz
 {

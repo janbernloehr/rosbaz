@@ -1,18 +1,17 @@
 #pragma once
 
-#include <cstdint>
-#include <string>
+#include "rosbaz/common.h"
 
+#include <cstdint>
 #include <ros/time.h>
 #include <rosbag/structures.h>
-
-#include "rosbaz/bag_parsing/header.h"
-#include "rosbaz/common.h"
 
 namespace rosbaz
 {
 namespace bag_parsing
 {
+struct Header;
+
 ros::Time unpack_time(uint64_t packed_time);
 
 rosbag::ChunkHeader as_chunk_header(const Header& header, uint32_t compressed_size);

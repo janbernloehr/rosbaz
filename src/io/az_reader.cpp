@@ -3,18 +3,20 @@
 #ifndef NO_AZ_BINDINGS
 
 #include "az_bearer_token.h"
-
-#include <ros/console.h>
+#include "rosbaz/blob_url.h"
+#include "rosbaz/exceptions.h"
+#include "rosbaz/io/buffer.h"
+#include "rosbaz/io/chunk_informed_cache.h"
 
 #include <azure/core.hpp>
 #include <azure/storage/blobs.hpp>
 #include <boost/make_unique.hpp>
 
-#include "rosbaz/exceptions.h"
-#include "rosbaz/io/io_helpers.h"
-#include "rosbaz/io/chunk_informed_cache.h"
-
+#include <algorithm>
+#include <cassert>
 #include <regex>
+#include <sstream>
+#include <utility>
 
 namespace rosbaz
 {
@@ -71,7 +73,7 @@ size_t AzReader::size()
 
   stats_.num_reads += 1;
 
-  return ret.Value.BlobSize;
+  return static_cast<uint64_t>(ret.Value.BlobSize);
 }
 
 void AzReader::set_cache_hints(const nonstd::span<uint64_t> cache_hints)
@@ -88,8 +90,8 @@ void AzReader::download(rosbaz::io::byte* buffer, size_t offset, size_t size)
 {
   Azure::Storage::Blobs::DownloadBlobToOptions options{};
   options.Range = Azure::Core::Http::HttpRange{};
-  options.Range.Value().Offset = offset;
-  options.Range.Value().Length = size;
+  options.Range.Value().Offset = static_cast<int64_t>(offset);
+  options.Range.Value().Length = static_cast<int64_t>(size);
 
   client_->DownloadTo(buffer, size, options);
 

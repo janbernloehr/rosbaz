@@ -1,24 +1,36 @@
-#include <regex>
-
-#include <boost/optional.hpp>
-#include <boost/optional/optional_io.hpp>
-
 #include "cli11/CLI11.hpp"
-
-#include <ros/console.h>
-#include <ros/ros.h>
-#include <rosbag/time_translator.h>
-
-#include "terminal/pausable_context.h"
-#include "terminal/progress_bar.h"
-
 #include "rosbaz/app/bag_printer.h"
 #include "rosbaz/app/options.h"
 #include "rosbaz/bag.h"
 #include "rosbaz/blob_url.h"
 #include "rosbaz/io/az_reader.h"
+#include "rosbaz/io/reader.h"
 #include "rosbaz/io/stream_reader.h"
+#include "rosbaz/message_instance.h"
 #include "rosbaz/view.h"
+#include "terminal/pausable_context.h"
+#include "terminal/progress_bar.h"
+
+#include <algorithm>
+#include <boost/optional.hpp>
+#include <boost/optional/optional_io.hpp>
+#include <boost/type_index/type_index_facade.hpp>
+#include <cstdint>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <ros/advertise_options.h>
+#include <ros/duration.h>
+#include <ros/init.h>
+#include <ros/node_handle.h>
+#include <ros/publisher.h>
+#include <ros/time.h>
+#include <rosbag/structures.h>
+#include <rosbag/time_translator.h>
+#include <stdexcept>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 namespace container
 {

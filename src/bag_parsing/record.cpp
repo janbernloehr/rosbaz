@@ -1,10 +1,13 @@
 #include "rosbaz/bag_parsing/record.h"
 
-#include <cstdint>
-#include <ros/console.h>
-
 #include "rosbaz/common.h"
 #include "rosbaz/io/io_helpers.h"
+
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <ostream>
+#include <ros/console.h>
 
 namespace rosbaz
 {

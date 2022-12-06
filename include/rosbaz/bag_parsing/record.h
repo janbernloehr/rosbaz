@@ -1,8 +1,8 @@
 #pragma once
 
-#include <cstdint>
-
 #include "rosbaz/common.h"
+
+#include <cstdint>
 
 namespace rosbaz
 {

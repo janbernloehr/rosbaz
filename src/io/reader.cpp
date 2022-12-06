@@ -3,6 +3,8 @@
 #include "rosbaz/bag_parsing/record.h"
 #include "rosbaz/io/io_helpers.h"
 
+#include <algorithm>
+
 namespace rosbaz
 {
 namespace io

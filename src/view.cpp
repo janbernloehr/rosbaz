@@ -1,9 +1,17 @@
 #include "rosbaz/view.h"
 
-#include <ros/console.h>
-#include <rosbag/view.h>
-
+#include "rosbaz/bag.h"
 #include "rosbaz/io/util.h"
+
+#include <algorithm>
+#include <assert.h>
+#include <boost/type_index/type_index_facade.hpp>
+#include <iterator>
+#include <map>
+#include <rosbag/query.h>
+#include <rosbag/view.h>
+#include <unordered_map>
+#include <utility>
 
 namespace rosbaz
 {

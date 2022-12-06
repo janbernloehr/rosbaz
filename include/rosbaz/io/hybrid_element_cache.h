@@ -1,16 +1,18 @@
 #pragma once
 
-#include <cstdint>
-
-#include <boost/circular_buffer.hpp>
-
+#include "rosbaz/common.h"
 #include "rosbaz/io/cache_entry.h"
 #include "rosbaz/io/cache_strategy.h"
+
+#include <boost/circular_buffer.hpp>
+#include <cstddef>
 
 namespace rosbaz
 {
 namespace io
 {
+class Buffer;
+
 /// Like \p SmallElementCacheStrategy but also caches large chunks.
 ///
 /// With default parameters, HybridElementCacheStrategy caches up to 10k small chunks of size 1k and hence requires 10M

@@ -1,10 +1,9 @@
-#include <benchmark/benchmark.h>
-
 #include "rosbaz/bag.h"
 #include "rosbaz/io/io_helpers.h"
 #include "rosbaz/io/stream_reader.h"
 #include "rosbaz/view.h"
 
+#include <benchmark/benchmark.h>
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
 #include <sensor_msgs/Imu.h>

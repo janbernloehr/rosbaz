@@ -1,13 +1,15 @@
 #pragma once
 
+#include "rosbaz/common.h"
+#include "rosbaz/io/writer.h"
+
+#include <boost/optional.hpp>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <vector>
-
-#include "rosbaz/blob_url.h"
-#include "rosbaz/io/buffer.h"
-#include "rosbaz/io/writer.h"
 
 namespace Azure
 {
@@ -22,9 +24,12 @@ class BlockBlobClient;
 
 namespace rosbaz
 {
+struct AzBlobUrl;
+
 namespace io
 {
 class AzWriter;
+class Buffer;
 
 class AzBlock : public Block
 {
@@ -51,7 +56,7 @@ private:
 
   std::string id_;
 
-  size_t block_size{0};
+  size_t block_size{ 0 };
 };
 
 class AzWriter : public IWriter

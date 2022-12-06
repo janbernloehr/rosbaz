@@ -1,11 +1,18 @@
 #pragma once
 
-#include "rosbaz/bag.h"
+#include "rosbaz/internal/nonstd/span.hpp"
 
 #include <ostream>
 
+namespace rosbag
+{
+struct ConnectionInfo;
+}  // namespace rosbag
+
 namespace rosbaz
 {
+class Bag;
+
 namespace app
 {
 void write_bag_human_friendly(const rosbaz::Bag& bag, std::ostream& stream);

@@ -1,7 +1,12 @@
 #include "rosbaz/io/chunk_informed_cache.h"
 
-#include <sstream>
-#include <iostream>
+#include "rosbaz/io/buffer.h"
+
+#include <algorithm>
+#include <assert.h>
+#include <boost/move/utility_core.hpp>
+#include <utility>
+
 namespace rosbaz
 {
 namespace io

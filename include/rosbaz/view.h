@@ -1,22 +1,21 @@
 #pragma once
 
+#include "rosbaz/message_instance.h"
+#include "rosbaz/query.h"
+
+#include <boost/iterator/iterator_facade.hpp>
+#include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <memory>
+#include <ros/time.h>
+#include <rosbag/structures.h>
 #include <set>
 #include <vector>
 
-#include <boost/iterator/iterator_facade.hpp>
-#include <ros/time.h>
-#include <rosbag/query.h>
-#include <rosbag/structures.h>
-
-#include "rosbaz/bag.h"
-#include "rosbaz/query.h"
-#include "rosbaz/message_instance.h"
-
 namespace rosbaz
 {
-struct View;
+class Bag;
 
 struct View
 {

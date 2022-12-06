@@ -1,15 +1,9 @@
 #include "rosbaz/bag.h"
 
-#include <algorithm>
-#include <future>
-
-#include <ros/console.h>
-#include <ros/header.h>
-#include <rosbag/constants.h>
-#include <rosbag/structures.h>
-
+#include "rosbaz/bag_parsing/chunk_ext.h"
 #include "rosbaz/bag_parsing/conversion.h"
 #include "rosbaz/bag_parsing/header.h"
+#include "rosbaz/bag_parsing/message_record_info.h"
 #include "rosbaz/bag_parsing/record.h"
 #include "rosbaz/common.h"
 #include "rosbaz/exceptions.h"
@@ -17,6 +11,18 @@
 #include "rosbaz/io/reader.h"
 #include "rosbaz/io/thread_pool.h"
 #include "rosbaz/io/util.h"
+
+#include <algorithm>
+#include <cassert>
+#include <boost/smart_ptr/shared_array.hpp>
+#include <exception>
+#include <functional>
+#include <mutex>
+#include <ostream>
+#include <ros/console.h>
+#include <ros/header.h>
+#include <rosbag/constants.h>
+#include <rosbag/structures.h>
 
 namespace rosbaz
 {

@@ -1,12 +1,17 @@
 #include "rosbaz/bag_parsing/header.h"
 
-#include <ros/console.h>
-#include <rosbag/constants.h>
-
 #include "rosbaz/common.h"
 #include "rosbaz/exceptions.h"
 #include "rosbaz/io/io_helpers.h"
 #include "rosbaz/io/util.h"
+
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <iterator>
+#include <ros/console.h>
+#include <rosbag/constants.h>
+#include <utility>
 
 namespace rosbaz
 {

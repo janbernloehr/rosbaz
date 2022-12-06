@@ -1,27 +1,49 @@
 #pragma once
 
-#include <cstdint>
-#include <map>
-#include <memory>
-#include <mutex>
-#include <unordered_map>
-#include <vector>
-
-#include <rosbag/structures.h>
-#include <rosbag/constants.h>
-#include <ros/message_event.h>
-#include <ros/serialization.h>
-
-#include "rosbaz/bag_parsing/chunk_ext.h"
-#include "rosbaz/bag_parsing/header.h"
-#include "rosbaz/bag_parsing/record.h"
+#include "ros/console.h"
 #include "rosbaz/bag_writing/block_ext.h"
 #include "rosbaz/bag_writing/conversion.h"
+#include "rosbaz/common.h"
+#include "rosbaz/exceptions.h"
 #include "rosbaz/io/buffer.h"
 #include "rosbaz/io/util.h"
+#include "rosbaz/io/writer.h"
+
+#include <boost/optional.hpp>
+#include <boost/smart_ptr/make_shared_object.hpp>
+#include <boost/smart_ptr/shared_ptr.hpp>
+#include <cstddef>
+#include <cstdint>
+#include <limits>
+#include <map>
+#include <memory>
+#include <ros/console.h>
+#include <ros/datatypes.h>
+#include <ros/message_traits.h>
+#include <ros/serialization.h>
+#include <ros/time.h>
+#include <rosbag/constants.h>
+#include <rosbag/structures.h>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
+namespace ros
+{
+template <typename M>
+class MessageEvent;
+}  // namespace ros
 
 namespace rosbaz
 {
+namespace bag_parsing
+{
+struct ChunkExt;
+struct Record;
+}  // namespace bag_parsing
+
 namespace io
 {
 class IReader;
@@ -431,7 +453,7 @@ void Bag::doWrite(const std::string& topic, ros::Time const& time, T const& msg,
       stopWritingChunk();
 
       // We no longer have a valid curr_chunk_info
-      curr_chunk_info_.pos = -1;
+      curr_chunk_info_.pos = std::numeric_limits<uint64_t>::max();
     }
   }
 }

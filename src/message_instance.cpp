@@ -1,8 +1,17 @@
 #include "rosbaz/message_instance.h"
 
-#include <chrono>
-
+#include "rosbaz/bag_parsing/chunk_ext.h"
+#include "rosbaz/bag_parsing/message_record_info.h"
 #include "rosbaz/exceptions.h"
+
+#include <cassert>
+#include <ros/console.h>
+#include <unordered_map>
+
+namespace ros
+{
+class Time;
+}  // namespace ros
 
 namespace rosbaz
 {

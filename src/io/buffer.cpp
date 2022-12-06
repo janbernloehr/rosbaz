@@ -1,7 +1,11 @@
 #include "rosbaz/io/buffer.h"
 
+#include <algorithm>
 #include <cassert>
+#include <cstdint>
 #include <cstdlib>
+#include <iterator>
+#include <utility>
 
 namespace rosbaz
 {
@@ -16,7 +20,9 @@ Buffer::Buffer(size_t size)
 
 Buffer::Buffer(const_pointer begin, const_pointer end)
 {
-  resize(std::distance(begin, end));
+  const int64_t size = std::distance(begin, end);
+  assert(size >= 0);
+  resize(static_cast<uint64_t>(size));
   std::copy(begin, end, this->begin());
 }
 

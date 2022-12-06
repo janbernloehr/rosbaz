@@ -2,11 +2,13 @@
 
 #include <cstdint>
 #include <rosbag/query.h>
-
-#include "rosbaz/bag.h"
+#include <rosbag/structures.h>
+#include <set>
 
 namespace rosbaz
 {
+class Bag;
+
 struct BagQuery
 {
   BagQuery(const Bag& _bag, const rosbag::Query& _query, uint32_t _bag_revision);

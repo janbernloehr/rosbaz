@@ -1,24 +1,23 @@
 #include "gtest/gtest.h"
-
 #include "rosbaz/bag.h"
 #include "rosbaz/io/io_helpers.h"
 #include "rosbaz/io/stream_reader.h"
 #include "rosbaz/io/stream_writer.h"
 #include "rosbaz/view.h"
 
+#include <boost/filesystem.hpp>
+#include <memory>
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
 #include <sensor_msgs/Imu.h>
-
-#include <boost/filesystem.hpp>
-#include <memory>
 
 class WriteTests : public ::testing::TestWithParam<const char*>
 {
 public:
   WriteTests() : bag{ std::make_unique<rosbag::Bag>(GetParam()) }
   {
-    const boost::filesystem::path output_path = boost::filesystem::temp_directory_path() / (boost::filesystem::unique_path().string() + ".bag");
+    const boost::filesystem::path output_path =
+        boost::filesystem::temp_directory_path() / (boost::filesystem::unique_path().string() + ".bag");
     rosbaz::Bag output_bag = rosbaz::Bag::write(rosbaz::io::StreamWriter::open(output_path.native()));
 
     rosbag::View view_in(*bag);

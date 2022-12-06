@@ -1,15 +1,17 @@
 #pragma once
 
-#include <cstdint>
-#include <vector>
-
 #include "rosbaz/common.h"
-#include "rosbaz/io/buffer.h"
+#include "rosbaz/internal/nonstd/span.hpp"
+
+#include <cstdint>
+#include <cstddef>
 
 namespace rosbaz
 {
 namespace io
 {
+class Buffer;
+
 struct OffsetAndSize
 {
   size_t offset;

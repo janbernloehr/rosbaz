@@ -1,13 +1,12 @@
 #include "rosbaz/io/io_helpers.h"
 
-#include <array>
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <vector>
-
 #include "rosbaz/common.h"
 #include "rosbaz/exceptions.h"
+
+#include <fstream>
+#include <limits>
+#include <sstream>
+#include <string>
 
 namespace rosbaz
 {

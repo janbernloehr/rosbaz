@@ -2,7 +2,6 @@
 
 #include "rosbaz/common.h"
 
-#include <cstdint>
 #include <cstddef>
 
 namespace rosbaz
