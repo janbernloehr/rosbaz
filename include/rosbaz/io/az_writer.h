@@ -10,6 +10,8 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <azure/core/credentials/credentials.hpp>
+#include <azure/storage/common/storage_credential.hpp>
 
 namespace Azure
 {
@@ -62,7 +64,9 @@ private:
 class AzWriter : public IWriter
 {
 public:
-  explicit AzWriter(const AzBlobUrl& blob_url, const std::string& account_key = "", const std::string& token = "");
+  explicit AzWriter(const AzBlobUrl& blob_url,
+                    std::shared_ptr<Azure::Core::Credentials::TokenCredential> credential = nullptr);
+  explicit AzWriter(const AzBlobUrl& blob_url, std::shared_ptr<Azure::Storage::StorageSharedKeyCredential> credential);
 
   ~AzWriter() override;
 

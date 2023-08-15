@@ -5,6 +5,9 @@
 #include "rosbaz/io/cache_strategy.h"
 #include "rosbaz/io/reader.h"
 
+#include <azure/core/credentials/credentials.hpp>
+#include <azure/storage/common/storage_credential.hpp>
+
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
@@ -33,12 +36,14 @@ namespace io
 class AzReader : public IReader
 {
 public:
-  explicit AzReader(const AzBlobUrl& blob_url, const std::string& account_key = "", const std::string& token = "");
+  explicit AzReader(const AzBlobUrl& blob_url, std::unique_ptr<ICacheStrategy> cache_strategy,
+                    std::shared_ptr<Azure::Core::Credentials::TokenCredential> credential = nullptr);
+  explicit AzReader(const AzBlobUrl& blob_url, std::unique_ptr<ICacheStrategy> cache_strategy,
+                    std::shared_ptr<Azure::Storage::StorageSharedKeyCredential> credential);
 
-  explicit AzReader(const AzBlobUrl& blob_url, std::unique_ptr<ICacheStrategy> cache_strategy);
-
-  explicit AzReader(const AzBlobUrl& blob_url, const std::string& account_key, const std::string& token,
-                    std::unique_ptr<ICacheStrategy> cache_strategy);
+  explicit AzReader(const AzBlobUrl& blob_url,
+                    std::shared_ptr<Azure::Core::Credentials::TokenCredential> credential = nullptr);
+  explicit AzReader(const AzBlobUrl& blob_url, std::shared_ptr<Azure::Storage::StorageSharedKeyCredential> credential);
 
   ~AzReader() override;
 

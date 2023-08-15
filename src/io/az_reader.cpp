@@ -2,7 +2,6 @@
 
 #ifndef NO_AZ_BINDINGS
 
-#include "az_bearer_token.h"
 #include "rosbaz/blob_url.h"
 #include "rosbaz/exceptions.h"
 #include "rosbaz/io/buffer.h"
@@ -22,41 +21,34 @@ namespace rosbaz
 {
 namespace io
 {
-AzReader::AzReader(const AzBlobUrl& blob_url, const std::string& account_key, const std::string& token)
-  : AzReader(blob_url, account_key, token, boost::make_unique<rosbaz::io::ChunkInformedCacheStrategy>())
+AzReader::AzReader(const AzBlobUrl& blob_url, std::shared_ptr<Azure::Core::Credentials::TokenCredential> credential)
+  : AzReader(blob_url, boost::make_unique<rosbaz::io::ChunkInformedCacheStrategy>(), credential)
+{
+}
+AzReader::AzReader(const AzBlobUrl& blob_url, std::shared_ptr<Azure::Storage::StorageSharedKeyCredential> credential)
+  : AzReader(blob_url, boost::make_unique<rosbaz::io::ChunkInformedCacheStrategy>(), credential)
 {
 }
 
-AzReader::AzReader(const AzBlobUrl& blob_url, std::unique_ptr<ICacheStrategy> cache_strategy)
-  : AzReader(blob_url, "", "", std::move(cache_strategy))
-{
-}
-
-AzReader::AzReader(const AzBlobUrl& blob_url, const std::string& account_key, const std::string& token,
-                   std::unique_ptr<ICacheStrategy> cache_strategy)
+AzReader::AzReader(const AzBlobUrl& blob_url, std::unique_ptr<ICacheStrategy> cache_strategy,
+                   std::shared_ptr<Azure::Core::Credentials::TokenCredential> credential)
   : container_(blob_url.container_name), blob_(blob_url.blob_name), cache_strategy_(std::move(cache_strategy))
 {
-  std::shared_ptr<Azure::Storage::Blobs::BlobClient> blobClient;
-
-  if (!token.empty())
+  if (credential != nullptr)
   {
-    auto credential = std::make_shared<BearerToken>(token);
-    client_ = std::make_shared<Azure::Storage::Blobs::BlobClient>(blob_url.to_string(), credential);
-  }
-  else if (!blob_url.sas_token.empty())
-  {
-    client_ = std::make_shared<Azure::Storage::Blobs::BlobClient>(blob_url.to_string());
-  }
-  else if (!account_key.empty())
-  {
-    auto credential = std::make_shared<Azure::Storage::StorageSharedKeyCredential>(blob_url.account_name, account_key);
     client_ = std::make_shared<Azure::Storage::Blobs::BlobClient>(blob_url.to_string(), credential);
   }
   else
   {
-    throw rosbaz::MissingCredentialsException("You must provide either a bearer token, a sas "
-                                              "token, or an account key.");
+    client_ = std::make_shared<Azure::Storage::Blobs::BlobClient>(blob_url.to_string());
   }
+}
+
+AzReader::AzReader(const AzBlobUrl& blob_url, std::unique_ptr<ICacheStrategy> cache_strategy,
+                   std::shared_ptr<Azure::Storage::StorageSharedKeyCredential> credential)
+  : container_(blob_url.container_name), blob_(blob_url.blob_name), cache_strategy_(std::move(cache_strategy))
+{
+  client_ = std::make_shared<Azure::Storage::Blobs::BlobClient>(blob_url.to_string(), credential);
 }
 
 AzReader::~AzReader() = default;

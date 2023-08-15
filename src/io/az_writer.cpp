@@ -2,7 +2,6 @@
 
 #ifndef NO_AZ_BINDINGS
 
-#include "az_bearer_token.h"
 #include "rosbaz/blob_url.h"
 #include "rosbaz/exceptions.h"
 #include "rosbaz/io/buffer.h"
@@ -80,30 +79,23 @@ void AzBlock::stage()
   is_staged_ = true;
 }
 
-AzWriter::AzWriter(const AzBlobUrl& blob_url, const std::string& account_key, const std::string& token)
+AzWriter::AzWriter(const AzBlobUrl& blob_url, std::shared_ptr<Azure::Core::Credentials::TokenCredential> credential)
   : container_(blob_url.container_name), blob_(blob_url.blob_name)
 {
-  std::shared_ptr<Azure::Storage::Blobs::BlockBlobClient> blobClient;
-
-  if (!token.empty())
+  if (credential != nullptr)
   {
-    auto credential = std::make_shared<BearerToken>(token);
-    client_ = std::make_shared<Azure::Storage::Blobs::BlockBlobClient>(blob_url.to_string(), credential);
-  }
-  else if (!blob_url.sas_token.empty())
-  {
-    client_ = std::make_shared<Azure::Storage::Blobs::BlockBlobClient>(blob_url.to_string());
-  }
-  else if (!account_key.empty())
-  {
-    auto credential = std::make_shared<Azure::Storage::StorageSharedKeyCredential>(blob_url.account_name, account_key);
     client_ = std::make_shared<Azure::Storage::Blobs::BlockBlobClient>(blob_url.to_string(), credential);
   }
   else
   {
-    throw rosbaz::MissingCredentialsException("You must provide either a bearer token, a sas "
-                                              "token, or an account key.");
+    client_ = std::make_shared<Azure::Storage::Blobs::BlockBlobClient>(blob_url.to_string());
   }
+}
+
+AzWriter::AzWriter(const AzBlobUrl& blob_url, std::shared_ptr<Azure::Storage::StorageSharedKeyCredential> credential)
+  : container_(blob_url.container_name), blob_(blob_url.blob_name)
+{
+  client_ = std::make_shared<Azure::Storage::Blobs::BlockBlobClient>(blob_url.to_string(), credential);
 }
 
 AzWriter::~AzWriter() = default;

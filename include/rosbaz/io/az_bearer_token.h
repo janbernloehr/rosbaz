@@ -4,22 +4,22 @@
 
 #include <string>
 
+namespace rosbaz
+{
+namespace io
+{
+
 class BearerToken : public Azure::Core::Credentials::TokenCredential
 {
 public:
-  explicit BearerToken(const std::string& token) : m_token{ token }
-  {
-  }
+  explicit BearerToken(const std::string& token);
 
   Azure::Core::Credentials::AccessToken
   GetToken(Azure::Core::Credentials::TokenRequestContext const& /* tokenRequestContext*/,
-           Azure::Core::Context const& /* context */) const override
-  {
-    Azure::Core::Credentials::AccessToken t;
-    t.Token = m_token;
-    return t;
-  }
+           Azure::Core::Context const& /* context */) const override;
 
 private:
   std::string m_token;
 };
+
+}}

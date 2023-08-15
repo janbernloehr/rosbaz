@@ -7,7 +7,7 @@ endif()
 
 option(REGRESSION_TESTS "Build and execute regression tests" OFF)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(ROSBAZ_CXX_FLAGS
   -Wall
   -Wextra
@@ -54,6 +54,7 @@ find_package(catkin REQUIRED
 )
 
 find_package(azure-storage-blobs-cpp CONFIG REQUIRED)
+find_package(azure-identity-cpp CONFIG REQUIRED)
 
 catkin_package(
   INCLUDE_DIRS include
@@ -82,7 +83,8 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 target_link_libraries(${PROJECT_NAME}
-  PRIVATE Azure::azure-storage-blobs
+  PUBLIC  Azure::azure-core
+  PRIVATE Azure::azure-storage-blobs Azure::azure-identity
 )
 
 file(GLOB _app_sources CONFIGURE_DEPENDS "app/*.cpp" "app/**/*.cpp")
@@ -90,7 +92,7 @@ file(GLOB _app_sources CONFIGURE_DEPENDS "app/*.cpp" "app/**/*.cpp")
 add_executable(${PROJECT_NAME}_app
   ${_app_sources}
 )
-target_link_libraries(${PROJECT_NAME}_app PRIVATE ${PROJECT_NAME})
+target_link_libraries(${PROJECT_NAME}_app PRIVATE ${PROJECT_NAME} Azure::azure-identity)
 set_target_properties(${PROJECT_NAME}_app PROPERTIES OUTPUT_NAME "rosbaz")
 
 set_target_properties(${PROJECT_NAME}_app
