@@ -5,9 +5,6 @@
 #include "rosbaz/io/cache_strategy.h"
 #include "rosbaz/io/reader.h"
 
-#include <azure/core/credentials/credentials.hpp>
-#include <azure/storage/common/storage_credential.hpp>
-
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
@@ -18,8 +15,16 @@
 
 namespace Azure
 {
+namespace Core
+{
+namespace Credentials
+{
+class TokenCredential;
+}
+}  // namespace Core
 namespace Storage
 {
+class StorageSharedKeyCredential;
 namespace Blobs
 {
 class BlobClient;

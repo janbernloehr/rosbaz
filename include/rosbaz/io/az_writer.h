@@ -10,13 +10,19 @@
 #include <mutex>
 #include <string>
 #include <vector>
-#include <azure/core/credentials/credentials.hpp>
-#include <azure/storage/common/storage_credential.hpp>
 
 namespace Azure
 {
+namespace Core
+{
+namespace Credentials
+{
+class TokenCredential;
+}
+}  // namespace Core
 namespace Storage
 {
+class StorageSharedKeyCredential;
 namespace Blobs
 {
 class BlockBlobClient;
