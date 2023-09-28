@@ -18,7 +18,9 @@ public:
   {
   }
 
-  virtual ~RegressionTests() noexcept {}
+  virtual ~RegressionTests() noexcept
+  {
+  }
 
   rosbaz::Bag baz;
   rosbag::Bag bag;
@@ -137,7 +139,9 @@ public:
   {
   }
 
-  virtual ~TwoFileRegressionTests() noexcept {}
+  virtual ~TwoFileRegressionTests() noexcept
+  {
+  }
 
   rosbaz::Bag baz0;
   rosbaz::Bag baz1;

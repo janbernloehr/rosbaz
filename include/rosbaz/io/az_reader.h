@@ -1,7 +1,7 @@
 #pragma once
 
 #include "rosbaz/common.h"
-#include "rosbaz/internal/nonstd/span.hpp"
+#include "rosbaz/internal/span.hpp"
 #include "rosbaz/io/cache_strategy.h"
 #include "rosbaz/io/reader.h"
 

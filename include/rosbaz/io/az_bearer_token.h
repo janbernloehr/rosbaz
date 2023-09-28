@@ -8,7 +8,6 @@ namespace rosbaz
 {
 namespace io
 {
-
 class BearerToken : public Azure::Core::Credentials::TokenCredential
 {
 public:
@@ -22,4 +21,5 @@ private:
   std::string m_token;
 };
 
-}}
+}  // namespace io
+}  // namespace rosbaz
