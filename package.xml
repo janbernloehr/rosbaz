@@ -13,6 +13,8 @@
   <depend>roscpp</depend>
   <depend>rosbag</depend>
 
+  <depend>azure-sdk</depend>
+
   <export>
   </export>
 </package>
