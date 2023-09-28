@@ -50,14 +50,12 @@ jobs:
         cmake --build . --parallel
         sudo cmake --install .
 
-    - uses: betwo/github-setup-catkin@master
+    - uses: ros-tooling/setup-ros@v0.7
       with:
-        ros-version: 'noetic'
-        build-tool: 'catkin_tools'
-        workspace: '$GITHUB_WORKSPACE'
+        required-ros-distributions: noetic
 
-    - name: 'build rosbaz'
-      run: catkin build -sc --no-status --no-notify -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} -DCMAKE_BUILD_TYPE=RelWithDebInfo
-
-    - name: 'test rosbaz'
-      run: catkin run_tests --no-status --no-notify --cmake-args -DREGRESSION_TESTS=ON && catkin_test_results
+    - uses: ros-tooling/action-ros-ci@v0.3
+      with:
+        package-name: rosbaz
+        target-ros1-distro: noetic
+        extra-cmake-args: -DREGRESSION_TESTS=ON
