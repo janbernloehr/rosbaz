@@ -18,6 +18,8 @@ public:
   {
   }
 
+  virtual ~RegressionTests() noexcept {}
+
   rosbaz::Bag baz;
   rosbag::Bag bag;
 };
@@ -134,6 +136,8 @@ public:
     , bag1{ std::get<1>(GetParam()) }
   {
   }
+
+  virtual ~TwoFileRegressionTests() noexcept {}
 
   rosbaz::Bag baz0;
   rosbaz::Bag baz1;

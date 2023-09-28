@@ -11,6 +11,10 @@
 #include "terminal/pausable_context.h"
 #include "terminal/progress_bar.h"
 
+#include <azure/identity/azure_cli_credential.hpp>
+#include <azure/storage/common/storage_credential.hpp>
+#include <rosbaz/io/az_bearer_token.h>
+
 #include <algorithm>
 #include <boost/optional.hpp>
 #include <boost/optional/optional_io.hpp>
@@ -73,7 +77,22 @@ std::shared_ptr<rosbaz::io::IReader> create_reader(const std::string& path_or_ur
 #ifndef NO_AZ_BINDINGS
     auto url = rosbaz::AzBlobUrl::parse(path_or_url);
 
-    return std::make_shared<rosbaz::io::AzReader>(url, common_options.account_key, common_options.token);
+    if (!common_options.account_key.empty())
+    {
+      auto credential =
+          std::make_shared<Azure::Storage::StorageSharedKeyCredential>(url.account_name, common_options.account_key);
+      return std::make_shared<rosbaz::io::AzReader>(url, credential);
+    }
+    else if (!common_options.token.empty())
+    {
+      auto credential = std::make_shared<rosbaz::io::BearerToken>(common_options.token);
+      return std::make_shared<rosbaz::io::AzReader>(url, credential);
+    }
+    else
+    {
+      auto credential = std::make_shared<Azure::Identity::AzureCliCredential>();
+      return std::make_shared<rosbaz::io::AzReader>(url, credential);
+    }
 #else
     throw std::runtime_error("rosbaz was compiled with NO_AZ_BINDINGS. Reading from azure is not supported.");
 #endif

@@ -13,8 +13,16 @@
 
 namespace Azure
 {
+namespace Core
+{
+namespace Credentials
+{
+class TokenCredential;
+}
+}  // namespace Core
 namespace Storage
 {
+class StorageSharedKeyCredential;
 namespace Blobs
 {
 class BlockBlobClient;
@@ -62,7 +70,9 @@ private:
 class AzWriter : public IWriter
 {
 public:
-  explicit AzWriter(const AzBlobUrl& blob_url, const std::string& account_key = "", const std::string& token = "");
+  explicit AzWriter(const AzBlobUrl& blob_url,
+                    std::shared_ptr<Azure::Core::Credentials::TokenCredential> credential = nullptr);
+  explicit AzWriter(const AzBlobUrl& blob_url, std::shared_ptr<Azure::Storage::StorageSharedKeyCredential> credential);
 
   ~AzWriter() override;
 

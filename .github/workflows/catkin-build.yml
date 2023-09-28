@@ -22,8 +22,13 @@ jobs:
       uses: actions/checkout@v2
       with:
         repository: 'Azure/azure-sdk-for-cpp.git'
-        ref: 'azure-storage-blobs_12.2.0'
+        ref: 'azure-storage-blobs_12.9.0'
         path: 'azure-sdk-for-cpp'
+
+    - name: 'checkout rosbaz'
+      uses: actions/checkout@v2
+      with:
+        path: 'src'
 
     - name: 'build azure-sdk-for-cpp'
       env:
@@ -37,25 +42,20 @@ jobs:
         sudo apt-get update -qq
         sudo apt-get install -y libssl-dev libcurl4-openssl-dev cmake g++ uuid-dev cmake
         cd azure-sdk-for-cpp
+        git apply ../src/azure-sdk.patch
         mkdir build.release
         cd build.release
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
+        export AZURE_SDK_DISABLE_AUTO_VCPKG=ON
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DDISABLE_AZURE_CORE_OPENTELEMETRY=ON -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
         cmake --build . --parallel
         sudo cmake --install .
 
-    - name: 'checkout rosbaz'
-      uses: actions/checkout@v2
+    - uses: ros-tooling/setup-ros@v0.7
       with:
-        path: 'src'
+        required-ros-distributions: noetic
 
-    - uses: betwo/github-setup-catkin@master
+    - uses: ros-tooling/action-ros-ci@v0.3
       with:
-        ros-version: 'noetic'
-        build-tool: 'catkin_tools'
-        workspace: '$GITHUB_WORKSPACE'
-
-    - name: 'build rosbaz'
-      run: catkin build -sc --no-status --no-notify -DCMAKE_CXX_COMPILER=${{ matrix.compiler }} -DCMAKE_BUILD_TYPE=RelWithDebInfo
-
-    - name: 'test rosbaz'
-      run: catkin run_tests --no-status --no-notify --cmake-args -DREGRESSION_TESTS=ON && catkin_test_results
+        package-name: rosbaz
+        target-ros1-distro: noetic
+        extra-cmake-args: -DREGRESSION_TESTS=ON

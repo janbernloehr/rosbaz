@@ -107,7 +107,7 @@ void View::iterator::increment()
 
   view_->update();
 
-  assert(!iters_.empty());
+  assert(!iters_.empty()); // increment called on end iterator
 
   // Note, updating may have blown away our message-ranges and
   // replaced them in general the ViewIterHelpers are no longer

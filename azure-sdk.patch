@@ -1,0 +1,49 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 285e9517..9737667e 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -119,9 +119,9 @@ endif()
+ add_subdirectory(sdk/core)
+ add_subdirectory(sdk/attestation)
+ # AMQP doesn't work for UWP yet, and eventhubs depends on AMQP, so we cannot include eventhubs on UWP.
+-if (NOT BUILD_WINDOWS_UWP)
+-  add_subdirectory(sdk/eventhubs)
+-endif()
++# if (NOT BUILD_WINDOWS_UWP)
++#   add_subdirectory(sdk/eventhubs)
++# endif()
+ add_subdirectory(sdk/identity)
+ add_subdirectory(sdk/keyvault)
+ add_subdirectory(sdk/storage)
+diff --git a/sdk/core/CMakeLists.txt b/sdk/core/CMakeLists.txt
+index 8773255f..c6106979 100644
+--- a/sdk/core/CMakeLists.txt
++++ b/sdk/core/CMakeLists.txt
+@@ -10,10 +10,10 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+ 
+ add_subdirectory(azure-core)
+ 
+-if (NOT BUILD_WINDOWS_UWP)
+-  message(STATUS "Including AMQP library")
+-  add_subdirectory(azure-core-amqp)
+-endif()
++# if (NOT BUILD_WINDOWS_UWP)
++#   message(STATUS "Including AMQP library")
++#   add_subdirectory(azure-core-amqp)
++# endif()
+ 
+ if (NOT DISABLE_AZURE_CORE_OPENTELEMETRY)
+   add_subdirectory(azure-core-tracing-opentelemetry)
+diff --git a/sdk/core/azure-core/src/http/curl/curl.cpp b/sdk/core/azure-core/src/http/curl/curl.cpp
+index b8703eac..71c1d3ae 100644
+--- a/sdk/core/azure-core/src/http/curl/curl.cpp
++++ b/sdk/core/azure-core/src/http/curl/curl.cpp
+@@ -274,7 +274,7 @@ static void CleanupThread()
+   }
+ }
+ 
+-std::string PemEncodeFromBase64(std::string const& base64, std::string const& pemType)
++[[gnu::unused]] std::string PemEncodeFromBase64(std::string const& base64, std::string const& pemType)
+ {
+   std::stringstream rv;
+   rv << "-----BEGIN " << pemType << "-----" << std::endl;
