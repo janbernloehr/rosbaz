@@ -34,3 +34,16 @@ index 8773255f..c6106979 100644
  
  if (NOT DISABLE_AZURE_CORE_OPENTELEMETRY)
    add_subdirectory(azure-core-tracing-opentelemetry)
+diff --git a/sdk/core/azure-core/src/http/curl/curl.cpp b/sdk/core/azure-core/src/http/curl/curl.cpp
+index b8703eac..71c1d3ae 100644
+--- a/sdk/core/azure-core/src/http/curl/curl.cpp
++++ b/sdk/core/azure-core/src/http/curl/curl.cpp
+@@ -274,7 +274,7 @@ static void CleanupThread()
+   }
+ }
+ 
+-std::string PemEncodeFromBase64(std::string const& base64, std::string const& pemType)
++[[gnu::unused]] std::string PemEncodeFromBase64(std::string const& base64, std::string const& pemType)
+ {
+   std::stringstream rv;
+   rv << "-----BEGIN " << pemType << "-----" << std::endl;

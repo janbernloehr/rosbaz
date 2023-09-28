@@ -15,13 +15,13 @@ This package provides an implementation of a subset of the rosbag api and the `r
 Summarize contents of a bag
 
 ```bash
-rosbaz info https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag?SAS_TOKEN
+rosbaz info https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag
 ```
 
 Play back contents of a bag
 
 ```bash
-rosbaz play --paused https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag?SAS_TOKEN
+rosbaz play --paused https://contosoaccount.blob.core.windows.net/contosocontainer/my.bag
 ```
 
 Note that only those topics with connected subscribers will actually be downloaded from azure.
@@ -119,7 +119,7 @@ sudo apt install cmake
 
 3. Install azure-storage-blobs
 ```bash
-git clone --branch azure-storage-blobs_12.8.0 https://github.com/Azure/azure-sdk-for-cpp.git
+git clone --branch azure-storage-blobs_12.9.0 https://github.com/Azure/azure-sdk-for-cpp.git
 
 cd azure-sdk-for-cpp
 mkdir build.release
