@@ -4,7 +4,8 @@ namespace rosbaz
 {
 namespace io
 {
-BearerToken::BearerToken(const std::string& token) : Azure::Core::Credentials::TokenCredential{"Bearer Token"}, m_token{ token }
+BearerToken::BearerToken(const std::string& token)
+  : Azure::Core::Credentials::TokenCredential{ "Bearer Token" }, m_token{ token }
 {
 }
 
