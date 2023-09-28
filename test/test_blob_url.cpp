@@ -29,5 +29,5 @@ TEST(AzBlobUrl, can_parse_with_sas)
   EXPECT_EQ(az_url.blob_endpoint, "contosoaccount.blob.core.windows.net");
   EXPECT_EQ(az_url.container_name, "contosocontainer");
   EXPECT_EQ(az_url.blob_name, "my.bag");
-  EXPECT_EQ(az_url.sas_token, "?SAS_TOKEN");
+  EXPECT_EQ(az_url.sas_token, "SAS_TOKEN");
 }

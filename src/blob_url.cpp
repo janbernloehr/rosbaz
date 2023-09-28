@@ -8,14 +8,14 @@
 
 namespace
 {
-std::regex is_url_rgx("^(https*)://");
+const std::regex is_url_rgx("^(https?)://");
 }
 
 namespace rosbaz
 {
 AzBlobUrl AzBlobUrl::parse(const std::string& url)
 {
-  std::regex url_rgx("^(https*)://(.+?)\\.([^/]+)/([^/]+)/(.+?)(\\?.+)?$");
+  const std::regex url_rgx("^(https?)://(.+?)\\.([^/]+)/([^/]+)/(.+?)(?:\\?(.+))?$");
 
   std::smatch matches;
 
@@ -51,7 +51,7 @@ std::string AzBlobUrl::to_string() const
 
   if (!sas_token.empty())
   {
-    url += sas_token;
+    url += "?" + sas_token;
   }
 
   return url;
