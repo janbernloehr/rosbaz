@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rosbaz/internal/nonstd/span.hpp"
+#include "rosbaz/internal/span.hpp"
 
 #include <ostream>
 
