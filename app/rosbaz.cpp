@@ -11,7 +11,7 @@
 #include "terminal/pausable_context.h"
 #include "terminal/progress_bar.h"
 
-#include <azure/identity/azure_cli_credential.hpp>
+#include <azure/identity/default_azure_credential.hpp>
 #include <azure/storage/common/storage_credential.hpp>
 #include <rosbaz/io/az_bearer_token.h>
 
@@ -90,7 +90,7 @@ std::shared_ptr<rosbaz::io::IReader> create_reader(const std::string& path_or_ur
     }
     else
     {
-      auto credential = std::make_shared<Azure::Identity::AzureCliCredential>();
+      auto credential = std::make_shared<Azure::Identity::DefaultAzureCredential>();
       return std::make_shared<rosbaz::io::AzReader>(url, credential);
     }
 #else
