@@ -88,6 +88,10 @@ std::shared_ptr<rosbaz::io::IReader> create_reader(const std::string& path_or_ur
       auto credential = std::make_shared<rosbaz::io::BearerToken>(common_options.token);
       return std::make_shared<rosbaz::io::AzReader>(url, credential);
     }
+    else if (!url.sas_token.empty())
+    {
+      return std::make_shared<rosbaz::io::AzReader>(url);
+    }
     else
     {
       auto credential = std::make_shared<Azure::Identity::DefaultAzureCredential>();
